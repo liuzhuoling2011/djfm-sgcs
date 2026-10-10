@@ -1,6 +1,6 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, stepFoes, playerAttack, type Foe, type Stats } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, type Foe, type Stats } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, type SkillFx } from './fx'
 
@@ -98,6 +98,9 @@ async function main() {
   let npcImgs = new Map<string, HTMLImageElement>()
   let origin = { x: 0, y: 0 }
   const qs = new URLSearchParams(location.search)
+  setSoftDf(qs.get('softdf') === '1')
+  if (SOFT_DF) console.info('[djfm] soft-DF ON (?softdf=1)')
+  else console.info('[djfm] soft-DF off; using placeholder foe caps')
   let tintOn = qs.get('tint') !== '0'
   let rainOn = qs.get('rain') !== '0'
   let ground: HTMLImageElement | null = null
@@ -164,8 +167,8 @@ async function main() {
         foes = foes.filter((f) => f.name !== '玉衡')
         const st = monSets['196']
         foes.push({
-          x: bx, y: by, hx: bx, hy: by, hp: 800, maxHp: 800, cd: 0.8, hitT: 0, dead: 0,
-          at: 55, df: 40, exp: 200, sight: 8, spd: 12, name: '玉衡', set: 196, act: 'idle', actT: 0, dir: 0,
+          x: bx, y: by, hx: bx, hy: by, hp: 520, maxHp: 520, cd: 0.8, hitT: 0, dead: 0,
+          at: 34, df: 42, exp: 200, sight: 8, spd: 12, name: '玉衡', set: 196, act: 'idle', actT: 0, dir: 0,
         })
         // ensure frames loaded
         if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
@@ -179,7 +182,7 @@ async function main() {
         const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
         foes = foes.filter((f) => f.name !== '魔豕兽')
         foes.push({
-          x: bx, y: by, hx: bx, hy: by, hp: 500, maxHp: 500, cd: 1, hitT: 0, dead: 0,
+          x: bx, y: by, hx: bx, hy: by, hp: 400, maxHp: 400, cd: 1, hitT: 0, dead: 0,
           at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 'pd006', act: 'idle', actT: 0, dir: 0, event: 'bossyezhu',
         })
         const st = monSets['pd006']
@@ -201,8 +204,8 @@ async function main() {
         }
         foes = foes.filter((f) => f.name !== '战象')
         foes.push({
-          x: bx, y: by, hx: bx, hy: by, hp: 1200, maxHp: 1200, cd: 1.1, hitT: 0, dead: 0,
-          at: 60, df: 45, exp: 250, sight: 8, spd: 8, name: '战象', set: 'pd009', act: 'idle', actT: 0, dir: 0, event: 'bossdaxiang',
+          x: bx, y: by, hx: bx, hy: by, hp: 650, maxHp: 650, cd: 1.1, hitT: 0, dead: 0,
+          at: 42, df: 45, exp: 250, sight: 8, spd: 8, name: '战象', set: 'pd009', act: 'idle', actT: 0, dir: 0, event: 'bossdaxiang',
         })
         const st = monSets['pd009']
         if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
@@ -215,8 +218,8 @@ async function main() {
           foes = foes.filter((f) => f.event !== ev)
           const set = monSets['pd613'] ? 'pd613' : (monSets['pd009'] ? 'pd009' : 'pd008')
           foes.push({
-            x: ox, y: oy, hx: ox, hy: oy, hp: 1500, maxHp: 1500, cd: 1.0, hitT: 0, dead: 0,
-            at: 70, df: 50, exp: 300, sight: 9, spd: 9, name: '天机', set, act: 'idle', actT: 0, dir: 0, event: ev,
+            x: ox, y: oy, hx: ox, hy: oy, hp: 720, maxHp: 720, cd: 1.0, hitT: 0, dead: 0,
+            at: 50, df: 48, exp: 300, sight: 9, spd: 9, name: '天机', set, act: 'idle', actT: 0, dir: 0, event: ev,
           })
           const st = monSets[set]
           if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
@@ -285,6 +288,7 @@ async function main() {
     }
     dlg.onFx = (kind, arg) => {
       if (kind === 'screen') inv.flash(`（ScreenEffect ${arg ?? ''}）`)
+      else if (kind === 'bldani') inv.flash(`（机关动画 ${arg ?? ''}）`)
       else if (kind === 'avi') playAvi((arg ?? '').trim().toLowerCase().replace(/\.dhp$/i, ''))
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
@@ -331,7 +335,7 @@ async function main() {
         return `<button data-buy="${r.id}">${i + 1}. ${n}<br/><small>${r.price} 金</small></button>`
       }).join('')
       invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
-        <div class="jm-title">铁匠铺 · 买卖</div>
+        <div class="jm-title">铁匠铺 · 买卖（金锭购买）</div>
         <div class="jm-body"><div class="jm-slots">${slots}</div></div>
         <div class="jm-foot">金钱 ${inv.money} · 蜀水×${inv.qty(120)}</div>
         <button class="jm-close" data-close-shop title="关闭">×</button>
@@ -449,6 +453,22 @@ async function main() {
     ;(window as unknown as { __djfmAvi?: string }).__djfmAvi = name
   }
 
+
+  type CombatBal = { scene_tier?: Record<string, number>; df_cap?: number[]; hp_cap?: number[]; at_cap?: number[] }
+  function balanceFoe(raw: { hp: number; at: number; df: number }, scene: string) {
+    // PLACEHOLDER balance (not soft-DF): cap RolePrivate stats so Init AT+4/lv can clear act-1.
+    const bal = (gameData as { combat?: CombatBal } | null)?.combat
+    const tier = Math.max(0, Math.min(5, bal?.scene_tier?.[scene] ?? 2))
+    const dfCap = bal?.df_cap?.[tier] ?? (28 + tier * 8)
+    const hpCap = bal?.hp_cap?.[tier] ?? (220 + tier * 150)
+    const atCap = bal?.at_cap?.[tier] ?? (22 + tier * 8)
+    return {
+      hp: Math.max(40, Math.min(raw.hp, hpCap)),
+      at: Math.max(8, Math.min(raw.at, atCap)),
+      df: Math.max(5, Math.min(raw.df, dfCap)),
+    }
+  }
+
   // Phase 25: quest props on triggers (scene SetPropToObj → E pickup)
   const PROP_TRIG: Record<string, { id: number; flag: string; name: string }> = {
     shushui: { id: 120, flag: 'xss', name: '蜀水' },
@@ -473,6 +493,8 @@ async function main() {
   const lootedScenes = new Set<string>()
   type GroundLoot = { x: number; y: number; id: number; taken?: boolean }
   let groundLoot: GroundLoot[] = []
+  type IceHaz = { x: number; y: number }
+  let iceHazards: IceHaz[] = []
   function spawnSceneLoot(scene: string) {
     groundLoot = []
     if (lootedScenes.has(scene)) return
@@ -733,6 +755,20 @@ async function main() {
     origin = { x: meta.chunk_origin?.[0] ?? 0, y: meta.chunk_origin?.[1] ?? 0 }
     buildings = meta.buildings ?? []
     objects = meta.npcs ?? meta.objects ?? []
+    iceHazards = []
+    {
+      const scn = String(meta.scene ?? id).toLowerCase()
+      if (scn === '1-8s') {
+        const keep: typeof objects = []
+        for (const o of objects) {
+          if (Number(o.ModelID) === 220 || String((o as {name?: string}).name ?? '') === '天冰') {
+            iceHazards.push({ x: (o.x ?? 0) - ((meta.chunk_origin?.[0] ?? 0)), y: (o.y ?? 0) - ((meta.chunk_origin?.[1] ?? 0)) })
+          } else keep.push(o)
+        }
+        objects = keep
+        if (iceHazards.length) inv.flash(`九天池寒冰 ×${iceHazards.length}（踩上受伤）`)
+      }
+    }
     atlases = meta.lazy?.atlases ?? []
     atlasImgs.clear()
 
@@ -812,9 +848,8 @@ async function main() {
     }
     for (const m of meta.monsters ?? []) {
       const lx = m.x - origin.x, ly = m.y - origin.y
-      // PLACEHOLDER: keep RolePrivate AT/DF/HP but soft-DF in hud.dmg handles unwinability; still soft-cap HP≥5000 for scripted bosses
-      const hp = Math.min(m.hp, 2500)
-      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp, maxHp: hp, cd: 1, hitT: 0, dead: 0, at: m.at, df: m.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
+      const b = balanceFoe({ hp: m.hp, at: m.at, df: m.df }, curScene)
+      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: b.hp, maxHp: b.hp, cd: 1, hitT: 0, dead: 0, at: b.at, df: b.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
     }
     // Phase 25: scene loot from AddItem tables (scatter potions near spawn, once per scene visit)
     spawnSceneLoot(curScene)
@@ -1032,6 +1067,9 @@ async function main() {
     }
 
     stepFoes(foes, pos, stats, dt, walkable)
+    for (const hz of iceHazards) {
+      if (Math.hypot(hz.x - pos.x, hz.y - pos.y) < 0.85) stats.hp -= 18 * dt
+    }
     // Boss death loot from scene scripts
     {
       const w = (window as unknown as { __djfmBoss?: string })
@@ -1054,11 +1092,11 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), groundLoot: () => groundLoot, triggers: () => curTriggers, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), groundLoot: () => groundLoot, iceHazards: () => iceHazards, triggers: () => curTriggers, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
-    }, omniAttack: () => { const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
+    }, faceAttack: (ang?: number) => { const a = ang ?? ((facing % 8) * (Math.PI / 4) - Math.PI); const before = foes.filter(f => f.dead <= 0 && !f.gone); playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
@@ -1245,6 +1283,12 @@ async function main() {
           ctx.fillStyle = '#ffd9a0'; ctx.font = '10px ui-sans-serif,system-ui'; ctx.fillText(f.name ?? '', fx - 18, top - 3)
         }
       } })
+    }
+    for (const hz of iceHazards) {
+      const p = iso(hz.x, hz.y)
+      const x = p.x + cam.x, y = p.y + cam.y
+      ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 14, 8, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.strokeStyle = 'rgba(200,240,255,0.8)'; ctx.stroke()
     }
         // Phase 20: 蜀水 prop marker on 1-6s
     for (const g of groundLoot) {

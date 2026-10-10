@@ -195,5 +195,54 @@
     "cooldown_ms": 450
   },
   "interact_key": "e",
-  "interact_range": 2.0
+  "interact_range": 2.0,
+  "combat": {
+    "note": "PLACEHOLDER: RolePrivate AT/DF/HP column mapping to exe formula is unconfirmed. Web scales foe stats by scene tier so Init.txt AT+4/lv can clear act-1. Soft-DF formula hack is OFF unless ?softdf=1.",
+    "softdf_query": "softdf=1",
+    "scene_tier": {
+      "1-1s": 1,
+      "1-2s": 1,
+      "1-3s": 1,
+      "1-3as": 2,
+      "1-4s": 2,
+      "1-5s": 2,
+      "1-6s": 2,
+      "1-7s": 3,
+      "1-7as": 3,
+      "1-8s": 3,
+      "1-9s": 4,
+      "1-10s": 4,
+      "1-10a1s": 4,
+      "1-10a2s": 4,
+      "1-10a3s": 4,
+      "1-10a4s": 4,
+      "1-10a5s": 4,
+      "1-10a6s": 5,
+      "1-11s": 5
+    },
+    "df_cap": [
+      28,
+      34,
+      42,
+      50,
+      58,
+      66
+    ],
+    "hp_cap": [
+      220,
+      320,
+      450,
+      600,
+      800,
+      1100
+    ],
+    "at_cap": [
+      22,
+      28,
+      34,
+      42,
+      50,
+      58
+    ]
+  }
 }

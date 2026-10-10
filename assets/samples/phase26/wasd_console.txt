@@ -1,0 +1,66 @@
+START no-softdf http://127.0.0.1:8765/
+[ren] foes=0 samp=[]
+  talk sy fl={"sy1": 1}
+[1-2s] foes=4 samp=[{'hp': 320, 'at': 28, 'df': 34, 'n': '魔豕兽战士'}]
+  talk bossyezhu fl={"sy1": 1}
+  fight {'魔豕兽'} hits=14 left=['魔豕兽战士', '持刀鬼兵', '持枪鬼兵', '持枪鬼兵'] lv=1 at=40 exp=80
+  54 1
+[ren] foes=0 samp=[]
+  talk cjg fl={"sy1": 1, "cjg1": 100}
+  talk sws fl={"sy1": 1, "cjg1": 100}
+  talk sws fl={"sy1": 20, "cjg1": 100}
+[1-3as] foes=1 samp=[{'hp': 450, 'at': 34, 'df': 42, 'n': '玉衡'}]
+  talk bossyuheng fl={"sy1": 20, "cjg1": 100}
+  fight {'玉衡'} hits=40 left=['玉衡'] lv=1 at=40 exp=80
+  118 0
+[1-3s] foes=0 samp=[]
+  talk sws fl={"sy1": 20, "cjg1": 100, "bq1": 10}
+[ren] foes=0 samp=[]
+  talk sws fl={"sy1": 20, "cjg1": 100, "bq1": 10}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 10, "bq": 1}
+[1-6s] foes=0 samp=[]
+[ren] foes=0 samp=[]
+  talk tj fl={"sy1": 20, "cjg1": 100, "bq1": 10, "bq": 1, "xss": 1, "tj": 1}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 10, "bq": 1, "xss": 1, "tj": 1}
+  sy1 20
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 10, "bq": 1, "xss": 1, "tj": 1}
+  talk sws fl={"sy1": 20, "cjg1": 100, "bq1": 10, "bq": 1, "xss": 1, "tj": 1}
+[1-4s] foes=0 samp=[]
+  talk sdyx fl={"sy1": 20, "cjg1": 100, "bq1": 20, "bq": 1, "xss": 1, "tj": 1}
+[ren] foes=0 samp=[]
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 30, "bq": 1, "xss": 1, "tj": 1}
+[1-5s] foes=0 samp=[]
+[1-7s] foes=0 samp=[]
+[1-8s] foes=0 samp=[]
+  ice 74
+[ren] foes=0 samp=[]
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 50, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 60, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+[1-4s] foes=0 samp=[]
+  talk sdyx fl={"sy1": 20, "cjg1": 100, "bq1": 70, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  119 1 bq1 70
+[ren] foes=0 samp=[]
+  talk sws fl={"sy1": 20, "cjg1": 100, "bq1": 71, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 1}
+  talk zhs fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 1, "zhs1": 1}
+[1-9s] foes=23 samp=[{'hp': 350, 'at': 50, 'df': 58, 'n': '狐猴'}]
+  talk bossdaxiang fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 1, "zhs1": 1}
+  fight {'战象'} hits=38 left=[] lv=2 at=44 exp=330
+  zhs1 10
+[ren] foes=0 samp=[]
+  talk zs fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 1, "zhs1": 100}
+[1-11s] foes=24 samp=[{'hp': 500, 'at': 58, 'df': 66, 'n': '狐精弓箭兵'}]
+  124 1 bq2 40
+[1-10a6s] foes=11 samp=[{'hp': 350, 'at': 58, 'df': 66, 'n': '狐猴'}]
+  talk bosstianji fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 40, "zhs1": 100, "xqnz": 1}
+  fight {'天机'} hits=65 left=[] lv=4 at=52 exp=930
+  bq2 50
+[ren] foes=0 samp=[]
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 60, "zhs1": 100, "xqnz": 1}
+  talk sws fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 70, "zhs1": 100, "xqnz": 1}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 100, "zhs1": 100, "xqnz": 1, "act2": 1}
+  talk bq fl={"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 100, "zhs1": 100, "xqnz": 1, "act2": 1}
+FINAL fl {"sy1": 20, "cjg1": 100, "bq1": 100, "bq": 1, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 100, "zhs1": 100, "xqnz": 1, "act2": 1} scene 2-0s
+  bq2 100
+errs []
+DONE

@@ -131,6 +131,8 @@ export class DialogSys {
       }
       else if (op === 'changeact' && p.length >= 2) {
         this.currentAct = Number(p[1]); this.onAct?.(this.currentAct)
+      } else if (op === 'setbldani') {
+        this.onFx?.('bldani', p.slice(1).join(' '))
       } else if (op === 'showactforeword' && p.length >= 2) {
         this.onForeword?.(Number(p[1]), Number(p[2] ?? 0), Number(p[3] ?? this.currentAct))
       }

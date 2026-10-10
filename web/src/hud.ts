@@ -6,14 +6,15 @@ export type Foe = {
   kbX?: number; kbY?: number; gone?: boolean; event?: string
 }
 export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
-// Damage: original formula is exe-only (not in mb tables). Working model AT−DF/2 ±10% min1.
-// PLACEHOLDER soft-DF (Phase 25): RolePrivate DF 160–180 makes late act-1 do 1 dmg/hit forever at Init AT curve.
-// Cap effective DF at 0.85×AT so growth from Init.txt (AT+4/lv) matters; remove when real formula is known.
+// Damage: original formula is exe-only. Working model AT−DF/2 ±10% min1 (PROGRESS Phase 17c).
+// Soft-DF formula hack is OPT-IN only (?softdf=1). Default uses raw DF; act-1 playability comes from
+// PLACEHOLDER foe stat caps in main.ts (game.json combat.scene_tier), not this formula.
+export let SOFT_DF = false
+export function setSoftDf(on: boolean) { SOFT_DF = on }
 export const dmg = (at: number, df: number) => {
-  const soft = Math.min(df, at * 0.85)
-  return Math.max(1, (at - soft / 2) * (0.9 + Math.random() * 0.2))
+  const use = SOFT_DF ? Math.min(df, at * 0.85) : df
+  return Math.max(1, (at - use / 2) * (0.9 + Math.random() * 0.2))
 }
-export const SOFT_DF = true // label for HUD/PROGRESS
 
 const L = (s: string) => new Promise<HTMLImageElement>((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = s })
 
@@ -68,7 +69,7 @@ export class Hud {
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
-    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF' : '') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
+    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF' : '  ·占位数值') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
   }
   // Minimap: JM 1549 frame (137×133) at Wine (663,0) = top-right; interior 6..131 × 6..104; name strip below
   drawMinimap(ctx: CanvasRenderingContext2D, ground: CanvasImageSource | null, gx: number, gy: number, k: number,
@@ -120,14 +121,14 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
 }
 
 // melee arc: hits foes within range in facing half-plane
-export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.8) {
+export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 2.1) {
   let hits = 0
   for (const f of foes) {
     if (f.dead > 0 || f.gone) continue
     const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy)
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
-    if (d < 0.7 || diff < 1.2) {
+    if (d < 1.05 || diff < 1.35) {
       f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.35; hits++
       // knockback away from player
       if (d > 0.01) { f.kbX = (dx / d) * 4.5; f.kbY = (dy / d) * 4.5 }
