@@ -267,6 +267,23 @@
       "move": 16.0,
       "exp_per_lv": 100
     },
-    "help": "成长：Init 男主角 AT40+4/lv DF30+4 HP800+80 MP36+1.2。怪物先取 RolePrivate 再按场景档位封顶。"
+    "help": "成长：Init 男主角 AT40+4/lv DF30+4 HP800+80 MP36+1.2。怪物先取 RolePrivate 再按场景档位封顶。",
+    "remake": {
+      "note": "Remake tuning (not from ComeOn tables): thin late-map trash + shorter aggro leash so WASD clears feel less exhausting.",
+      "sight_cap": 5.5,
+      "leash": 9,
+      "max_trash": 12,
+      "trash_scenes": [
+        "1-9s",
+        "1-10s",
+        "1-10a1s",
+        "1-10a2s",
+        "1-10a3s",
+        "1-10a4s",
+        "1-10a5s",
+        "1-10a6s",
+        "1-11s"
+      ]
+    }
   }
 }
