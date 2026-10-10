@@ -595,3 +595,18 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 - Split by tile coverage: full-diamond overlays improve from 14.6→7.5 and 11.2→4.8 when drawn opaque, so **the Phase 14 rule that skipped coverage ≥45 % tiles was wrong**.
 - **Conclusion:** overlay tiles are a plain colour-keyed opaque blit over the ground diamond, with no translucency or special blend mode and no per-tile flag needed. phase14_ground_deco.py and scene_export.py now draw every col1 tile that way. 瓦当镇 now shows Wine's dirt paths and worn patches.
 - **Compare images:** `assets/samples/phase16/wine_vs_model_pavilion_overlay.png`, `wine_vs_model_gate_overlay.png`, `overlay_blend_01_gate_rain.png`, `overlay_blend_10_pavilion_tower.png` (Wine | ground only | best mode).
+
+## Phase 17a — git repo + map transitions 1-0s ↔ 1-1s ↔ 1-2s (2026-10-10 14:23 UTC+8)
+
+- **git:** `git init` in /workspace/djfm-sgcs. `.gitignore` excludes extract/, *.exe, *.lib/*.Lib/*.fol, fol_extract/, node_modules, web/dist and t_*.png. First commit 15c1b48.
+- **Exits:** taken from the real BNT trigger records (`go <scene>` scripts), now exported by scene_export.py:
+  - 1-0s (71,6)/(72,12) → 1-1s
+  - 1-1s (128,241–248) → 1-0s; (213,90–97) → 1-2s
+  - 1-2s (123–129,239–246) → 1-1s; (125–133,8–15) → 1-3s (not exported yet)
+- **Arrival rule:** you arrive at the centroid of the destination map's own `go <previous scene>` triggers, stepped toward the map centre to the first walkable cell. The trigger radius is 3.2 cells. A trigger only re-arms after you leave every trigger, which stops bounce-back loops.
+- **Fixes:** 1-0s was cropped to a 96×80 window starting at (15,19), which made the north exit unreachable; it is now the full 128×128. Fixed a spawn-search bug where `break` only left the inner loop and teleported the player far away (for example `?at=75,9` → (52,111)).
+- **Tested** (headless; `window.__djfm` shows the scene and position):
+  - 1-0s → 1-1s (arrive at 128,241)
+  - 1-1s → 1-2s (127,238)
+  - 1-2s → 1-1s (209,95)
+- **Shots:** `assets/samples/phase17/warp_*.png`.
