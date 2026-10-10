@@ -50,6 +50,13 @@ export const dmg = (at: number, df: number) => {
   return Math.max(1, (at - use / 2) * (0.9 + Math.random() * 0.2))
 }
 
+/** Remake tuning (not from tables): late-map trash density / leash — see game.json combat.remake */
+export let REMAKE = { sight_cap: 5.5, leash: 9, max_trash: 12, trash_scenes: ['1-9s','1-10s','1-10a1s','1-10a2s','1-10a3s','1-10a4s','1-10a5s','1-10a6s','1-11s'] as string[] }
+export function setRemakeTuning(t: Partial<typeof REMAKE>) { REMAKE = { ...REMAKE, ...t, trash_scenes: t.trash_scenes ?? REMAKE.trash_scenes } }
+
+export type FloatDmg = { x: number; y: number; text: string; t: number; max: number; crit?: boolean; color?: string }
+
+
 const L = (s: string) => new Promise<HTMLImageElement>((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = s })
 
 export class Hud {
@@ -141,35 +148,47 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
       if (walk(f.x, ny)) f.y = ny
     }
     const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy)
-    const sight = f.sight ?? 7
+    const homeX = f.hx ?? f.x, homeY = f.hy ?? f.y
+    const homeD = Math.hypot(p.x - homeX, p.y - homeY)
+    const sight = Math.min(f.sight ?? 7, REMAKE.sight_cap)
+    // Leash: stop chasing far from spawn home (remake tuning)
+    const aggro = d < sight && homeD < REMAKE.leash
     if (d > 0.01) f.dir = (Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8
     if (f.hitT > 0) { f.act = 'hurt'; continue }
-    if (f.act === 'attack' && (f.actT ?? 0) < 0.8) continue
-    if (d < sight && d > 1.1) {
-      const sp = (f.spd ? f.spd / 3.5 : 2.2) * dt, nx = f.x + dx / d * sp, ny = f.y + dy / d * sp
+    if (f.act === 'attack' && (f.actT ?? 0) < 0.55) continue
+    if (!aggro && homeD > 0.4) {
+      // return home slowly
+      const hx = homeX - f.x, hy = homeY - f.y, hd = Math.hypot(hx, hy) || 1
+      const sp = 1.6 * dt, nx = f.x + hx / hd * sp, ny = f.y + hy / hd * sp
       if (walk(nx, f.y)) f.x = nx
       if (walk(f.x, ny)) f.y = ny
       if (f.act !== 'walk') { f.act = 'walk'; f.actT = 0 }
-    } else if (d <= 1.3 && f.cd <= 0) {
-      st.hp -= dmg(f.at ?? 20, st.df ?? 10); f.cd = 1.4; f.act = 'attack'; f.actT = 0
+    } else if (aggro && d > 1.1) {
+      const sp = (f.spd ? f.spd / 3.8 : 2.0) * dt, nx = f.x + dx / d * sp, ny = f.y + dy / d * sp
+      if (walk(nx, f.y)) f.x = nx
+      if (walk(f.x, ny)) f.y = ny
+      if (f.act !== 'walk') { f.act = 'walk'; f.actT = 0 }
+    } else if (aggro && d <= 1.3 && f.cd <= 0) {
+      st.hp -= dmg(f.at ?? 20, st.df ?? 10); f.cd = 1.5; f.act = 'attack'; f.actT = 0
     } else if (f.act !== 'idle') { f.act = 'idle'; f.actT = 0 }
   }
 }
 
 // melee arc: hits foes within range in facing half-plane
-export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 2.1) {
-  let hits = 0
+export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 2.1): FloatDmg[] {
+  const floats: FloatDmg[] = []
   for (const f of foes) {
     if (f.dead > 0 || f.gone) continue
     const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy)
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     if (d < 1.05 || diff < 1.35) {
-      f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.28; hits++
-      // knockback away from player
-      if (d > 0.01) { f.kbX = (dx / d) * 4.5; f.kbY = (dy / d) * 4.5 }
+      const dealt = dmg(st.at ?? 40, f.df ?? 10)
+      f.hp -= dealt; f.hitT = 0.38; f.act = 'hurt'; f.actT = 0
+      if (d > 0.01) { f.kbX = (dx / d) * 5.2; f.kbY = (dy / d) * 5.2 }
+      floats.push({ x: f.x, y: f.y, text: String(Math.round(dealt)), t: 0.75, max: 0.75, crit: dealt > (st.at ?? 40) * 0.7 })
       if (f.hp <= 0) { f.dead = 0.9; f.actT = 0; st.exp += f.exp ?? 25; while (tryLevelUp(st)) { /* Init.txt growth */ } }
     }
   }
-  return hits
+  return floats
 }

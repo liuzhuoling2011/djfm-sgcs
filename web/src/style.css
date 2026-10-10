@@ -95,3 +95,22 @@ img { max-width:100%; image-rendering: pixelated; }
 
 .combat-help{position:fixed;left:12px;bottom:56px;z-index:22;max-width:340px;background:rgba(8,14,28,.88);border:1px solid #3a5a8a;border-radius:8px;padding:8px 10px;color:#cfe;font-size:12px;line-height:1.35}
 .combat-help.hidden{display:none}
+
+/* Phase 29 dialog — ResJM JM_DlgModel corner tiles + parchment board */
+#dialog.jm-dialog{display:block;position:fixed;left:50%;bottom:128px;transform:translateX(-50%);z-index:40;pointer-events:auto;border:none;background:transparent;padding:0;max-width:92vw}
+#dialog.jm-dialog .dlg-board{
+  width:min(520px,92vw);min-height:120px;padding:18px 28px 16px;
+  background:url(/game/hud/panels/dialog_board.png) center/100% 100% no-repeat;
+  image-rendering:auto;color:#f0e6c8;font-family:"Microsoft YaHei","SimSun",ui-sans-serif,system-ui;
+  text-shadow:0 1px 2px #000;box-sizing:border-box;
+}
+#dialog.jm-dialog .dlg-title{color:#ffd24a;font-size:14px;font-weight:bold;margin-bottom:6px;letter-spacing:.08em}
+#dialog.jm-dialog .dlg-body{font-size:13px;line-height:1.55;min-height:48px}
+#dialog.jm-dialog .dlg-body p{margin:0}
+#dialog.jm-dialog .dlg-hint{margin-top:10px;font-size:11px;color:#c9a86a}
+#dialog.jm-dialog .dlg-choice{
+  display:block;width:100%;text-align:left;margin:4px 0;padding:5px 8px;
+  background:rgba(0,0,0,.35);border:1px solid #6a5a3a;border-radius:2px;color:#e8f0ff;
+  cursor:pointer;font:inherit;font-size:12px;
+}
+#dialog.jm-dialog .dlg-choice:hover{border-color:#ffd24a;color:#ffd24a}

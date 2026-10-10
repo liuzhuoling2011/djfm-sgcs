@@ -1,6 +1,6 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, INIT, type Foe, type Stats } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, type Foe, type Stats, type FloatDmg } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 
@@ -151,6 +151,8 @@ async function main() {
   let dialogNpc = ''
   let attackT = 0
   let skillFx: SkillFx | null = null
+  let floaters: FloatDmg[] = []
+  let playerHurtFlash = 0
   type Fellow = { id: string; x: number; y: number; dir: number; imgs: HTMLImageElement[] }
   let fellow: Fellow | null = null
   const fellowImgs = new Map<string, HTMLImageElement[]>()
@@ -403,23 +405,28 @@ async function main() {
   }
 
   function renderDialog() {
+    // Phase 29: ResJM-styled board (dialog_board from JM_DlgModel corner tiles)
+    const wrap = (title: string, body: string, hint: string) =>
+      `<div class="dlg-board"><div class="dlg-title">${title}</div><div class="dlg-body">${body}</div><div class="dlg-hint">${hint}</div></div>`
     if (dlg.open) {
       dialogOpen = true
       dialogEl.style.display = 'block'
+      dialogEl.classList.add('jm-dialog')
       if (dlg.choices.length) {
-        const opts = dlg.choices.map((c, i) => `<button data-i="${i}" style="display:block;margin:4px 0">${i + 1}. ${c.label}</button>`).join('')
-        dialogEl.innerHTML = `<div class="box"><b>${dlg.npc}</b><div>${opts}</div><small>数字键选择 · Esc 关闭</small></div>`
+        const opts = dlg.choices.map((c, i) => `<button type="button" class="dlg-choice" data-i="${i}">${i + 1}. ${c.label}</button>`).join('')
+        dialogEl.innerHTML = wrap(dlg.npc || '对话', opts, '数字键选择 · Esc 关闭')
         dialogEl.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { dlg.pick(Number((b as HTMLButtonElement).dataset.i)); dialogOpen = dlg.open; renderDialog() }))
       } else {
         const line = dlg.lines[dlg.idx] ?? ''
-        dialogEl.innerHTML = `<div class="box"><b>${dlg.npc}</b><p>${line}</p><small>E / Enter 继续 · Esc 关闭</small></div>`
+        dialogEl.innerHTML = wrap(dlg.npc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
       }
       return
     }
-    if (!dialogOpen) { dialogEl.style.display = 'none'; return }
+    if (!dialogOpen) { dialogEl.style.display = 'none'; dialogEl.classList.remove('jm-dialog'); return }
     dialogEl.style.display = 'block'
+    dialogEl.classList.add('jm-dialog')
     const line = dialogLines[dialogIdx] ?? ''
-    dialogEl.innerHTML = `<div class="box"><b>${dialogNpc}</b><p>${line}</p><small>E / Enter 继续 · Esc 关闭</small></div>`
+    dialogEl.innerHTML = wrap(dialogNpc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
   }
   function advanceDialog() {
     if (!dialogOpen && !dlg.open) return
@@ -878,10 +885,30 @@ async function main() {
     for (const [sid, acts] of Object.entries(monSets)) for (const a of Object.values(acts)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
       if (f && !monImgs.has(f[0])) { const k = f[0]; loadImage(`${base}/mon/${k}`).then((im) => monImgs.set(k, im)).catch(() => {}) ; void sid }
     }
-    for (const m of meta.monsters ?? []) {
-      const lx = m.x - origin.x, ly = m.y - origin.y
-      const b = balanceFoe({ hp: m.hp, at: m.at, df: m.df }, curScene)
-      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: b.hp, maxHp: b.hp, cd: 1, hitT: 0, dead: 0, at: b.at, df: b.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
+    {
+      let mons = [...(meta.monsters ?? [])]
+      // Remake tuning: thin late-map trash (not from data tables)
+      const cap = Math.max(4, Number(REMAKE.max_trash) || 12)
+      if (REMAKE.trash_scenes.includes(curScene) && mons.length > cap) {
+        const keep: typeof mons = []
+        const trash: typeof mons = []
+        for (const mo of mons) {
+          const nm = mo.name || ''
+          const ev = String((mo as { event?: string }).event || '').toLowerCase()
+          const isBoss = (ev && ev !== 'auto') || /boss|天机|战象|玉衡/i.test(nm)
+          if (isBoss) keep.push(mo)
+          else trash.push(mo)
+        }
+        const slots = Math.max(0, cap - keep.length)
+        const step = Math.max(1, Math.ceil(trash.length / Math.max(1, slots)))
+        mons = [...keep, ...trash.filter((_, i) => i % step === 0).slice(0, slots)]
+        console.info(`[djfm] remake trash thin ${curScene}: ${meta.monsters?.length}→${mons.length} (cap=${cap} step=${step})`)
+      }
+      for (const mo of mons) {
+        const lx = mo.x - origin.x, ly = mo.y - origin.y
+        const b = balanceFoe({ hp: mo.hp, at: mo.at, df: mo.df }, curScene)
+        foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: b.hp, maxHp: b.hp, cd: 1, hitT: 0, dead: 0, at: b.at, df: b.df, exp: mo.exp, sight: Math.min(mo.sight ?? 7, REMAKE.sight_cap), spd: mo.spd, name: mo.name, set: mo.set, act: 'idle', actT: 0, dir: 0, event: (mo as {event?: string}).event })
+      }
     }
     // Phase 25: scene loot from AddItem tables (scatter potions near spawn, once per scene visit)
     spawnSceneLoot(curScene)
@@ -954,7 +981,7 @@ async function main() {
       attackT = 0.24; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.24)
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
-      playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats)
+      floaters.push(...playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats))
       for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
@@ -1013,7 +1040,7 @@ async function main() {
         stats.mp -= cost; attackT = 0.35; attackCd = 0.85
         const mult = Number(sk?.at_mult ?? 2) || 2
         const at0 = stats.at ?? 40; stats.at = at0 * mult
-        playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2)
+        floaters.push(...playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2))
         stats.at = at0
         skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI)
         inv.flash(`${sk?.name ?? '疾电'}！`)
@@ -1053,6 +1080,19 @@ async function main() {
   function iso(x: number, y: number): Vec {
     return { x: (x - y) * (tileW / 2), y: (x + y) * (tileH / 2) }
   }
+  function drawNameplate(ctx: CanvasRenderingContext2D, label: string, sx: number, sy: number, kind: 'npc' | 'mon' = 'npc') {
+    if (!label) return
+    ctx.save()
+    ctx.font = '11px "Microsoft YaHei","PingFang SC",ui-sans-serif,system-ui'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'bottom'
+    ctx.lineWidth = 3
+    ctx.strokeStyle = 'rgba(0,0,0,0.8)'
+    ctx.strokeText(label, sx, sy)
+    ctx.fillStyle = kind === 'mon' ? '#ffb0a0' : '#ffe9a0'
+    ctx.fillText(label, sx, sy)
+    ctx.restore()
+  }
   function walkable(x: number, y: number): boolean {
     return walkableNow(x, y, mapW, mapH, blocked)
   }
@@ -1067,6 +1107,9 @@ async function main() {
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
     skillFx = tickFx(skillFx, dt)
+    if (playerHurtFlash > 0) playerHurtFlash -= dt
+    for (const fl of floaters) fl.t -= dt
+    floaters = floaters.filter((fl) => fl.t > 0)
     inv.tick(dt); if (inv.toastT > 0) renderToast()
 
     let dx = 0, dy = 0
@@ -1097,7 +1140,7 @@ async function main() {
     pos.x = Math.max(0, Math.min(mapW - 1, pos.x))
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
     // Phase 28: stride locked to distance (~1.15 cycles per cell) so gait matches speed
-    if (moving) animT += speed * dt * 1.15
+    if (moving) animT += speed * dt * 1.35
 
     // AddFellow companion follows player (TransToPlayer approx)
     if (fellow) {
@@ -1110,7 +1153,14 @@ async function main() {
       }
     }
 
-    stepFoes(foes, pos, stats, dt, walkable)
+    {
+      const hp0 = stats.hp
+      stepFoes(foes, pos, stats, dt, walkable)
+      if (stats.hp < hp0 - 0.5) {
+        playerHurtFlash = 0.35
+        floaters.push({ x: pos.x, y: pos.y, text: String(Math.round(hp0 - stats.hp)), t: 0.7, max: 0.7, color: '#ff6060' })
+      }
+    }
     for (const hz of iceHazards) {
       if (Math.hypot(hz.x - pos.x, hz.y - pos.y) < 0.85) {
         stats.hp -= 12 * dt
@@ -1139,11 +1189,11 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, triggers: () => curTriggers, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
-    }, faceAttack: (ang?: number) => { const a = ang ?? ((facing % 8) * (Math.PI / 4) - Math.PI); const before = foes.filter(f => f.dead <= 0 && !f.gone); playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
+    }, faceAttack: (ang?: number) => { const a = ang ?? ((facing % 8) * (Math.PI / 4) - Math.PI); const before = foes.filter(f => f.dead <= 0 && !f.gone); floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats)); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5)); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
@@ -1270,16 +1320,8 @@ async function main() {
           const rawName = (o as { name?: string }).name || (eid ? (dlg.names[eid] ?? '') : '')
           const skip = !rawName || /^auto$/i.test(eid) || rawName === '天冰' || Number(o.ModelID) === 220
           if (!skip) {
-            const label = rawName
             const top = img ? (sy - (o.oy != null && o.oy > 0 ? o.oy : img.height - 8) - 4) : sy - 18
-            ctx.font = '11px "Microsoft YaHei","PingFang SC",ui-sans-serif,system-ui'
-            ctx.textAlign = 'center'
-            ctx.lineWidth = 3
-            ctx.strokeStyle = 'rgba(0,0,0,0.75)'
-            ctx.strokeText(label, sx, top)
-            ctx.fillStyle = '#ffe9a0'
-            ctx.fillText(label, sx, top)
-            ctx.textAlign = 'left'
+            drawNameplate(ctx, rawName, sx, top, 'npc')
           }
         },
       })
@@ -1306,9 +1348,8 @@ async function main() {
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
       else if (moving && playerWalk[d]?.length) {
-        // ping-pong 0,1,2,3,2,1
-        const seq = [0, 1, 2, 3, 2, 1]
-        const fi = seq[Math.floor(animT) % seq.length] % playerWalk[d].length
+        // Phase 29: sequential 0..3 (Wine-like even gait; ping-pong hung on wide frames)
+        const fi = Math.floor(animT) % playerWalk[d].length
         spr = playerWalk[d][fi]
       } else if (playerIdle[d]) spr = playerIdle[d]
     }
@@ -1347,7 +1388,7 @@ async function main() {
       }
       draws.push({ z: f.x + f.y + 0.24, fn: () => {
         if (img) {
-          if (f.hitT > 0) ctx.filter = 'brightness(1.8)'
+          if (f.hitT > 0) { ctx.filter = 'brightness(2.4) saturate(1.6)'; ctx.globalAlpha = 0.92 }
           ctx.drawImage(img, fx - img.width / 2, fy - img.height + 6)
           ctx.filter = 'none'
         } else { ctx.fillStyle = '#7a2a2a'; ctx.beginPath(); ctx.ellipse(fx, fy - 18, 10, 18, 0, 0, Math.PI * 2); ctx.fill() }
@@ -1355,7 +1396,7 @@ async function main() {
           const top = fy - (img?.height ?? 40) - 6
           ctx.fillStyle = '#000'; ctx.fillRect(fx - 18, top, 36, 4)
           ctx.fillStyle = '#e33'; ctx.fillRect(fx - 18, top, 36 * Math.max(0, f.hp / f.maxHp), 4)
-          ctx.fillStyle = '#ffd9a0'; ctx.font = '10px ui-sans-serif,system-ui'; ctx.fillText(f.name ?? '', fx - 18, top - 3)
+          if (f.name) drawNameplate(ctx, f.name, fx, top - 2, 'mon')
         }
       } })
     }
@@ -1398,6 +1439,27 @@ async function main() {
     }
     draws.sort((a, b) => a.z - b.z)
     for (const d of draws) d.fn()
+    // Floating damage numbers
+    for (const fl of floaters) {
+      const fp = iso(fl.x, fl.y)
+      const u = 1 - fl.t / fl.max
+      const sx = fp.x + cam.x, sy = fp.y + cam.y - 36 - u * 28
+      ctx.save()
+      ctx.globalAlpha = Math.min(1, fl.t * 2)
+      ctx.font = `bold ${fl.crit ? 16 : 13}px ui-sans-serif,system-ui`
+      ctx.textAlign = 'center'
+      ctx.lineWidth = 3
+      ctx.strokeStyle = '#000'
+      ctx.strokeText(fl.text, sx, sy)
+      ctx.fillStyle = fl.color ?? (fl.crit ? '#ffe060' : '#fff0c0')
+      ctx.fillText(fl.text, sx, sy)
+      ctx.restore()
+    }
+    // Player hurt red flash
+    if (playerHurtFlash > 0) {
+      ctx.fillStyle = `rgba(180,0,0,${Math.min(0.35, playerHurtFlash)})`
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
 
     // Phase 14: scene light tint (fit vs Wine 1-0s: rgb*≈(0.63,0.63,0.80)+(8,9,10)) + rain (ScnInfo BigRain15/SmallRain20)
     if (tintOn) {

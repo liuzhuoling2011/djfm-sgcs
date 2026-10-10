@@ -843,6 +843,25 @@ Skipped (schema still broken).
 
 
 
+## Phase 29 — act-1 polish (names / combat feel / dialog / density)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Goals
+1. Field-map NPC **and** monster nameplates everywhere (`drawNameplate`).
+2. Combat feel: floating damage, clearer hurt flash, player hit vignette.
+3. Dialog board styled from ResJM (JM_DlgModel corner tiles → `dialog_board.png`).
+4. Walk: sequential frames + faster stride sync (fix phase28 wide-leg hang).
+5. Remake tuning: late-map trash thin + sight/leash (`combat.remake`). Treat ONT `event=auto` as trash; keep real bosses. Example 1-9s 24→9, 1-11s→12.
+
+### Deploy
+- Source + Pages + NAS (filled on push)
+
+### Samples
+- `assets/samples/phase29/`
+
+---
+
 ## Phase 28 — act-1 polish (JM / VFX / Init growth / gait)
 
 **Date:** 2026-10-10 (UTC+8)
