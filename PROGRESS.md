@@ -865,6 +865,9 @@ Harness: act-1 clear flags → talk 泊祁 → **2-0s** with chapter foreword �
 - 2-4as / 2-13as lack flag.txt display names (kept id).
 - Minimap / BGM per act-2 scene not specialized.
 
+### Deploy
+- source `e4fd05c`, Pages `2212e23`, .
+
 ### Samples
 - `assets/samples/phase26/act2_grid.png`, `pt_*.png`, `2-0s.png`…
 
