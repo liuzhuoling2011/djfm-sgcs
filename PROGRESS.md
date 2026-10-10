@@ -1,3 +1,21 @@
+## Phase 43 — UI direction: modern HTML/CSS chrome (2026-10-10)
+
+**Direction change (coordinator 重温老游戏):** Stop pixel-matching Wine and stop stretching ResJM panel PNGs as the primary dialog / 行囊 / 买卖 / 镶嵌 / HUD chrome. Act-1 only. **Facing unchanged:** `facing = (oct + 6) % 8` (east = art6). Walk export, gait, and run speed were not touched. Phase 42 buy / sell / embed money and stacks stay.
+
+### Chrome
+- Dialog, 行囊, 买卖, 镶嵌, and the status bar are HTML/CSS over the canvas (`#stage`). Palette is dark parchment, gold rules, cream text. Choice rows, shop rows, close, and 确认镶嵌 are at least 44px.
+- Dialog sits above the bar. 继续 / click / E / Enter advance. Esc closes the dialog only.
+- Desks are centered modals. × / Esc closes that panel only. I/B from a desk still opens the bag. Sell list is still the smith's catalog (no 指南珠).
+- HUD is a flex bar: 气血/真气 numbers, potion keys 1–4 (tap or 1–4), Space/Q ready glow (就绪 / 挥砍 / 冷却), 金钱, F1/F2. Canvas still draws the world and the minimap. `Hud.draw` no longer scales `jm_1478` across the playfield. Orb and weapon art are small `<img>` accents.
+
+### Samples
+`assets/samples/phase43/dialog.png`, `bag.png`, `shop.png`, `hud.png`
+
+### Build
+`cd web && npm run build` → `web/dist` (gitignored). GitHub Pages serves that directory from `main`. This branch does not publish Pages.
+
+---
+
 ## Phase 43 — Wine hold re-record (gait) — BLOCKED 2026-10-10 ~21:45 Asia/Shanghai
 
 **Ask:** Phase42 Wine hold GIFs look idle; re-record continuous WASD/Shift+WASD in 瓦当镇; require player-crop MAD/uniq gait; save under `assets/samples/phase43/wine_hold/`; refresh boards; deploy if walk changes.

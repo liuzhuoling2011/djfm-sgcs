@@ -15,11 +15,11 @@ Working tree: `/workspace/djfm-sgcs`. Pages: `https://liuzhuoling2011.github.io/
 | **1–4** | Potions (1–2 HP, 3–4 MP). Shared cooldown ~1.1s |
 | **5** | 飞蝗石 (throw) |
 | **6** | 指南珠 (return to scene spawn) |
-| **I** | Inventory (行囊 JM panel) |
+| **I** / **B** | 行囊 (bag). From the smith's desk, opens the bag |
 | **G** | Pick ground loot |
 | **M** | Mute BGM + SFX |
 | **S** / **L** | Quicksave / quickload (localStorage) |
-| **Esc** | Close dialog / panels |
+| **Esc** | Close the open dialog, or else the open desk (one panel) |
 
 Query flags: `?softdf=1` soft DF; `?sfx=0` disable SFX; `?tint=0` / `?rain=0` disable scene FX.
 
