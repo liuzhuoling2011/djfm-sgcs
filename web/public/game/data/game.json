@@ -191,8 +191,8 @@
       }
     ],
     "key": "Space",
-    "range": 1.5,
-    "cooldown_ms": 450
+    "range": 1.55,
+    "cooldown_ms": 520
   },
   "interact_key": "e",
   "interact_range": 2.0,

@@ -844,6 +844,38 @@ Skipped (schema still broken).
 
 
 
+## Phase 36 — playtest feel (dialog / JM bag / melee)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Dialog
+- Bottom-anchored Wine-style board (above HUD), SimSun body, dark ink on parchment.
+- Choice rows as soft highlight lines (not arcade buttons).
+- Clamp keeps board on-screen above orb bar.
+
+### Inventory
+- JM bag/shop/embed centered (`top:46%`); z-index above toast/debug.
+- Denser bag list on 326×226 panels.
+
+### Attack
+- Hit delayed to mid-swing (~0.16s after Space); CD 520ms; range 1.55.
+- Tighter cone (0.95 rad); knockback 1.6 (was 5.2); shorter hurt flash.
+
+### Samples
+- `assets/samples/phase36/`
+
+### Still feels wrong (honest)
+- No live Wine dialog capture this session (prior wine_dialog.png is a ResJM.lib path error box).
+- Bottom HUD still flatter than Wine (missing some hotbar glow/Q slot polish).
+- Melee still 2.5D remake — no true Wine animation cancel / multi-hit combo chain.
+- Dialog text packing/line breaks not pixel-matched to ResJM word wrap.
+- Walk gait still approximate (Phase 35).
+
+### Deploy
+- (pending)
+
+---
+
 ## Phase 35 — camera lock + 8-dir walk/run polish
 
 **Date:** 2026-10-10 (UTC+8)

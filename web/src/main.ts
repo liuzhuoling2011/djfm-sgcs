@@ -408,21 +408,23 @@ async function main() {
   }
 
   function clampDialog() {
-    // Phase 32: keep dialog board inside viewport
+    // Phase 36: bottom-anchored Wine dialog — keep above HUD, inside viewport
     requestAnimationFrame(() => {
+      const pad = 10
+      const hudClear = 100 // leave room for bottom HUD orb/bar
+      dialogEl.style.bottom = `${hudClear}px`
+      dialogEl.style.top = 'auto'
+      dialogEl.style.transform = 'translateX(-50%)'
       const r = dialogEl.getBoundingClientRect()
-      const pad = 12
-      let tx = -50, ty = -50
-      if (r.width > window.innerWidth - pad * 2) {
-        dialogEl.style.maxWidth = `${window.innerWidth - pad * 2}px`
+      let dx = 0
+      if (r.left < pad) dx = pad - r.left
+      if (r.right > window.innerWidth - pad) dx = window.innerWidth - pad - r.right
+      if (r.top < pad) {
+        // grow upward room: raise bottom if board too tall
+        const overflow = pad - r.top
+        dialogEl.style.bottom = `${hudClear - overflow}px`
       }
-      const r2 = dialogEl.getBoundingClientRect()
-      let dx = 0, dy = 0
-      if (r2.left < pad) dx = pad - r2.left
-      if (r2.right > window.innerWidth - pad) dx = window.innerWidth - pad - r2.right
-      if (r2.top < pad) dy = pad - r2.top
-      if (r2.bottom > window.innerHeight - pad) dy = window.innerHeight - pad - r2.bottom
-      dialogEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`
+      dialogEl.style.transform = `translateX(calc(-50% + ${dx}px))`
     })
   }
   function renderDialog() {
@@ -444,7 +446,7 @@ async function main() {
       clampDialog()
       return
     }
-    if (!dialogOpen) { dialogEl.style.display = 'none'; dialogEl.classList.remove('jm-dialog'); dialogEl.style.transform = ''; return }
+    if (!dialogOpen) { dialogEl.style.display = 'none'; dialogEl.classList.remove('jm-dialog'); dialogEl.style.transform = ''; dialogEl.style.bottom = ''; return }
     dialogEl.style.display = 'block'
     dialogEl.classList.add('jm-dialog')
     const line = dialogLines[dialogIdx] ?? ''
@@ -1043,7 +1045,7 @@ async function main() {
   }
 
   const keys = new Set<string>()
-  let facing = 0, animT = 0, moving = false
+  let facing = 0, animT = 0, moving = false, attackPending = false
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase()
     keys.add(k)
@@ -1070,11 +1072,13 @@ async function main() {
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
-      attackT = 0.24; skillFx = spawnFx('slash', facingWorldAng(facing), 0.24); playSfx('attack'); playSfx('slash', { vol: 0.7 })
-      attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
-      const before = foes.filter((f) => f.dead <= 0 && !f.gone)
-      { const fl = playerAttack(foes, pos, facingWorldAng(facing), stats); floaters.push(...fl); if (fl.length) playSfx('hit') }
-      for (const f of before) if (f.dead > 0) onFoeKilled(f)
+      // Phase 36: Wine-like melee — windup then hit (not instant arcade)
+      attackT = 0.34
+      attackPending = true
+      skillFx = spawnFx('slash', facingWorldAng(facing), 0.34)
+      playSfx('attack')
+      playSfx('slash', { vol: 0.65 })
+      attackCd = Math.max(0.52, (gameData?.attack?.cooldown_ms ?? 520) / 1000)
     }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
       dlg.pick(Number(k) - 1); dialogOpen = dlg.open; renderDialog(); return
@@ -1204,6 +1208,18 @@ async function main() {
     last = now
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
+    // Hit lands ~mid swing (Wine: contact on attack frame, not keydown)
+    if (attackPending && attackT > 0 && attackT <= 0.18) {
+      attackPending = false
+      const before = foes.filter((f) => f.dead <= 0 && !f.gone)
+      const range = gameData?.attack?.range ?? 1.55
+      const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, range)
+      floaters.push(...fl)
+      if (fl.length) playSfx('hit')
+      else playSfx('slash', { vol: 0.25 })
+      for (const f of before) if (f.dead > 0) onFoeKilled(f)
+    }
+    if (attackT <= 0) attackPending = false
     skillFx = tickFx(skillFx, dt)
     if (playerHurtFlash > 0) playerHurtFlash -= dt
     for (const fl of floaters) fl.t -= dt
@@ -1466,10 +1482,11 @@ async function main() {
       const d = ((facing % 8) + 8) % 8
       // Phase 27: attack frame sync — windup (walk), hit (attack), recover (idle)
       if (attackT > 0) {
-        const u = attackT / 0.28
-        if (u > 0.65 && playerWalk[d]?.[0]) spr = playerWalk[d][0]
-        else if (u > 0.25 && playerAttackSpr[d]) spr = playerAttackSpr[d]
-        else if (playerAttackSpr[d]) spr = playerAttackSpr[d]
+        const u = attackT / 0.34
+        // windup → strike pose → recover
+        if (u > 0.72 && playerWalk[d]?.[0]) spr = playerWalk[d][0]
+        else if (u > 0.22 && playerAttackSpr[d]) spr = playerAttackSpr[d]
+        else if (playerIdle[d]) spr = playerIdle[d]
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
       else if (moving && playerWalk[d]?.length) {
