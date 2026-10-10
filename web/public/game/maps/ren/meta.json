@@ -1946,5 +1946,123 @@
   "findings": {
     "fol": "CRACKED",
     "begin_scn": "0 -> 1-0s / Map_Ren.lib"
-  }
+  },
+  "triggers": [
+    {
+      "x": 63,
+      "y": 43,
+      "bid": 40,
+      "script": "go 1-1s",
+      "label": "北门"
+    },
+    {
+      "x": 62,
+      "y": 43,
+      "bid": 40,
+      "script": "go 1-1s"
+    },
+    {
+      "x": 84,
+      "y": 59,
+      "bid": 43,
+      "script": "go 1-4s",
+      "label": "东门"
+    },
+    {
+      "x": 41,
+      "y": 59,
+      "bid": 43,
+      "script": "go 1-7as",
+      "label": "西门"
+    },
+    {
+      "x": 63,
+      "y": 74,
+      "bid": 40,
+      "script": "go 1-9s",
+      "label": "南门"
+    },
+    {
+      "x": 68,
+      "y": 117,
+      "bid": 40,
+      "script": "go 1-9s"
+    },
+    {
+      "x": 119,
+      "y": 64,
+      "bid": 43,
+      "script": "go 1-4s"
+    },
+    {
+      "x": 62,
+      "y": 119,
+      "bid": 43,
+      "script": "go 1-9s"
+    },
+    {
+      "x": 112,
+      "y": 64,
+      "bid": 43,
+      "script": "go 1-4s"
+    },
+    {
+      "x": 62,
+      "y": 80,
+      "bid": 701,
+      "script": "SetFlag 1-0s 2*SetBldAni CSD 1*ShowJM 103 3"
+    },
+    {
+      "x": 71,
+      "y": 24,
+      "bid": 680,
+      "script": "Quest"
+    },
+    {
+      "x": 72,
+      "y": 12,
+      "bid": 43,
+      "script": "go 1-1s un"
+    },
+    {
+      "x": 27,
+      "y": 52,
+      "bid": 43,
+      "script": "go 1-7as"
+    },
+    {
+      "x": 71,
+      "y": 6,
+      "bid": 40,
+      "script": "go 1-1s"
+    },
+    {
+      "x": 20,
+      "y": 52,
+      "bid": 43,
+      "script": "go 1-7as"
+    }
+  ],
+  "quest_gate_cells": [
+    [
+      24,
+      1
+    ],
+    [
+      23,
+      1
+    ],
+    [
+      25,
+      1
+    ],
+    [
+      24,
+      2
+    ],
+    [
+      23,
+      2
+    ]
+  ]
 }

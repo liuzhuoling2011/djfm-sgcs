@@ -782,7 +782,59 @@ async function main() {
     }
   }
 
-  async function applyPack(id: string, arriveFrom?: string) {
+  const SAVE_KEY = 'djfm_act1_v1'
+  function quickSave() {
+    const data = {
+      v: 1,
+      scene: curScene,
+      pack: packId,
+      pos: { x: pos.x, y: pos.y },
+      origin,
+      flags: { ...dlg.flags },
+      exitText: { ...dlg.exitText },
+      lockText: { ...dlg.lockText },
+      bldStatus: { ...dlg.bldStatus },
+      hidden: [...hiddenEvents],
+      inv: { money: inv.money, items: inv.items.map((i) => ({ ...i })), weaponSlots: inv.weaponSlots },
+      stats: { ...stats },
+      looted: [...lootedScenes],
+      t: Date.now(),
+    }
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data))
+      inv.flash('速存 ✓（S）'); playSfx('ui')
+    } catch { inv.flash('速存失败') }
+  }
+  async function quickLoad() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY)
+      if (!raw) { inv.flash('没有存档'); return }
+      const data = JSON.parse(raw) as {
+        pack: string; scene: string; pos: { x: number; y: number }
+        flags: Record<string, number>; exitText: Record<string, number>; lockText: Record<string, number>
+        bldStatus: Record<string, number>; hidden: string[]
+        inv: { money: number; items: { id: number; qty: number }[]; weaponSlots: number }
+        stats: typeof stats; looted: string[]
+      }
+      Object.assign(dlg.flags, data.flags || {})
+      Object.assign(dlg.exitText, data.exitText || {})
+      Object.assign(dlg.lockText, data.lockText || {})
+      Object.assign(dlg.bldStatus, data.bldStatus || {})
+      hiddenEvents.clear(); for (const h of data.hidden || []) hiddenEvents.add(h)
+      lootedScenes.clear(); for (const s of data.looted || []) lootedScenes.add(s)
+      inv.money = data.inv?.money ?? inv.money
+      inv.items = (data.inv?.items || []).map((i) => ({ ...i }))
+      inv.weaponSlots = data.inv?.weaponSlots ?? inv.weaponSlots
+      Object.assign(stats, data.stats || {})
+      await applyPack(data.pack || packOf(data.scene), undefined)
+      pos.x = data.pos?.x ?? pos.x; pos.y = data.pos?.y ?? pos.y
+      spawnPos = { x: pos.x, y: pos.y }
+      hud.pots = [...inv.potSlots()]
+      inv.flash(`读档 ← ${data.scene}`); playSfx('ui'); renderInv()
+    } catch (e) { inv.flash('读档失败'); console.warn(e) }
+  }
+
+    async function applyPack(id: string, arriveFrom?: string) {
     packId = id
     for (const b of packsEl.querySelectorAll('button')) {
       b.classList.toggle('active', (b as HTMLButtonElement).dataset.pack === id)
@@ -820,6 +872,15 @@ async function main() {
     for (const b of meta.blocked_sample ?? []) blocked.add(`${b[0]},${b[1]}`)
     for (let x = 0; x < mapW; x++) { blocked.add(`${x},0`); blocked.add(`${x},${mapH - 1}`) }
     for (let y = 0; y < mapH; y++) { blocked.add(`0,${y}`); blocked.add(`${mapW - 1},${y}`) }
+    // Phase 31: punch holes at warp pads so exits are approachable
+    for (const tr of ((meta as { triggers?: { x: number; y: number; script?: string }[] }).triggers ?? [])) {
+      if (!/\bgo\s/i.test(tr.script ?? '')) continue
+      const lx = Math.round(tr.x - origin.x), ly = Math.round(tr.y - origin.y)
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const x = lx + dx, y = ly + dy
+        if (x >= 0 && y >= 0 && x < mapW && y < mapH) blocked.delete(`${x},${y}`)
+      }
+    }
 
     buildingImgs = new Map()
     npcImgs = new Map()
@@ -963,6 +1024,8 @@ async function main() {
     if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault()
     if (k === 'g') useGround = !useGround
     if (k === 'm') { muted = !muted; if (audio) audio.muted = muted; setSfxEnabled(!muted) }
+    if (k === 's' && !dialogOpen && !inv.shopOpen) { quickSave(); return }
+    if (k === 'l' && !dialogOpen) { void quickLoad(); return }
     if (k === 'escape') { dialogOpen = false; renderDialog() }
     if ((k === 'e' || k === 'enter') && dialogOpen) { advanceDialog(); e.preventDefault(); return }
     if (k === 'e' && !dialogOpen) {
@@ -1194,7 +1257,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
@@ -1439,22 +1502,46 @@ async function main() {
         ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 16, 9, 0, 0, Math.PI * 2); ctx.fill()
       }
     }
-        // Phase 20: 蜀水 prop marker on 1-6s
+    // Phase 31: ground loot sparkles
     for (const g of groundLoot) {
       if (g.taken) continue
       const p = iso(g.x, g.y)
-      ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.arc(p.x, p.y - 8, 5, 0, Math.PI * 2); ctx.fill()
-      ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('?', p.x - 3, p.y - 12)
+      draws.push({ z: g.x + g.y + 0.05, fn: () => {
+        const x = p.x + cam.x, y = p.y + cam.y
+        const pulse = 0.65 + 0.35 * Math.sin(performance.now() / 200)
+        ctx.fillStyle = `rgba(255,210,120,${pulse})`
+        ctx.beginPath(); ctx.arc(x, y - 10, 5, 0, Math.PI * 2); ctx.fill()
+        ctx.strokeStyle = `rgba(255,255,200,${pulse})`; ctx.lineWidth = 1
+        ctx.beginPath(); ctx.arc(x, y - 10, 8 + pulse * 2, 0, Math.PI * 2); ctx.stroke()
+      }})
     }
-        if (curScene === '1-6s' && inv.qty(120) <= 0 && (dlg.flags.xss ?? 0) < 1) {
+    // Quest / jiguan / nearby exit markers
+    {
+      const pwx = pos.x + origin.x, pwy = pos.y + origin.y
       for (const tr of curTriggers) {
-        if ((tr.script || '').trim().toLowerCase() !== 'shushui') continue
-        const sp = iso(tr.x - origin.x, tr.y - origin.y)
-        draws.push({ z: tr.x + tr.y, fn: () => {
+        let key = (tr.script || '').trim().toLowerCase().split(/\s+/).filter(Boolean)[0] || ''
+        if (!key && curScene === '1-11s' && Math.hypot(tr.x - 197, tr.y - 157) < 3) key = 'jiguan1'
+        const prop = PROP_TRIG[key]
+        const isJig = key.startsWith('jiguan')
+        const isGo = /\bgo\s/i.test(tr.script || '')
+        if (!prop && !isJig && !isGo) continue
+        if (prop && ((dlg.flags[prop.flag] ?? 0) >= 1 || inv.qty(prop.id) > 0)) continue
+        if (isJig && (dlg.bldStatus[key] ?? 0) >= 1) continue
+        if (isGo && Math.hypot(tr.x - pwx, tr.y - pwy) > 22) continue
+        const lx = tr.x - origin.x, ly = tr.y - origin.y
+        const sp = iso(lx, ly)
+        const goDest = tr.script.match(/go\s+(\S+)/i)?.[1]
+        const label = prop?.name || (isJig ? key : (goDest ?? '出口'))
+        const rgb = prop ? '126,200,255' : isJig ? '255,176,96' : '160,224,128'
+        draws.push({ z: lx + ly + 0.08, fn: () => {
           const x = sp.x + cam.x, y = sp.y + cam.y
-          ctx.fillStyle = 'rgba(80,180,255,0.85)'
-          ctx.beginPath(); ctx.arc(x, y - 18, 7, 0, Math.PI * 2); ctx.fill()
-          ctx.fillStyle = '#cfefff'; ctx.font = '10px ui-sans-serif'; ctx.fillText('蜀水', x - 10, y - 28)
+          const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 250 + tr.x)
+          ctx.fillStyle = `rgba(${rgb},${pulse})`
+          ctx.beginPath()
+          ctx.moveTo(x, y - 22 - pulse * 4); ctx.lineTo(x + 6, y - 14); ctx.lineTo(x, y - 6); ctx.lineTo(x - 6, y - 14)
+          ctx.closePath(); ctx.fill()
+          ctx.strokeStyle = `rgba(255,255,255,${pulse})`; ctx.lineWidth = 1; ctx.stroke()
+          drawNameplate(ctx, label, x, y - 28 - pulse * 3, 'npc')
         }})
       }
     }
@@ -1545,7 +1632,7 @@ async function main() {
     const wx = (pos.x + origin.x).toFixed(1), wy = (pos.y + origin.y).toFixed(1)
     const bgmState = muted ? 'BGM:mute' : 'BGM:on'
     ctx.fillText(
-      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | E谈 Space砍 G地 M静音`,
+      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | E谈 Space砍 G地 S存 L读 M静音`,
       12, 20,
     )
     requestAnimationFrame(frame)

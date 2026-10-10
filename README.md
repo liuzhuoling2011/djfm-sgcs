@@ -18,6 +18,7 @@ Working tree: `/workspace/djfm-sgcs`. Pages: `https://liuzhuoling2011.github.io/
 | **I** | Inventory (行囊 JM panel) |
 | **G** | Pick ground loot |
 | **M** | Mute BGM + SFX |
+| **S** / **L** | Quicksave / quickload (localStorage) |
 | **Esc** | Close dialog / panels |
 
 Query flags: `?softdf=1` soft DF; `?sfx=0` disable SFX; `?tint=0` / `?rain=0` disable scene FX.

@@ -843,6 +843,24 @@ Skipped (schema still broken).
 
 
 
+## Phase 31 — act-1 residual (warps / markers / save / smoke)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Fixes
+1. **Town warps missing** — `ren`/`game/map` had 0 triggers; injected reachable北/东/西/南 pads (`go 1-1s/1-4s/1-7as/1-9s`) + phase10 BNT triggers; punch blocked border at pads.
+2. **Quest markers** — sparkle diamonds + labels for `shushui/bjsm/qnxbz/tzxs/jiguan*` and nearby exits; ground-loot pulse.
+3. **Quicksave** — `S`/`L` → `localStorage djfm_act1_v1` (flags, exit/lock, bldStatus, inv, stats, pos, scene).
+4. **Smoke** — `tools/phase31_smoke.py` town→bq2=100.
+
+### Deploy
+- (hashes after push)
+
+### Samples
+- `assets/samples/phase31/`
+
+---
+
 ## Phase 30 — act-1 polish (SFX / camera / death / guide)
 
 **Date:** 2026-10-10 (UTC+8)
