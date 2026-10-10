@@ -839,5 +839,5 @@ Skipped (schema still broken).
 - Full act-1 side quests (cds/td, cjg, …) not required for 蜀水 but still flag-gated.
 
 ### Deploy
-- Pages + NAS; source commit + PROGRESS.
+- Source `7e5dc16`, Pages `a1316de`, NAS_OK.
 
