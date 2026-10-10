@@ -1476,4 +1476,4 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 
 ### Verified in Playwright
 - Buy 小血瓶 400→360; sell +16→376; embed money 500→300 gems=1 AT 40→42.
-
+**Deploy:** Source `033f20a` · Pages `1fe9ad0` · NAS_OK `/volume4/web/djfm/` (shopMode+RH_002).
