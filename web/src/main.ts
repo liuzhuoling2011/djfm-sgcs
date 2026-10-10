@@ -1290,13 +1290,13 @@ async function main() {
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
     // Hit lands ~mid swing (Wine: contact on attack frame, not keydown)
-    if (attackPending && attackT > 0 && attackT <= 0.18) {
+    if (attackPending && attackT > 0 && attackT <= 0.20) {
       attackPending = false
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
       const range = gameData?.attack?.range ?? 1.55
       const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, range)
       floaters.push(...fl)
-      if (fl.length) { playSfx('hit'); hitStop = Math.max(hitStop, 0.045) }
+      if (fl.length) { playSfx('hit'); hitStop = Math.max(hitStop, 0.055) }
       else playSfx('slash', { vol: 0.25 })
       for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }

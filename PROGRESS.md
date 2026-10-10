@@ -1,6 +1,6 @@
 ## Phase 41 deploy (hold-key facing audit) — 2026-10-10 20:50 Asia/Shanghai
 
-**Source commit:** (pending) · **Pages/NAS:** pending this push
+**Source:** `35a203e` (+follow-ups) · **Pages:** `c6cd74f`/`aedf5b1` · **NAS_OK** `/volume4/web/djfm/`
 
 ### Confirmed
 - `tools/phase41_player_sprites.py` exports walk+run; RH_002; RH under `{0..5}`; ping-pong pad.
@@ -1524,3 +1524,16 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 ### Verified in Playwright
 - Buy 小血瓶 400→360; sell +16→376; embed money 500→300 gems=1 AT 40→42.
 **Deploy:** Source `033f20a` · Pages `1fe9ad0` · NAS_OK `/volume4/web/djfm/` (shopMode+RH_002).
+
+## Phase 42b — Wine town hold GIFs + combat polish (2026-10-10)
+
+### Wine hold (game_share)
+- ComeOn from `/home/box/vms/game_share/DJFM` with `WINEPREFIX=~/.wine-holdrec`, `dinput` disabled.
+- Entered 瓦当镇 via Load UI → 载入 → skip intro (not extract blank path).
+- Recorded 16 continuous-hold GIFs under `assets/samples/phase42/wine_hold/` (cropMAD≥2.6; camera-lock center-crop validation).
+- Boards: `wine_vs_web_walk_8dir.png`, `wine_vs_web_run_8dir.png`.
+- Facing kept: `(oct+6)%8` / RH_002 / art6=east.
+
+### Combat
+- Hit connect window 0.18→0.20; hitStop 0.045→0.055; melee cone 0.95→0.92; KB 1.6→1.75.
+

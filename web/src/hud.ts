@@ -263,10 +263,10 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     // Phase 36: tighter cone + short knockback (Wine melee, not arcade shove)
-    if (d < 0.85 || diff < 0.95) {
+    if (d < 0.85 || diff < 0.92) {
       const dealt = dmg(st.at ?? 40, f.df ?? 10)
       f.hp -= dealt; f.hitT = 0.22; f.act = 'hurt'; f.actT = 0
-      if (d > 0.01) { f.kbX = (dx / d) * 1.6; f.kbY = (dy / d) * 1.6 }
+      if (d > 0.01) { f.kbX = (dx / d) * 1.75; f.kbY = (dy / d) * 1.75 }
       floats.push({ x: f.x, y: f.y, text: String(Math.round(dealt)), t: 0.55, max: 0.55, crit: dealt > (st.at ?? 40) * 0.75 })
       if (f.hp <= 0) { f.dead = 0.9; f.actT = 0; st.exp += f.exp ?? 25; while (tryLevelUp(st)) { /* Init.txt growth */ } }
     }
