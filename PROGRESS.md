@@ -690,3 +690,28 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 - Full Spr↔ResPlayer part table (CA/HD/RH/TK exact IDs).
 - Saber ghost multi-layer (lep header offsets).
 - Inventory / F1–F2 skills / further dialog / more act-1 maps (paused per steering).
+
+## Phase 19b — SprRole paper-doll polish (2026-10-10 Asia/Shanghai)
+
+**Goal:** Crack Spr↔part map so player/NPC sprites match Wine placement.
+
+### SprRole.h breakthrough
+- `slr/SprRole.h` maps `SPR_ROLE_{role}_{PART}_{var}_001` → **Spr.lib index**.
+- Player 901: `CA→34`, `HD→112`, `TK→114`, `RH_005→116` (starting saber).
+- Each Spr part entry ≈512 slots; `res = ResPlayer1 base+dir` (CA 0–7, HD 128–135, TK 256–263, RH 384–391); `ox/oy` = foot hotspot.
+- Composite order (bitmap): legs(CA) → torso(TK) → head(HD) → weapon(RH) at shared hotspot (64,100).
+
+### Town NPCs
+- `SPR_ROLE_{graph}_TK_001_001` → Spr (e.g. 623→1619) → ResExNpc/ResNpc frames + ox/oy.
+- Civilian fallbacks when SprRole hits combat/partial art: sy→n3:1008, zs→1014, cjg→1007, td→618, cds→619, etc.
+- Client draws NPCs with `ox/oy` foot anchors from SprRole.
+
+### Samples
+- `assets/samples/phase19b/player_sheet(_hd).png`, `town_npcs.png`
+- `compare_player_wine_web.png`, `compare_npcs.png`
+
+### Deploy
+- Pages + NAS after this section.
+
+### Still open
+- Per-frame `n` sync for attack cycles; RH fine gaps on some dirs; inventory/skills still paused until sprites solid.

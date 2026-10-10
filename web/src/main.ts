@@ -5,7 +5,7 @@ import { Hud, stepFoes, playerAttack, type Foe, type Stats } from './hud'
 type Vec = { x: number; y: number }
 type MapObj = {
   lx?: number; ly?: number; x?: number; y?: number; MapX?: number; MapY?: number
-  ModelID?: number; Type?: number; EventID?: string; file?: string; sw?: number; sh?: number; npc_dirs?: string[]; graph?: number
+  ModelID?: number; Type?: number; EventID?: string; file?: string; sw?: number; sh?: number; npc_dirs?: string[]; ox?: number; oy?: number; graph?: number
 }
 type BldPart = { file: string; ox: number; oy: number; w: number; h: number }
 type Building = { x: number; y: number; bid: number; name: string; parts: BldPart[]; fw?: number; fh?: number }
@@ -512,7 +512,12 @@ async function main() {
       draws.push({
         z: ox + oy + 0.2,
         fn: () => {
-          if (img) ctx.drawImage(img, sx - img.width / 2, sy - img.height + 8)
+          if (img) {
+            // SprRole oy = foot hotspot Y in sprite; fallback bottom-center
+            const hotY = o.oy != null && o.oy > 0 ? o.oy : img.height - 8
+            const hotX = o.ox != null && o.ox > 0 ? o.ox : img.width / 2
+            ctx.drawImage(img, sx - hotX, sy - hotY)
+          }
 
           else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill() }
           ctx.fillStyle = '#ffe9a0'; ctx.font = '10px ui-sans-serif,system-ui'
