@@ -630,3 +630,12 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
   - Walking to the exit in Wine is also impossible, because the north gate is still story-locked (`wine_north_blocked.png`). Reaching 1-2s needs the act-1 quest chain played in Wine.
   - Original saves were restored from `assets/samples/phase17/save_backup_*.001`.
 - **Save format notes:** `.001` holds the player paper-doll string `CA_001_001_031*HD_…*TK_…` (layers CA/HD/JQ/LA/LE/RA/RE/RH/TK), float stats AT/DF/HP/MP/Stamina at +188.., and position i32 at +268.
+
+## Phase 17d — stamina asset search, saber ghost-soldier (2026-10-10 15:04 UTC+8)
+
+- **Stamina bar: not found in any library.** I texture-matched a 38×4 interior strip of the Wine bar against every entry of ResJM.Lib.chs/.cht, ResPrior.lib and ResEx01.Lib, using both bld_rle and the sprite decoder, at every offset. I also matched vertical colour profiles against all ResJM entries 5–9 px tall. The best mean error was 29 (an exact match is under 1), and PixelGame.lib is not leyiLib2.0. The bar is most likely drawn in code (a gradient or palette fill), so the Wine-sampled strip stays (`hud/stamina_wine.png`).
+- **Saber ghost-soldier (持刀鬼兵): still not assembled.**
+  - Layers identified: ResNpc3 sets 522 (body+legs), 546 (arm), 570 (curved saber), each 12 actions × 8 directions. The shadow sets 534/558 are all-zero 0505 leps.
+  - The per-frame lep header after `b8` holds two (u32, u32) pairs. When the first value is 0, the second equals the decoded W (or H), e.g. 546 f10: (0,17),(0,24) = 17×24. Otherwise the pair seems to be a packed offset plus size that I haven't cracked (594 f0: (1326,6),(667,22) for a 108×51 frame), so the layer registration offsets are unknown.
+  - bld_rle also guesses the wrong width on some tiny layer frames (570 f0 → 24×1).
+  - Without those offsets, any composite would be a guess, so 190 still uses the spear body (set 594). Next step: decode the header pair (likely x/y origin relative to the role foot) or use the Spr.lib ox/oy tables (`tools/spr.py`) once their res→ResNpc3 mapping is known.
