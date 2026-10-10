@@ -168,7 +168,9 @@ async function main() {
     atlasLoading.delete(a.file)
   }
 
-  async function applyPack(id: string) {
+  let warpArmed = true, curScene = '1-0s', curTriggers: { x: number; y: number; script: string }[] = [], warpCd = 0, firstLoad = true
+  const packOf = (scene: string) => (scene === '1-0s' ? 'ren' : scene)
+  async function applyPack(id: string, arriveFrom?: string) {
     packId = id
     for (const b of packsEl.querySelectorAll('button')) {
       b.classList.toggle('active', (b as HTMLButtonElement).dataset.pack === id)
@@ -213,13 +215,25 @@ async function main() {
     mapLabel = `${meta.scene_name ?? meta.scene ?? id} ${mapW}x${mapH} bld=${buildings.length} npc=${objects.length} atlases=${atlases.length}`
     pos.x = meta.spawn?.[0] ?? mapW / 2
     pos.y = meta.spawn?.[1] ?? mapH / 2
-    { const at = new URLSearchParams(location.search).get('at'); if (at) { const [ax, ay] = at.split(',').map(Number); pos.x = ax - origin.x; pos.y = ay - origin.y } }
+    curScene = (meta.scene ?? id).toLowerCase()
+    curTriggers = ((meta as { triggers?: { x: number; y: number; script?: string }[] }).triggers ?? [])
+      .filter((g) => g.x < 4096 && g.y < 4096 && /^go\s/.test(g.script ?? '')).map((g) => ({ x: g.x, y: g.y, script: g.script! }))
+    if (arriveFrom) {
+      // real exit pairing: arrive next to this map's own 'go <previous scene>' trigger, stepped toward the map centre
+      const back = curTriggers.filter((g) => g.script.split(/\s+/)[1]?.toLowerCase() === arriveFrom)
+      if (back.length) {
+        const cx = back.reduce((s, g) => s + g.x, 0) / back.length - origin.x, cy = back.reduce((s, g) => s + g.y, 0) / back.length - origin.y
+        const vx = mapW / 2 - cx, vy = mapH / 2 - cy, vl = Math.hypot(vx, vy) || 1
+        pos.x = cx; pos.y = cy
+        for (let s = 4; s < 40; s++) { const px = Math.round(cx + vx / vl * s), py = Math.round(cy + vy / vl * s); if (walkable(px, py)) { pos.x = px; pos.y = py; break } }
+      }
+      warpCd = 0.5; warpArmed = false
+    }
+    if (firstLoad) { firstLoad = false; const at = new URLSearchParams(location.search).get('at'); if (at) { const [ax, ay] = at.split(',').map(Number); pos.x = ax - origin.x; pos.y = ay - origin.y } }
     if (!walkableNow(pos.x, pos.y, mapW, mapH, blocked)) {
-      for (let r = 1; r < 40; r++) {
+      search: for (let r = 1; r < 40; r++) {
         for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-          if (walkableNow(pos.x + dx, pos.y + dy, mapW, mapH, blocked)) {
-            pos.x += dx; pos.y += dy; r = 99; break
-          }
+          if (walkableNow(pos.x + dx, pos.y + dy, mapW, mapH, blocked)) { pos.x += dx; pos.y += dy; break search }
         }
       }
     }
@@ -344,6 +358,15 @@ async function main() {
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
 
     stepFoes(foes, pos, stats, dt, walkable)
+    warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y }
+    const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 3.2)
+    if (!nearT) warpArmed = true
+    if (warpCd <= 0 && warpArmed) for (const g of curTriggers) {
+      if (Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 3.2) {
+        const dest = g.script.split(/\s+/)[1]?.toLowerCase()
+        if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) { warpCd = 99; void applyPack(packOf(dest), curScene); break }
+      }
+    }
     stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.5)
     stats.hp = Math.min(stats.maxHp, stats.hp + dt * 0.8)
     if (stats.hp <= 0) { stats.hp = stats.maxHp; pos.x = spawnPos.x; pos.y = spawnPos.y }

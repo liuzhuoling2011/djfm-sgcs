@@ -75,7 +75,9 @@ def main(scene):
     for rc in bld:
         a = rc['off']; fp.setdefault(struct.unpack_from('<H', md, a + 36)[0], struct.unpack_from('<HH', md, a + 79))
     done = {}; blds = []
+    trig = []
     for p in P.parse_bnt(bnt, bld):
+        if p['kind'] == 'trigger': trig.append(dict(x=p['x'], y=p['y'], bid=p['bid'], script=p.get('script', '')))
         if p['kind'] != 'bld' or p['bid'] not in recs: continue
         parts = []
         for pt in recs[p['bid']]['parts']:
@@ -112,7 +114,7 @@ def main(scene):
         if mons: cand = [(abs(x - mons[0]['x']) + abs(y - mons[0]['y']) + (100 if abs(x - mons[0]['x']) + abs(y - mons[0]['y']) < 8 else 0), x, y) for _, x, y in cand]
         _, sx, sy = min(cand); spawn = [sx, sy]
     meta = dict(scene=scene, scene_name=scene, pack_id=scene, chunk_origin=[0, 0], chunk_size=[mw, mh], map_dims=[mw, mh],
-                tile_pixel=[64, 32], spawn=spawn, grid=[], buildings=blds, npcs=[], objects=[], monsters=mons, monster_sets=monsets,
+                tile_pixel=[64, 32], spawn=spawn, grid=[], buildings=blds, npcs=[], objects=[], monsters=mons, monster_sets=monsets, triggers=trig,
                 walk_grid=walk, ground_full=dict(file='ground_full.png', **orig, pixel_size=list(g.size)),
                 source=f'Phase16 scene_export {scene}: {mp.name}+{libname}+{mdl}')
     (out / 'meta.json').write_text(json.dumps(meta, ensure_ascii=False))
