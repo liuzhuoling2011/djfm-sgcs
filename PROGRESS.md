@@ -844,6 +844,23 @@ Skipped (schema still broken).
 
 
 
+## Phase 33 — walk polish + xn multi-face
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Changes
+1. **Player walk:** nest idxs `0,2,4,6` from first-8 walk pool; **ping-pong** 0-1-2-3-2-1; distance stride `×2.4`.
+2. **xn 行囊:** SprRole only has ResExNpc1 `2178/2179` (no other dir res). Remake: back(2178)+side(2179)+horizontal mirrors → 8 dirs.
+3. Screenshots under `assets/samples/phase33/`.
+
+### Deploy
+- (pending)
+
+### Note
+Walk closer to Wine but still may look off to users; xn mirrors are remake convenience (original single/few facings).
+
+---
+
 ## Phase 32 — act-1 QA + user bugs
 
 **Date:** 2026-10-10 (UTC+8)

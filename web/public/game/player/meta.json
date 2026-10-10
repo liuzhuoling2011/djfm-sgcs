@@ -9,7 +9,7 @@
     128,
     128
   ],
-  "frame_order": "sequential",
+  "frame_order": "sequential_0246",
   "dir_convention": "d0=NE…d5=S…d7=E",
-  "source": "Phase32 ResPlayer1 paper-doll; pool first≤12; frac 0/.28/.55/.82; no crop"
+  "source": "Phase33 first-8 nest idxs 0,2,4,6; layers CA,TK,HD,RH"
 }

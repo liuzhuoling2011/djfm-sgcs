@@ -1236,7 +1236,7 @@ async function main() {
     const moved = Math.hypot(pos.x - ox0, pos.y - oy0)
     if (moved > 1e-5) {
       const prev = animT
-      animT += moved * 1.85 // ~2.2 cells per full 4-frame cycle
+      animT += moved * 2.4 // Phase33: ~2.5 cells per ping-pong cycle (Wine-ish)
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 
@@ -1463,10 +1463,15 @@ async function main() {
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
       else if (moving && playerWalk[d]?.length) {
-        // Phase 32: 4-frame sequential; distance-locked animT (no moonwalk when blocked)
+        // Phase 33: 4-frame ping-pong (0-1-2-3-2-1) — Wine gait without hanging on wide frames
         const n = playerWalk[d].length
-        const fi = ((Math.floor(animT) % n) + n) % n
-        spr = playerWalk[d][fi]
+        if (n <= 1) spr = playerWalk[d][0]
+        else {
+          const cycle = n * 2 - 2 // 4→6
+          const t = ((Math.floor(animT) % cycle) + cycle) % cycle
+          const fi = t < n ? t : cycle - t
+          spr = playerWalk[d][fi]
+        }
       } else if (playerIdle[d]) spr = playerIdle[d]
     }
     const pp = iso(pos.x, pos.y)

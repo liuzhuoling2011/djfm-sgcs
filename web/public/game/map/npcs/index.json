@@ -208,6 +208,6 @@
       "xn_6.png",
       "xn_7.png"
     ],
-    "source": "ResExNpc1:2178"
+    "source": "ResExNpc1:2178(back)+2179(side)+mirror — SprRole has no other res"
   }
 }
