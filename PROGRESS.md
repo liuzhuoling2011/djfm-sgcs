@@ -855,7 +855,7 @@ Skipped (schema still broken).
 5. Remake tuning: late-map trash thin + sight/leash (`combat.remake`). Treat ONT `event=auto` as trash; keep real bosses. Example 1-9s 24→9, 1-11s→12.
 
 ### Deploy
-- Source + Pages + NAS (filled on push)
+- Source ; Pages ; NAS 
 
 ### Samples
 - `assets/samples/phase29/`
