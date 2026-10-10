@@ -978,8 +978,13 @@ async function main() {
     groundMeta = meta.ground_full ?? null
     if (groundMeta?.file) {
       const gf = groundMeta.file
-      try { ground = await loadImageHd(`${base}/ground_hd/${gf}`, `${base}/${gf}`) } catch { ground = null }
-      // If HD ground is 2× pixels, keep world scale via groundMeta.tile dims (unchanged)
+      const gfJpg = gf.replace(/\.png$/i, '.jpg')
+      // Prefer JPEG ground_hd (Pages size), then PNG ground_hd, then SD
+      try { ground = await loadImage(`${base}/ground_hd/${gfJpg}`) }
+      catch {
+        try { ground = await loadImageHd(`${base}/ground_hd/${gf}`, `${base}/${gf}`) }
+        catch { ground = null }
+      }
     }
     useGround = !!ground
     miniImg = null
@@ -1482,8 +1487,10 @@ async function main() {
       const gFocusY = (wx + wy) * (th / 2) - groundMeta.min_sy
       // Same lock point as cam (-36), integer blit — must stay in sync with entity cam
       // HD ground may be 2× pixels; lock world scale to meta tile size
-      const nativeW = (groundMeta as { px_w?: number }).px_w
-      const srcScale = nativeW && nativeW > 0 ? ground.width / nativeW : (ground.width > 5000 ? 2 : 1)
+      // Prefer meta.pixel_size (SD native) so HD ×1 enhance or ×2 both scale correctly
+      const ps = (groundMeta as { pixel_size?: number[]; px_w?: number }).pixel_size
+      const nativeW = (ps && ps[0]) || (groundMeta as { px_w?: number }).px_w || 0
+      const srcScale = nativeW > 0 ? ground.width / nativeW : 1
       const gs = (tileW / tw) / Math.max(1, srcScale)
       const gx = Math.round(canvas.width / 2 - gFocusX * (tileW / tw))
       const gy = Math.round(canvas.height / 2 - 36 - gFocusY * (tileW / tw))
