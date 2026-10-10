@@ -14,6 +14,15 @@
       "begin_scn_guess": 0
     },
     {
+      "id": "1-2s",
+      "file": "map_ren.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "1-2s 野外 (鬼兵)"
+    },
+    {
       "id": "diyu",
       "file": "map_diyu.lib",
       "dims": [
