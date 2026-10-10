@@ -1,0 +1,67 @@
+{
+  "begin_scn": 0,
+  "begin_scn_mapping": "Phase11: 瓦当镇 props scrubbed; NPC frames fixed; tile atlases+lazy; BGM 04_AMAZINGWATER; E=talk Space=attack stub; spawn (63,59).",
+  "default": "ren",
+  "packs": [
+    {
+      "id": "ren",
+      "file": "map_ren.lib",
+      "dims": [
+        150,
+        123
+      ],
+      "count": 18450,
+      "begin_scn_guess": 0
+    },
+    {
+      "id": "diyu",
+      "file": "map_diyu.lib",
+      "dims": [
+        140,
+        90
+      ],
+      "count": 12600,
+      "begin_scn_guess": null
+    },
+    {
+      "id": "snow",
+      "file": "map_snow.lib",
+      "dims": [
+        145,
+        90
+      ],
+      "count": 13050,
+      "begin_scn_guess": null
+    },
+    {
+      "id": "nanfang",
+      "file": "map_nanfang.lib",
+      "dims": [
+        100,
+        63
+      ],
+      "count": 6300,
+      "begin_scn_guess": null
+    },
+    {
+      "id": "grave",
+      "file": "map_grave.lib",
+      "dims": [
+        72,
+        50
+      ],
+      "count": 3600,
+      "begin_scn_guess": null
+    },
+    {
+      "id": "icecave",
+      "file": "Map_Icecave.lib",
+      "dims": [
+        60,
+        45
+      ],
+      "count": 2700,
+      "begin_scn_guess": null
+    }
+  ]
+}
