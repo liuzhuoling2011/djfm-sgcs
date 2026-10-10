@@ -13,7 +13,11 @@
 
 **Proofs:** `assets/samples/phase39/` (`walk_8dir_grid.png`, `proof_east_p39.png`, `wine_vs_web_EWNS.png`, `map_hold_to_art.png`). Wine live re-capture this session was black/menu-stuck; used phase37 WASD strips.
 
-**Deploy:** source + GitHub Pages. NAS optional (SOCKS often times out).
+**Deploy:**
+- Source `c91b72a` (master) — already had Phase39 export + `facing=(oct+6)%8`
+- Pages `59417c2` (main) → https://liuzhuoling2011.github.io/djfm-sgcs/
+- NAS_OK `/volume4/web/djfm/` (player + built assets + phase39 proofs; full map tree not re-synced)
+- Confirm: `assets/samples/phase39/walk_8dir_grid.png` present; meta source RH_002 +(body+3)%8
 
 ---
 
