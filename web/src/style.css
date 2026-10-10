@@ -66,3 +66,7 @@ img { max-width:100%; image-rendering: pixelated; }
 .jm-frame .jm-embed-info{position:absolute;left:40px;right:40px;top:56px;color:#e8f0ff;font-size:12px;line-height:1.45;text-shadow:0 1px 2px #000}
 .jm-frame .jm-embed-actions{position:absolute;left:40px;bottom:48px}
 .jm-frame .jm-embed-actions button{margin-right:6px;background:rgba(0,0,0,.55);color:#cfe;border:1px solid #6a5a3a;border-radius:3px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}
+
+.cutscene{position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cutscene video{max-width:100%;max-height:100%}
+.cut-tip{position:absolute;right:16px;bottom:12px;color:#ccc;font:12px sans-serif;opacity:.7}

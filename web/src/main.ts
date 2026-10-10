@@ -166,7 +166,7 @@ async function main() {
           at: 55, df: 40, exp: 200, sight: 8, spd: 12, name: '玉衡', set: 196, act: 'idle', actT: 0, dir: 0,
         })
         // ensure frames loaded
-        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+        if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
           if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('玉衡来袭！')
@@ -178,10 +178,10 @@ async function main() {
         foes = foes.filter((f) => f.name !== '魔豕兽')
         foes.push({
           x: bx, y: by, hx: bx, hy: by, hp: 500, maxHp: 500, cd: 1, hitT: 0, dead: 0,
-          at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 'r348', act: 'idle', actT: 0, dir: 0, event: 'bossyezhu',
+          at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 'pd006', act: 'idle', actT: 0, dir: 0, event: 'bossyezhu',
         })
-        const st = monSets['r348'] ?? monSets['10']
-        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+        const st = monSets['pd006']
+        if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
           if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('魔豕兽出现！')
@@ -193,10 +193,10 @@ async function main() {
         foes = foes.filter((f) => f.name !== '战象')
         foes.push({
           x: bx, y: by, hx: bx, hy: by, hp: 1200, maxHp: 1200, cd: 1.1, hitT: 0, dead: 0,
-          at: 60, df: 45, exp: 250, sight: 8, spd: 8, name: '战象', set: 'boss564', act: 'idle', actT: 0, dir: 0, event: 'bossdaxiang',
+          at: 60, df: 45, exp: 250, sight: 8, spd: 8, name: '战象', set: 'pd009', act: 'idle', actT: 0, dir: 0, event: 'bossdaxiang',
         })
-        const st = monSets['boss564']
-        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+        const st = monSets['pd009']
+        if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
           if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('战象来袭！')
@@ -242,17 +242,7 @@ async function main() {
     }
     dlg.onFx = (kind, arg) => {
       if (kind === 'screen') inv.flash(`（ScreenEffect ${arg ?? ''}）`)
-      else if (kind === 'avi') {
-        const name = (arg ?? '').trim().toLowerCase().replace(/\.dhp$/i, '')
-        const url = `game/cutscenes/${name || '1-3s'}.png`
-        const img = new Image()
-        img.onload = () => {
-          cutscene = { img, t: 2.8 }
-          inv.flash(`PlayAvi ${name || '1-3s'}`)
-        }
-        img.onerror = () => inv.flash(`（PlayAvi ${arg ?? ''} — 无预览帧）`)
-        img.src = url
-      }
+      else if (kind === 'avi') playAvi((arg ?? '').trim().toLowerCase().replace(/\.dhp$/i, ''))
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
@@ -381,6 +371,22 @@ async function main() {
   let warpArmed = true, curScene = '1-0s', curTriggers: { x: number; y: number; script: string }[] = [], warpCd = 0, firstLoad = true
   const packOf = (scene: string) => (scene === '1-0s' ? 'ren' : scene)
 
+
+  // Phase 24: DHP (MPEG-1) → mp4 cutscenes; click/Esc/Space skips
+  const playedAvi = new Set<string>()
+  function playAvi(name: string, once = false) {
+    if (!name || (once && playedAvi.has(name))) return
+    playedAvi.add(name)
+    const wrap = document.createElement('div'); wrap.className = 'cutscene'
+    const v = document.createElement('video'); v.src = `game/cutscenes/${name}.mp4`; v.autoplay = true; v.playsInline = true
+    const tip = document.createElement('div'); tip.className = 'cut-tip'; tip.textContent = '点击 / Esc 跳过'
+    wrap.append(v, tip); document.body.append(wrap)
+    const done = () => { window.removeEventListener('keydown', key, true); v.pause(); wrap.remove() }
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); done() } }
+    window.addEventListener('keydown', key, true)
+    wrap.addEventListener('click', done); v.addEventListener('ended', done); v.addEventListener('error', () => { inv.flash(`（PlayAvi ${name} 无视频）`); done() })
+    ;(window as unknown as { __djfmAvi?: string }).__djfmAvi = name
+  }
   /** Scene script hooks from mb/trigger/scene/*.txt (only sy1/蜀水-related subset). */
   let swsTimer: number | null = null
   function runSceneEnter(scene: string) {
@@ -402,6 +408,7 @@ async function main() {
       return
     }
     if (scene === '1-3as') {
+      if ((dlg.flags.sy1 ?? 0) < 30) playAvi('1-3as', true)
       // IsProp 118 + sy1≥20 → SetFlag sy1 30
       if (inv.qty(118) > 0 && (dlg.flags.sy1 ?? 0) >= 20)
         dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
@@ -418,6 +425,7 @@ async function main() {
         inv.flash('洞中有妖气——玉衡看守着玉净甘露（E 对话开战）')
     }
     if (scene === '1-2s') {
+      if ((dlg.flags.sy1 ?? 0) < 10) playAvi('1-2s', true)
       // cjg quest: SetPropToObj bossyezhu when cjg1∈[0,10); RemItem when cjg1≥1 after clear
       if ((dlg.flags.cjg1 ?? 0) >= 1) dlg.onRem?.('bossyezhu', 'rem')
       if ((dlg.flags.cjg1 ?? 0) >= 1 && (dlg.flags.cjg1 ?? 0) < 10 && inv.qty(54) <= 0)
@@ -425,7 +433,9 @@ async function main() {
       if (inv.qty(54) > 0 && (dlg.flags.cjg1 ?? 0) < 10)
         dlg.flags.cjg1 = Math.max(dlg.flags.cjg1 ?? 0, 10)
     }
+    if (scene === '1-10a6s' && (dlg.flags.bq2 ?? 0) < 50) playAvi('1-10a6s', true)
     if (scene === '1-3s') {
+      if ((dlg.flags.sy1 ?? 0) < 10) playAvi('1-3s', true)
       // fellow while escorting before sy1 30
       if ((dlg.flags.sy1 ?? 0) >= 19 && (dlg.flags.sy1 ?? 0) < 30)
         dlg.onFellow?.('sws', true)
@@ -530,7 +540,7 @@ async function main() {
     }
     foes = []
     monSets = meta.monster_sets ?? {}
-    for (const [sid, acts] of Object.entries(monSets)) for (const a of Object.values(acts)) for (const f of a.frames) {
+    for (const [sid, acts] of Object.entries(monSets)) for (const a of Object.values(acts)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
       if (f && !monImgs.has(f[0])) { const k = f[0]; loadImage(`${base}/mon/${k}`).then((im) => monImgs.set(k, im)).catch(() => {}) ; void sid }
     }
     for (const m of meta.monsters ?? []) {
@@ -782,6 +792,7 @@ async function main() {
         }
       }
     }
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() } }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true

@@ -1,0 +1,53 @@
+[ren] scene=1-0s npcs=td,xn,tj,cds,zs,zhs,bq,gbw,cjg,sws,sy foes=0 flags={}
+  talk sy: 少侠醒了啊！看见你没事我就开心了。 | 不用向我说谢谢的哦，是我爷爷把你从妖魔口中救出来的，我只是照顾了一会，没什么功劳 | 你想找我爷爷说谢谢啊！可惜他上山取玉净甘露了。 | 我不知道什么原因生下来就得了一种怪病，不要以为我看似正常，可只要一吃东西就全身疼 | 少侠不用担心，我是不害怕的，因为我死了就能见到我爹娘了。不过我很担心爷爷，去了这 | 少侠你要去帮我爷爷？你的伤才刚好，没问题吗？ … flags {"sy1": 1}
+  exit 1-1s lock -1
+[1-1s] scene=1-1s npcs= foes=0 flags={"sy1": 1}
+  ▶ cutscene 1-2s
+  skipped: True
+[1-2s] scene=1-2s npcs=bossyezhu foes=4 flags={"sy1": 1}
+  talk bossyezhu: （bossyezhu拦住了去路！） … flags {"sy1": 1, "cjg1": 1}
+  fight 魔豕兽: swings=3 left=4 exp=80
+  猪心54 1
+  fight all: swings=12 left=0 exp=480
+[ren] scene=1-0s npcs=td,xn,tj,cds,zs,zhs,bq,gbw,cjg,sws,sy foes=0 flags={"sy1": 1, "cjg1": 10}
+  talk sws: %4%，怎么到这里来了？这里极其危险，不会武功是会死的。 | 你想帮我？你还是回去吧，这里真的很危险。 | 你怎么这么固执？你难道不知道身体发肤，受之父母的道理吗？ | 哎，如果你执意要去，那我们先过几招，让我看看你的本事如何？ … flags {"sy1": 1, "cjg1": 10}
+  after sws scene 1-3s 19
+  talk sws: 不错啊！%4%看不出你的武艺很有功底啊！真是长江后浪推前浪，我老了，唉！ | 当然当然，救我孙女当然需要你多多帮忙呢！走，我们现在就去落马洞取玉净甘露。 … flags {"sy1": 20, "cjg1": 10}
+  ▶ cutscene 1-3as
+  skipped: True
+[1-3as] scene=1-3as npcs=bossyuheng,sws foes=1 flags={"sy1": 20, "cjg1": 10}
+  talk bossyuheng: （bossyuheng拦住了去路！） … flags {"sy1": 20, "cjg1": 10}
+  fight 玉衡: swings=3 left=0 exp=680
+  118 1 sy1 30
+[1-3s] scene=1-3s npcs= foes=0 flags={"sy1": 30, "cjg1": 10}
+  talk sws: %4%，快带着玉净甘露先回去，我老了，活动了这么久也累了，要在这休息一会才可以， … flags {"sy1": 40, "cjg1": 10}
+[ren] scene=1-0s npcs=td,xn,tj,cds,zs,zhs,bq,gbw,cjg,sws,sy foes=0 flags={"sy1": 40, "cjg1": 10}
+  talk sws: 什么？你说你要找玲珑心？%4%，你是怎么知道有玲珑心的呢？ | 哦，原来是泊祁告诉你的，还希望你能像封魔战神一样替天行道！好样的，年轻人，你向东 … flags {"sy1": 40, "cjg1": 10, "bq1": 10}
+  talk bq: 侠客醒了啊，感觉如何？身体还疼不？ | 怎么你不记得了吗？ | 算了，看你这么痛苦的样子我告诉你好了，昨天村长在镇外除魔之时，发现业已重伤奄奄一 | 呵呵，想起来了吧。 | 对我说什么谢谢啊，告诉你救人是一件积阴德的好事，那是我应该做的。 … flags {"sy1": 40, "cjg1": 10, "bq1": 10, "bq": 1}
+  sy1 40
+[1-6s] scene=1-6s npcs= foes=0 flags={"sy1": 40, "cjg1": 10, "bq1": 10, "bq": 1}
+  (蜀水 pickup simulated via inv.add — proximity trigger)
+[ren] scene=1-0s npcs=td,xn,tj,cds,zs,zhs,bq,gbw,cjg,sws,sy foes=0 flags={"sy1": 40, "cjg1": 10, "bq1": 10, "bq": 1}
+  talk tj: 侠客醒过来了！那个伯祁医生的医术还真是高明，村长把你救回来的时候我还在想世间又多 … flags {"sy1": 40, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  talk bq: 果真是玉净甘露，我这就去救醒村长的孙女。 … flags {"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-4s] scene=1-4s npcs=haojiao,sdyx foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-5s] scene=1-5s npcs= foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-7s] scene=1-7s npcs=huli foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-8s] scene=1-8s npcs=Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-9s] scene=1-9s npcs=zs,bossdaxiang foes=24 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  talk bossdaxiang: （bossdaxiang拦住了去路！） … flags {"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  fight 战象: swings=1 left=23 exp=930
+  zhs1 None
+[1-10s] scene=1-10s npcs= foes=32 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  fight all: swings=25 left=32 exp=930
+[1-10a1s] scene=1-10a1s npcs= foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-10a2s] scene=1-10a2s npcs= foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-10a3s] scene=1-10a3s npcs= foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-10a4s] scene=1-10a4s npcs= foes=9 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-10a5s] scene=1-10a5s npcs= foes=12 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  ▶ cutscene 1-10a6s
+  skipped: True
+[1-10a6s] scene=1-10a6s npcs=boss,bosstianji foes=11 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+  talk bosstianji: （bosstianji拦住了去路！） … flags {"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+[1-11s] scene=1-11s npcs=boss,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto foes=0 flags={"sy1": 100, "cjg1": 10, "bq1": 10, "bq": 1, "tj": 1}
+page errors: []
