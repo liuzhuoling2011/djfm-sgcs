@@ -357,12 +357,18 @@ async function main() {
   function renderInv() {
     const show = inv.open || inv.shopOpen || inv.embedOpen
     invEl.classList.toggle('hidden', !show)
-    invEl.classList.add('jm-mode') // original JM panels (HD-upscaled assets)
-    if (!show) return
-    const rows = inv.items.map((it) => {
+    if (!show) { placeChrome(); return }
+    // panel_625 paints five grooves (y 32–154). Keep one name per groove when the bag is that short.
+    const bagSlots: ({ id: number; qty: number } | null)[] = [...inv.items]
+    if (bagSlots.length <= 5) while (bagSlots.length < 5) bagSlots.push(null)
+    const rows = bagSlots.map((it) => {
+      if (!it) return '<li class="groove empty"></li>'
       const d = inv.props[String(it.id)]
-      return `<li><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
-    }).join('') || '<li class="empty">（空）</li>'
+      return `<li class="groove"><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
+    }).join('')
+    const bagScroll = inv.items.length > 5 ? ' scroll' : ''
+    const head = (title: string, closeAttr: string) =>
+      `<header class="desk-head"><h3>${title}</h3><button type="button" class="desk-x" ${closeAttr} aria-label="关闭">×</button></header>`
     if (inv.shopOpen) {
       // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226
       const buyMode = inv.shopMode === 'buy'
@@ -382,17 +388,15 @@ async function main() {
           return `<button type="button" data-sell="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${inv.qty(r.id)}</i></span><span class="pr">售 ${pr} 金</span></button>`
         }).join('') || '<div class="jm-empty">行囊里没有铁匠收购的药品或飞蝗石</div>'
       }
-      invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
-        <div class="jm-title">买卖</div>
-        <button type="button" class="jm-close" data-close-shop aria-label="关闭">×</button>
-        <div class="jm-body"><div class="jm-slots">${slots}</div>
-          <p class="jm-shop-hint">${buyMode ? '点商品购入 · 金钱不足会提示' : '点持有的药品 / 飞蝗石卖出（售价四折）'}</p></div>
-        <div class="jm-footbar">
-          <div class="jm-money">金钱 ${inv.money}</div>
-          <div class="jm-deal-btns">
-            <button type="button" class="jm-deal buy${buyMode ? ' on' : ''}" data-shop-mode="buy">购入</button>
-            <button type="button" class="jm-deal sell${!buyMode ? ' on' : ''}" data-shop-mode="sell">卖出</button>
-            <button type="button" class="jm-deal close" data-close-shop>关闭</button>
+      invEl.innerHTML = `<div class="desk shop">
+        ${head('买卖', 'data-close-shop')}
+        <div class="desk-list">${slots}</div>
+        <footer class="desk-foot">
+          <div class="money">金钱 ${inv.money}</div>
+          <div class="desk-actions">
+            <button type="button" class="${buyMode ? 'on' : ''}" data-shop-mode="buy">购入</button>
+            <button type="button" class="${buyMode ? '' : 'on'}" data-shop-mode="sell">卖出</button>
+            <button type="button" data-close-shop>关闭</button>
           </div>
         </div>
       </div></div>`
@@ -414,13 +418,14 @@ async function main() {
         </div>
       </div></div>`
     } else {
-      invEl.innerHTML = `<div class="box"><div class="jm-frame bag">
-        <div class="jm-title">行囊</div>
-        <button type="button" class="jm-close" data-close-inv aria-label="关闭">×</button>
-        <div class="jm-body"><ul class="jm-bag-list">${rows}</ul></div>
-        <div class="jm-bag-equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
-        <div class="jm-money">金钱 ${inv.money}</div>
-      </div></div>`
+      invEl.innerHTML = `<div class="desk bag">
+        ${head('行囊', 'data-close-inv')}
+        <ul class="desk-list${bagScroll}">${rows}</ul>
+        <footer class="desk-foot">
+          <div class="equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
+          <div class="money">金钱 ${inv.money}</div>
+        </footer>
+      </div>`
     }
     const syncPots = () => { hud.pots = [...inv.potSlots()] }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
@@ -446,33 +451,15 @@ async function main() {
     invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
     placeChrome()
   }
+  /** Lift HTML dialog and desks above the canvas stone bar (110px in 800-space, scaled with the view). */
+  let hudSpace = 0
   function placeChrome() {
-    /* Pin original JM dialog/panels above canvas JM HUD bar (layout matches original). */
-    const r = canvas.getBoundingClientRect()
-    const hudPx = Math.round(r.height * (110 / 720))
-    const aboveHud = Math.max(8, window.innerHeight - r.bottom + hudPx + 6)
-    if (dialogEl.style.display !== 'none' && !dialogEl.classList.contains('hidden')) {
-      const w = Math.min(760, Math.round(r.width * 0.92))
-      dialogEl.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`
-      dialogEl.style.width = `${w}px`
-      dialogEl.style.right = 'auto'
-      dialogEl.style.bottom = `${aboveHud}px`
-      dialogEl.style.top = 'auto'
-      dialogEl.style.transform = 'none'
-    }
-    if (!invEl.classList.contains('hidden')) {
-      // Original JM panels are 326×226 in 800-space
-      const sc = r.width / 800
-      const dw = Math.round(326 * sc), dh = Math.round(226 * sc)
-      invEl.style.width = `${dw}px`
-      invEl.style.height = `${dh}px`
-      invEl.style.setProperty('--jm-w', `${dw}px`)
-      invEl.style.left = `${Math.round(r.left + (r.width - dw) / 2)}px`
-      invEl.style.top = `${Math.round(r.top + Math.max(16, (r.height - hudPx - dh) / 2))}px`
-      invEl.style.right = 'auto'
-      invEl.style.bottom = 'auto'
-      invEl.style.transform = 'none'
-    }
+    const w = canvas.getBoundingClientRect().width
+    if (w < 8) return
+    const space = Math.round(110 * (w / 800) + 10)
+    if (space === hudSpace) return
+    hudSpace = space
+    stageEl.style.setProperty('--hud-space', `${space}px`)
   }
   window.addEventListener('resize', () => placeChrome())
   window.addEventListener('scroll', () => placeChrome(), true)
@@ -480,6 +467,7 @@ async function main() {
     toastEl.classList.toggle('hidden', inv.toastT <= 0)
     if (inv.toastT > 0) toastEl.textContent = inv.toast
   }
+
   function clampDialog() {
     requestAnimationFrame(() => placeChrome())
   }
@@ -1816,6 +1804,7 @@ async function main() {
       ctx.textAlign = 'left'
     }
     hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax, attackCd, attackReady: attackCd <= 0 && attackT <= 0 })
+    placeChrome()
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })

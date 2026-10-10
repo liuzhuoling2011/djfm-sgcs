@@ -1,0 +1,11 @@
+Key -> screen direction (isometric, 瓦当镇)
+W = N (north, up-screen)
+A = W (west, left-screen)
+S = S (south, down-screen)
+D = E (east, right-screen)
+WA = NW
+WD = NE
+SA = SW
+SD = SE
+Walk: hold_{W,A,S,D,WA,WD,SA,SD}.gif
+Run:  run_hold_{W,A,S,D,WA,WD,SA,SD}.gif  (Shift held together with the direction keys)
