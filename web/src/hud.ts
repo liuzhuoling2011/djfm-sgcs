@@ -6,9 +6,14 @@ export type Foe = {
   kbX?: number; kbY?: number; gone?: boolean; event?: string
 }
 export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
-// Damage: the original formula is not in any data table (searched mb/*.txt|ini, player/*); it lives in the exe.
-// Working model: AT − DF/2, ±10%, min 1 (assumption, see PROGRESS Phase 17c).
-export const dmg = (at: number, df: number) => Math.max(1, (at - df / 2) * (0.9 + Math.random() * 0.2))
+// Damage: original formula is exe-only (not in mb tables). Working model AT−DF/2 ±10% min1.
+// PLACEHOLDER soft-DF (Phase 25): RolePrivate DF 160–180 makes late act-1 do 1 dmg/hit forever at Init AT curve.
+// Cap effective DF at 0.85×AT so growth from Init.txt (AT+4/lv) matters; remove when real formula is known.
+export const dmg = (at: number, df: number) => {
+  const soft = Math.min(df, at * 0.85)
+  return Math.max(1, (at - soft / 2) * (0.9 + Math.random() * 0.2))
+}
+export const SOFT_DF = true // label for HUD/PROGRESS
 
 const L = (s: string) => new Promise<HTMLImageElement>((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = s })
 
@@ -63,7 +68,7 @@ export class Hud {
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
-    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
+    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF' : '') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
   }
   // Minimap: JM 1549 frame (137×133) at Wine (663,0) = top-right; interior 6..131 × 6..104; name strip below
   drawMinimap(ctx: CanvasRenderingContext2D, ground: CanvasImageSource | null, gx: number, gy: number, k: number,

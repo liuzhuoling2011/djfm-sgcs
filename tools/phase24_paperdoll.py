@@ -52,10 +52,44 @@ def lep(libn, res, sub):
     s = sub - 1 if sub >= 1 else 0
     return ims[s] if s < len(ims) else None
 
+
+def pli_orders(graph):
+    """Per-frame part draw order from PLI (indices into parts() key list)."""
+    import re
+    slr = ROOT/'assets/samples/phase9/fol_extract/slr'/graph
+    files = list(slr.glob('*.PLI')) if slr.exists() else []
+    if not files: return None
+    b = files[0].read_bytes()
+    # part tags in header order
+    tags = [m.group(1).decode() for m in re.finditer(rb'([A-Z]{2})\x00\x00\x00[0-9]{3}\x00', b[:300])]
+    if not tags:
+        tags = [m.group(1).decode() for m in re.finditer(rb'([A-Z]{2})\x00', b[:120])]
+    n = len(tags) or 5
+    i = b.find(b'\x80\x00')
+    if i < 0: i = 120
+    else: i += 2
+    # skip leading u16 pairs that look like counts
+    while i + 4 < len(b) and b[i+1] == 0 and b[i+3] == 0 and b[i] < 64 and b[i+2] < 64:
+        i += 4
+    orders = []
+    while i + n <= len(b) and len(orders) < 400:
+        chunk = list(b[i:i+n])
+        if all(c < n for c in chunk):
+            orders.append([tags[c] if c < len(tags) else tags[0] for c in chunk])
+            i += n
+        else:
+            i += 1
+            if i > len(b) - n: break
+    return orders if orders else None
+
 ORDER = ['CA','LE','LA','LH','TK','RA','RH','HD','RE']
-def composite(pmap, gi, fi, C=(160, 200)):
+def composite(pmap, gi, fi, C=(160, 200), orders=None):
     can = Image.new('RGBA', (320, 260), (0,0,0,0)); any_ = False
-    for p in sorted(pmap, key=lambda q: ORDER.index(q) if q in ORDER else 5):
+    if orders and gi < len(orders):
+        seq = [p for p in orders[gi] if p in pmap] + [p for p in pmap if p not in (orders[gi] if gi < len(orders) else [])]
+    else:
+        seq = sorted(pmap, key=lambda q: ORDER.index(q) if q in ORDER else 5)
+    for p in seq:
         gs = pmap[p]
         if gi >= len(gs) or not gs[gi]['frames']: continue
         f = gs[gi]['frames'][min(fi, len(gs[gi]['frames'])-1)]
@@ -66,16 +100,18 @@ def composite(pmap, gi, fi, C=(160, 200)):
     return can if any_ else None
 
 def load(graph):
-    return {p: groups(sid) for p, sid in parts(graph).items()}
+    pm = {p: groups(sid) for p, sid in parts(graph).items()}
+    return pm, pli_orders(graph)
 
 if __name__ == '__main__':
-    g = sys.argv[1]; pm = load(g)
+    g = sys.argv[1]; pm, ords = load(g)
     ref = next(iter(pm.values()))
+    print('pli orders', len(ords) if ords else 0)
     print(g, {p: len(v) for p, v in pm.items()})
     print('codes', [(i, x['code'], len(x['frames'])) for i, x in enumerate(ref)][:60])
     tiles = []
     for gi in range(len(ref)):
-        im = composite(pm, gi, 0)
+        im = composite(pm, gi, 0, orders=ords)
         if im: bb = im.getbbox(); tiles.append((gi, ref[gi]['code'], im.crop(bb) if bb else im))
     W = 12; sheet = Image.new('RGBA', (W*110, ((len(tiles)+W-1)//W)*130), (20,20,30,255))
     from PIL import ImageDraw; d = ImageDraw.Draw(sheet)

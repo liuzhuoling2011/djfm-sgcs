@@ -15,16 +15,19 @@ BLOCKS = {
   '009': dict(walk=0, idle=8, hurt=46, attack=24, death=54),
   '003': dict(walk=0, idle=37, hurt=53, attack=21, death=61),
   '113': dict(walk=0, idle=8, hurt=54, attack=62, death=16),
+  '613': dict(walk=0, idle=8, hurt=16, attack=24, death=40),
   '008': dict(walk=0, idle=8, hurt=58, attack=66, death=42),
 }
-ROLE_G = {190:'602',191:'603',189:'601',10:'006',11:'006',75:'006',158:'009',170:'009',46:'008',12:'003',55:'113'}
+ROLE_G = {190:'602',191:'603',189:'601',10:'006',11:'006',75:'006',158:'009',170:'009',46:'008',12:'003',55:'113',199:'613',200:'613'}
 _built = {}
 def build(g):
     if g in _built: return _built[g]
-    pm = P.load(g); ref = next(iter(pm.values())); acts = {}
+    loaded = P.load(g)
+    pm, ords = loaded if isinstance(loaded, tuple) else (loaded, None)
+    ref = next(iter(pm.values())); acts = {}
     for act, g0 in BLOCKS[g].items():
         per = max(len(ref[g0+d]['frames']) for d in range(8) if g0+d < len(ref))
-        acts[act] = (per, [[P.composite(pm, g0+d, k) for k in range(per)] for d in range(8)])
+        acts[act] = (per, [[P.composite(pm, g0+d, k, orders=ords) for k in range(per)] for d in range(8)])
     bb = None
     for per, dirs in acts.values():
         for fr in dirs:

@@ -843,6 +843,38 @@ Skipped (schema still broken).
 
 
 
+## Phase 25: act-1 main quest after sy1=100 (2026-10-10)
+
+### Done (from real talk/scene scripts only)
+1. **IsFlag bare = equality** — bare `IsFlag name value` is now `==` (was `>=`), so bq.txt stage gates (30→31 vs 40→50) no longer clobber each other.
+2. **玲珑心链 (bq1)** via talk + scene props:
+   - bq→bq1=1 → sws→10 + unlock 1-4s → sdyx→20 → bq→30 + unlock 1-7as
+   - **1-7s jiutianchi** SetLockTextID 208 while bq1∈[30,50); unlock at 50
+   - Quest props on triggers: bjsm→122, qnxbz→123, tzxs→121 (E pickup); tzxs sets bq1=40
+   - bq→50 (with 121) →60 → sdyx Miss121 Acquire119 (玲珑心) bq1=70 → sws→71 → bq→100 + bq2=1 + unlock 1-9s
+3. **战象 / 张珊 (zhs1)**: IsDead bossdaxiang → zhs1=10; talk zs → zhs1=100. Combat spawn nudges onto walkable (standability).
+4. **1-11s switches**: E on jiguan1/2/3 → bldStatus; all three + xqnz<1 → 气凝珠(124) + PlayAvi 1-11s + bq2=40.
+5. **1-10a6s dual 天机**: onCombat bosstianji/boss (pd613); IsDead both → bq2=50 + avi.
+6. **Act-end**: bq talk after bq2=50 →60; sws→70; bq→**bq2=100*go 2-0s** (2-0s not exported → stays in town; flag is the clear mark).
+7. **Scene loot**: AddItem pools from scene scripts scatter potions near spawn (once/scene).
+8. **PLACEHOLDER soft-DF** (`hud.dmg`): effective DF capped at 0.85×AT so Init.txt AT+4/lv matters vs RolePrivate DF 160+. HUD shows `·软DF`. Soft-cap spawn HP≤2500. Real formula still exe-only.
+9. **PLI per-frame draw order** wired into paper-doll compositor when PLI order table parses; 天机 graph 613 exported as pd613.
+
+### Playthrough (scripted harness past sy1=100)
+Log: `assets/samples/phase25/playthrough_log.txt`. Boot at sy1=100 lv8 (Init growth), then real flag/talk/pick/kill path.
+Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired along the way.
+
+### Still blocks / gaps for a clean act-1 clear
+- **Act-2 map 2-0s not exported** — `go 2-0s` cannot leave town.
+- Soft-DF / HP soft-cap are placeholders; balance ≠ Wine.
+- Scene AddItem is a simplified scatter, not full AddItem RNG/coords.
+- 1-8s 天冰 Autos still placeholders; ChangeAct / ShowActForeword / SetBldAni still stubs.
+- PLI order parser is heuristic (can over-read); some frames may still mis-layer.
+- Harness uses omniAttack + killFlag for boss deaths after engaging (not pure WASD play).
+
+### Samples
+- `assets/samples/phase25/playthrough_grid.png`, `pt_*.png`, `console.txt`, `playthrough_log.txt`
+
 ## Phase 24: cutscenes, SprRole paper-dolls, act-1 playthrough (2026-10-10)
 
 ### Done

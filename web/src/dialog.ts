@@ -16,18 +16,36 @@ export type CombatHook = (battleId: number, eventId: string) => void
 export type FellowHook = (eventId: string, enable: boolean) => void
 export type FxHook = (kind: string, arg?: string) => void
 export type RemHook = (eventId: string, mode: 'rem' | 'reset' | 'table', slot?: number, val?: number) => void
+export type BldHook = (name: string, status: number) => void
+export type LockHook = (name: string, textId: number) => void
+export type DeadCheck = (eventId: string) => boolean
 
 export function evalCond(cond: string, flags: Flags, inv?: InvHook): boolean {
   if (!cond.trim()) return true
   return cond.split('*').every((c) => {
     const p = c.trim().split(/\s+/)
     if (p[0] === 'IsFlag' && p.length >= 3) {
-      const name = p[1].toLowerCase(), v = Number(p[2]), op = p[3] !== undefined ? Number(p[3]) : 2
-      const cur = flags[name] ?? 0
+      const name = p[1].toLowerCase(), v = Number(p[2]), cur = flags[name] ?? 0
+      if (p[3] === undefined) return cur === v // bare = equality (quest stage gates)
+      const op = Number(p[3])
       return op === 1 ? cur < v : cur >= v
     }
     if (p[0] === 'IsProp' && p.length >= 2) {
-      return inv?.hasProp(Number(p[1])) ?? false
+      const has = inv?.hasProp(Number(p[1])) ?? false
+      if (p.length >= 3 && Number(p[2]) === 0) return !has
+      return has
+    }
+    if (p[0] === 'IsPropInBody' && p.length >= 2) {
+      const has = inv?.hasProp(Number(p[1])) ?? false
+      if (p.length >= 3 && Number(p[2]) === 0) return !has
+      return has
+    }
+    if (p[0] === 'IsBldStatus' && p.length >= 3) {
+      // evaluated in main via dlg.bldStatus; here read from a module-level bridge set on DialogSys
+      return true // deferred — scene scripts not evalCond
+    }
+    if (p[0] === 'IsDead' && p.length >= 2) {
+      return true // deferred to scene runner
     }
     return true // unknown predicates ignored
   })
@@ -54,6 +72,11 @@ export class DialogSys {
   onFellow?: FellowHook
   onFx?: FxHook
   onRem?: RemHook
+  onBld?: BldHook
+  onLock?: LockHook
+  isDead?: DeadCheck
+  lockText: Record<string, number> = {}
+  bldStatus: Record<string, number> = {}
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([

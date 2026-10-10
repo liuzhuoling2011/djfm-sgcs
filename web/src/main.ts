@@ -188,8 +188,15 @@ async function main() {
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyezhu'
       } else if (eventId === 'bossdaxiang') {
         const o = objects.find((x) => String(x.EventID).toLowerCase() === 'bossdaxiang')
-        const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
-        const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+        let bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
+        let by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+        if (!walkableNow(bx, by, mapW, mapH, blocked)) {
+          // Phase 25: 战象 standability — place on nearest walkable (or beside player)
+          let found = false
+          search: for (let r = 1; r < 10; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++)
+            if (walkableNow(bx + dx, by + dy, mapW, mapH, blocked)) { bx += dx; by += dy; found = true; break search }
+          if (!found) { bx = pos.x + 1.5; by = pos.y }
+        }
         foes = foes.filter((f) => f.name !== '战象')
         foes.push({
           x: bx, y: by, hx: bx, hy: by, hp: 1200, maxHp: 1200, cd: 1.1, hitT: 0, dead: 0,
@@ -201,6 +208,40 @@ async function main() {
         }
         inv.flash('战象来袭！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossdaxiang'
+      } else if (eventId === 'bosstianji' || eventId === 'boss') {
+        const spawnOne = (ev: string, ox: number, oy: number) => {
+          foes = foes.filter((f) => f.event !== ev)
+          const set = monSets['pd613'] ? 'pd613' : (monSets['pd009'] ? 'pd009' : 'pd008')
+          foes.push({
+            x: ox, y: oy, hx: ox, hy: oy, hp: 1500, maxHp: 1500, cd: 1.0, hitT: 0, dead: 0,
+            at: 70, df: 50, exp: 300, sight: 9, spd: 9, name: '天机', set, act: 'idle', actT: 0, dir: 0, event: ev,
+          })
+          const st = monSets[set]
+          if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
+            if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+          }
+        }
+        const o1 = objects.find((x) => String(x.EventID).toLowerCase() === 'bosstianji')
+        const o2 = objects.find((x) => String(x.EventID).toLowerCase() === 'boss')
+        const near = (o: typeof o1, fb: number) => {
+          const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x + fb))) : pos.x + fb
+          const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+          // standability: nudge onto walkable
+          let x = bx, y = by
+          if (!walkableNow(x, y, mapW, mapH, blocked)) {
+            search: for (let r = 1; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++)
+              if (walkableNow(bx + dx, by + dy, mapW, mapH, blocked)) { x = bx + dx; y = by + dy; break search }
+          }
+          return { x, y }
+        }
+        if (eventId === 'bosstianji' || !foes.some((f) => f.event === 'bosstianji')) {
+          const p1 = near(o1, 1.5); spawnOne('bosstianji', p1.x, p1.y)
+        }
+        if (eventId === 'boss' || !foes.some((f) => f.event === 'boss')) {
+          const p2 = near(o2, -1.5); spawnOne('boss', p2.x, p2.y)
+        }
+        inv.flash('双天机来袭！')
+        ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bosstianji'
       } else {
         inv.flash(`（战斗 ${battleId}/${eventId} 未接线）`)
       }
@@ -387,6 +428,125 @@ async function main() {
     wrap.addEventListener('click', done); v.addEventListener('ended', done); v.addEventListener('error', () => { inv.flash(`（PlayAvi ${name} 无视频）`); done() })
     ;(window as unknown as { __djfmAvi?: string }).__djfmAvi = name
   }
+
+  // Phase 25: quest props on triggers (scene SetPropToObj → E pickup)
+  const PROP_TRIG: Record<string, { id: number; flag: string; name: string }> = {
+    shushui: { id: 120, flag: 'xss', name: '蜀水' },
+    bjsm: { id: 122, flag: 'xbjsm', name: '冰晶石木' },
+    qnxbz: { id: 123, flag: 'xqnxbz', name: '千年玄冰柱' },
+    tzxs: { id: 121, flag: 'xtzxs', name: '天芝血参' },
+  }
+  // Scene AddItem pools (from trigger/scene/*.txt) — mode-3 scatter; web drops a few near spawn once
+  const SCENE_LOOT: Record<string, number[]> = {
+    '1-1s': [5, 6, 16, 25, 197],
+    '1-4s': [22, 162, 195, 192, 190, 191],
+    '1-5s': [22, 162, 66, 98, 99],
+    '1-6s': [22, 162, 66, 98, 99],
+    '1-7s': [22, 162, 66, 98, 99],
+    '1-9s': [162, 189],
+    '1-10s': [162, 189, 46],
+    '1-11s': [162, 12, 55],
+    '1-10a1s': [162, 189, 46],
+    '1-10a2s': [162, 189, 46],
+    '1-10a3s': [162, 189, 46],
+  }
+  const lootedScenes = new Set<string>()
+  type GroundLoot = { x: number; y: number; id: number; taken?: boolean }
+  let groundLoot: GroundLoot[] = []
+  function spawnSceneLoot(scene: string) {
+    groundLoot = []
+    if (lootedScenes.has(scene)) return
+    const pool = SCENE_LOOT[scene]
+    if (!pool?.length) return
+    lootedScenes.add(scene)
+    const n = Math.min(4, 2 + Math.floor(Math.random() * 3))
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2, r = 2 + Math.random() * 4
+      const x = pos.x + Math.cos(ang) * r, y = pos.y + Math.sin(ang) * r
+      if (!walkableNow(x, y, mapW, mapH, blocked)) continue
+      groundLoot.push({ x, y, id: pool[Math.floor(Math.random() * pool.length)] })
+    }
+    if (groundLoot.length) inv.flash(`附近散落了 ${groundLoot.length} 件物资（走近按 E）`)
+  }
+  function tryPickProp(): boolean {
+    const range = gameData?.interact_range ?? 2
+    // ground loot
+    for (const g of groundLoot) {
+      if (g.taken) continue
+      if (Math.hypot(g.x - pos.x, g.y - pos.y) > range + 0.5) continue
+      g.taken = true
+      inv.add(g.id, 1)
+      const nm = inv.props[g.id]?.name ?? `道具${g.id}`
+      inv.flash(`拾取 ${nm}`)
+      return true
+    }
+    const wx = pos.x + origin.x, wy = pos.y + origin.y
+    for (const tr of curTriggers) {
+      let key = (tr.script || '').trim().toLowerCase().split(/\s+/).filter(Boolean)[0] || ''
+      // 1-11s: empty script at jiguan1 spot
+      if (!key && curScene === '1-11s' && Math.hypot(tr.x - 197, tr.y - 157) < 3) key = 'jiguan1'
+      if (key.startsWith('jiguan')) {
+        const d = Math.hypot(tr.x - wx, tr.y - wy)
+        if (d > range + 1.5) continue
+        const st = dlg.bldStatus[key] ?? 0
+        if (st >= 1) { inv.flash(`${key} 已启动`); return true }
+        dlg.bldStatus[key] = 1
+        inv.flash(`${key} 机关启动！`)
+        checkJiguanReward()
+        return true
+      }
+      const def = PROP_TRIG[key]
+      if (!def) continue
+      const d = Math.hypot(tr.x - wx, tr.y - wy)
+      if (d > range + 1.5) continue
+      if (inv.qty(def.id) > 0 || (dlg.flags[def.flag] ?? 0) >= 1) { inv.flash(`此处的${def.name}已被取走`); return true }
+      // scene gates: tzxs needs bq1 in [30,40) roughly — script IsFlag bq1 40 1
+      if (key === 'tzxs' && (dlg.flags.bq1 ?? 0) >= 40) { inv.flash('天芝血参已不在此处'); return true }
+      if (key === 'tzxs' && (dlg.flags.bq1 ?? 0) < 30) { inv.flash('（尚不可取 — 需泊祁指引至九天池）'); return true }
+      inv.add(def.id, 1); dlg.flags[def.flag] = 1
+      if (key === 'tzxs' && (dlg.flags.bq1 ?? 0) < 40) dlg.flags.bq1 = Math.max(dlg.flags.bq1 ?? 0, 40)
+      inv.flash(`获得 ${def.name}`)
+      return true
+    }
+    return false
+  }
+  function checkJiguanReward() {
+    // scene/1-11s: all three jiguan on + xqnz<1 → ResetObj boss*SetPropToObj boss 0 124*PlayAvi
+    const a = dlg.bldStatus.jiguan1 ?? 0, b = dlg.bldStatus.jiguan2 ?? 0, c = dlg.bldStatus.jiguan3 ?? 0
+    if (a >= 1 && b >= 1 && c >= 1 && (dlg.flags.xqnz ?? 0) < 1) {
+      dlg.onRem?.('boss', 'rem')
+      if (inv.qty(124) <= 0) {
+        inv.add(124, 1); dlg.flags.xqnz = 1
+        inv.flash('获得 气凝珠！')
+        playAvi('1-11s', true)
+      }
+      if ((dlg.flags.bq2 ?? 0) < 40) dlg.flags.bq2 = Math.max(dlg.flags.bq2 ?? 0, 40)
+    }
+  }
+  function onFoeKilled(f: Foe) {
+    const ev = (f.event || '').toLowerCase()
+    // 1-9s: IsDead bossdaxiang → SetFlag zhs1 10
+    if (ev === 'bossdaxiang' || f.name === '战象') {
+      if ((dlg.flags.zhs1 ?? 0) < 10) {
+        dlg.flags.zhs1 = Math.max(dlg.flags.zhs1 ?? 0, 10)
+        inv.flash('战象倒下 — zhs1→10（可回镇找张珊/张河生）')
+        dlg.onRem?.('bossdaxiang', 'rem')
+      }
+    }
+    // 1-10a6s: IsDead bosstianji*IsDead boss → SetFlag bq2 50
+    if (ev === 'bosstianji' || ev === 'boss' || f.name === '天机') {
+      const left = foes.filter((x) => !x.gone && x.dead <= 0 && (x.event === 'bosstianji' || x.event === 'boss' || x.name === '天机'))
+      // current foe already dying; count others still alive
+      const others = foes.filter((x) => x !== f && !x.gone && x.dead <= 0 && (x.event === 'bosstianji' || x.event === 'boss' || x.name === '天机'))
+      if (others.length === 0 && (dlg.flags.bq2 ?? 0) < 50) {
+        dlg.flags.bq2 = Math.max(dlg.flags.bq2 ?? 0, 50)
+        inv.flash('双天机已灭 — bq2→50')
+        playedAvi.delete('1-10a6s'); playAvi('1-10a6s', true)
+      }
+    }
+    // 1-2s pig heart already handled elsewhere via qty
+  }
+
   /** Scene script hooks from mb/trigger/scene/*.txt (only sy1/蜀水-related subset). */
   let swsTimer: number | null = null
   function runSceneEnter(scene: string) {
@@ -433,7 +593,79 @@ async function main() {
       if (inv.qty(54) > 0 && (dlg.flags.cjg1 ?? 0) < 10)
         dlg.flags.cjg1 = Math.max(dlg.flags.cjg1 ?? 0, 10)
     }
-    if (scene === '1-10a6s' && (dlg.flags.bq2 ?? 0) < 50) playAvi('1-10a6s', true)
+    if (scene === '1-10a6s') {
+      if ((dlg.flags.bq2 ?? 0) < 50) playAvi('1-10a6s', true)
+      // RemItem bosses when not yet on quest / after clear
+      if ((dlg.flags.bq2 ?? 0) < 10) { dlg.onRem?.('boss', 'rem'); dlg.onRem?.('bosstianji', 'rem') }
+      if ((dlg.flags.bq2 ?? 0) >= 50) { dlg.onRem?.('boss', 'rem'); dlg.onRem?.('bosstianji', 'rem') }
+      else if ((dlg.flags.bq2 ?? 0) >= 10) {
+        // ensure dual bosses fightable — combat via E talk (jump 4) or auto-spawn if missing
+        if (!foes.some((f) => f.event === 'bosstianji' || f.name === '天机')) {
+          // fall through — talk starts combat
+        }
+      }
+      if ((dlg.flags.bq2 ?? 0) >= 10 && (dlg.flags.bq2 ?? 0) < 50 && inv.qty(124) <= 0)
+        inv.flash('双天机在此（需气凝珠在身；E 对话开战）')
+      if ((dlg.flags.bq2 ?? 0) < 10 && inv.qty(124) > 0) dlg.flags.bq2 = Math.max(dlg.flags.bq2 ?? 0, 10)
+    }
+    if (scene === '1-4s') {
+      if ((dlg.flags.bq1 ?? 0) < 10) inv.flash('（玲珑心线：先与沈万山/泊祁对话至 bq1≥10）')
+    }
+    if (scene === '1-5s') {
+      // SetPropToObj bjsm when xbjsm<1
+      if ((dlg.flags.xbjsm ?? 0) < 1 && inv.qty(122) <= 0)
+        inv.flash('附近有冰晶石木可采（触发器 bjsm，按 E）')
+    }
+    if (scene === '1-7s') {
+      if ((dlg.flags.bq1 ?? 0) >= 30 && (dlg.flags.bq1 ?? 0) < 50)
+        dlg.lockText['jiutianchi'] = 208
+      if ((dlg.flags.bq1 ?? 0) >= 50)
+        dlg.lockText['jiutianchi'] = -1
+      if ((dlg.flags.xqnxbz ?? 0) < 1 && inv.qty(123) <= 0)
+        inv.flash('附近有千年玄冰柱（qnxbz，按 E）')
+    }
+    if (scene === '1-8s') {
+      if ((dlg.flags.bq1 ?? 0) >= 30 && (dlg.flags.bq1 ?? 0) < 40 && inv.qty(121) <= 0)
+        inv.flash('九天池有天芝血参（tzxs，按 E）')
+      if (inv.qty(121) > 0 && (dlg.flags.bq1 ?? 0) < 40)
+        dlg.flags.bq1 = Math.max(dlg.flags.bq1 ?? 0, 40)
+    }
+    if (scene === '1-9s') {
+      if ((dlg.flags.zhs1 ?? 0) >= 1) { dlg.onRem?.('zs', 'rem'); dlg.onRem?.('bossdaxiang', 'rem') }
+      if ((dlg.flags.zhs1 ?? 0) >= 100) dlg.onRem?.('zs', 'rem')
+      if ((dlg.flags.zhs1 ?? 0) < 10)
+        inv.flash('炎炀关 — 战象拦路（E 对话开战）')
+      // standability: ensure walkable cells around boss NPC
+      const bo = objects.find((x) => String(x.EventID).toLowerCase() === 'bossdaxiang')
+      if (bo && walkGrid) {
+        const bx = Math.round((bo.x ?? 0) - origin.x), by = Math.round((bo.y ?? 0) - origin.y)
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const gx = bx + dx + origin.x, gy = by + dy + origin.y
+          const ly = gy, lx = gx
+          if (ly >= 0 && ly < walkGrid.length && lx >= 0 && lx < (walkGrid[ly]?.length ?? 0)) {
+            const row = walkGrid[ly].split(''); row[lx] = '1'; walkGrid[ly] = row.join('')
+          }
+          blocked.delete(`${bx + dx},${by + dy}`)
+        }
+        WG = { g: walkGrid, ox: origin.x, oy: origin.y }
+      }
+    }
+    if (scene === '1-11s') {
+      if ((dlg.flags.xqnz ?? 0) >= 1 || inv.qty(124) > 0) dlg.onRem?.('boss', 'rem')
+      // reset jiguan open when xqnz==0 per script
+      if ((dlg.flags.xqnz ?? 0) < 1) {
+        if ((dlg.bldStatus.jiguan1 ?? 0) < 1) { /* default closed until E */ }
+      }
+      inv.flash('气凝洞 — 启动三处机关 jiguan1/2/3 可获气凝珠')
+      if (inv.qty(124) > 0 && (dlg.flags.bq2 ?? 0) < 40)
+        dlg.flags.bq2 = Math.max(dlg.flags.bq2 ?? 0, 40)
+    }
+    if (scene === '1-0s' || scene === 'ren') {
+      // exit locks from scene/1-0s.txt
+      if ((dlg.flags.bq1 ?? 0) < 10 && dlg.exitText['1-4s'] !== -1) dlg.exitText['1-4s'] = dlg.exitText['1-4s'] ?? 303
+      if ((dlg.flags.bq1 ?? 0) < 30 && dlg.exitText['1-7as'] !== -1) dlg.exitText['1-7as'] = dlg.exitText['1-7as'] ?? 303
+      if ((dlg.flags.bq2 ?? 0) < 1 && dlg.exitText['1-9s'] !== -1) dlg.exitText['1-9s'] = dlg.exitText['1-9s'] ?? 303
+    }
     if (scene === '1-3s') {
       if ((dlg.flags.sy1 ?? 0) < 10) playAvi('1-3s', true)
       // fellow while escorting before sy1 30
@@ -504,10 +736,10 @@ async function main() {
     pos.y = meta.spawn?.[1] ?? mapH / 2
     curScene = (meta.scene ?? id).toLowerCase()
     curTriggers = ((meta as { triggers?: { x: number; y: number; script?: string }[] }).triggers ?? [])
-      .filter((g) => g.x < 4096 && g.y < 4096 && (/^go\s/.test(g.script ?? '') || /^(shushui)$/i.test((g.script ?? '').trim()))).map((g) => ({ x: g.x, y: g.y, script: g.script! }))
+      .filter((g) => g.x < 4096 && g.y < 4096 && (/\bgo\s/i.test(g.script ?? '') || /^(shushui|bjsm|qnxbz|tzxs|tianshu\d*|jiguan\d*)/i.test((g.script ?? '').trim()) || (curScene === '1-11s' && !(g.script ?? '').trim()))).map((g) => ({ x: g.x, y: g.y, script: g.script! }))
     if (arriveFrom) {
       // real exit pairing: arrive next to this map's own 'go <previous scene>' trigger, stepped toward the map centre
-      const back = curTriggers.filter((g) => g.script.split(/\s+/)[1]?.toLowerCase() === arriveFrom)
+      const back = curTriggers.filter((g) => { const p=g.script.trim().split(/\s+/); const i=p.findIndex(x=>x.toLowerCase()==='go'); return (i>=0?p[i+1]:p[1])?.toLowerCase()===arriveFrom })
       if (back.length) {
         const cx = back.reduce((s, g) => s + g.x, 0) / back.length - origin.x, cy = back.reduce((s, g) => s + g.y, 0) / back.length - origin.y
         const vx = mapW / 2 - cx, vy = mapH / 2 - cy, vl = Math.hypot(vx, vy) || 1
@@ -545,8 +777,12 @@ async function main() {
     }
     for (const m of meta.monsters ?? []) {
       const lx = m.x - origin.x, ly = m.y - origin.y
-      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: m.hp, maxHp: m.hp, cd: 1, hitT: 0, dead: 0, at: m.at, df: m.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
+      // PLACEHOLDER: keep RolePrivate AT/DF/HP but soft-DF in hud.dmg handles unwinability; still soft-cap HP≥5000 for scripted bosses
+      const hp = Math.min(m.hp, 2500)
+      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp, maxHp: hp, cd: 1, hitT: 0, dead: 0, at: m.at, df: m.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
     }
+    // Phase 25: scene loot from AddItem tables (scatter potions near spawn, once per scene visit)
+    spawnSceneLoot(curScene)
     const nf = Number(qs.get('foe') ?? '0')
     for (let i = 0; i < nf; i++) {
       const a = (i / Math.max(1, nf)) * Math.PI * 2, fx = pos.x + Math.cos(a) * 4, fy = pos.y + Math.sin(a) * 4
@@ -605,23 +841,14 @@ async function main() {
         if (d <= range && (!best || d < best.d)) best = { d, o }
       }
       if (best?.o.EventID) { dlg.state = 0; dlg.start(String(best.o.EventID)); dialogOpen = dlg.open; renderDialog() }
-      // Scene props: 1-6s shushui (蜀水) — scene/1-6s.txt SetPropToObj when xss<1
-      else {
-        for (const tr of curTriggers) {
-          if ((tr.script || '').trim().toLowerCase() !== 'shushui') continue
-          const d = Math.hypot(tr.x - origin.x - pos.x, tr.y - origin.y - pos.y)
-          if (d > range + 0.5) continue
-          if (inv.qty(120) > 0 || (dlg.flags.xss ?? 0) >= 1) { inv.flash('此处的蜀水已被取走'); break }
-          inv.add(120, 1); dlg.flags.xss = 1
-          inv.flash('获得 蜀水 — 可交予铁匠强化兵器（需 sy1≥99 才触发任务台词）')
-          break
-        }
-      }
+      else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
       attackT = 0.28; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.28)
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
+      const before = foes.filter((f) => f.dead <= 0 && !f.gone)
       playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats)
+      for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
       dlg.pick(Number(k) - 1); dialogOpen = dlg.open; renderDialog(); return
@@ -792,13 +1019,28 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() } }
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), groundLoot: () => groundLoot, triggers: () => curTriggers, killFlag: (ev: string) => {
+      const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
+      const f = foes.find(match)
+      if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
+    }, omniAttack: () => { const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
     if (warpCd <= 0 && warpArmed) for (const g of curTriggers) {
       if (Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 3.2) {
-        const dest = g.script.split(/\s+/)[1]?.toLowerCase()
+        const parts = g.script.trim().split(/\s+/)
+        // 'go 1-8s' | 'jiutianchi go 1-8s' | 'bjsm  jsm'
+        const gi = parts.findIndex((x) => x.toLowerCase() === 'go')
+        const dest = (gi >= 0 ? parts[gi + 1] : parts[1])?.toLowerCase()
+        const lockName = parts[0]?.toLowerCase()
+        // Phase 25: SetLockTextID jiutianchi 208 while bq1∈[30,50)
+        if (lockName && (dlg.lockText[lockName] ?? -1) >= 0) {
+          const lid = dlg.lockText[lockName]
+          dlg.npc = '出口'; dlg.lines = [dlg.text(lid).replace(/^\(对话 \d+\)$/, '') || '（此路未开——先完成泊祁的玲珑心指引。）']
+          dlg.idx = 0; dlg.choices = []; dlg.open = true
+          dialogOpen = true; renderDialog(); warpCd = 0.8; break
+        }
         if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) {
           const lock = dlg.exitLock(dest)
           if (lock) {
@@ -970,7 +1212,13 @@ async function main() {
       } })
     }
         // Phase 20: 蜀水 prop marker on 1-6s
-    if (curScene === '1-6s' && inv.qty(120) <= 0 && (dlg.flags.xss ?? 0) < 1) {
+    for (const g of groundLoot) {
+      if (g.taken) continue
+      const p = iso(g.x, g.y)
+      ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.arc(p.x, p.y - 8, 5, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif'; ctx.fillText('?', p.x - 3, p.y - 12)
+    }
+        if (curScene === '1-6s' && inv.qty(120) <= 0 && (dlg.flags.xss ?? 0) < 1) {
       for (const tr of curTriggers) {
         if ((tr.script || '').trim().toLowerCase() !== 'shushui') continue
         const sp = iso(tr.x - origin.x, tr.y - origin.y)
