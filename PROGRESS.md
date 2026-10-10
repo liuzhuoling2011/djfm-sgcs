@@ -854,7 +854,7 @@ Skipped (schema still broken).
 4. QA screenshots + honesty note on playtest readiness.
 
 ### Deploy
-- Source `d3d4e99` · Pages `284c641` · NAS `/volume4/web/djfm/`
+- Source `3722cf3` · Pages `c70646b` (main) · NAS FAILED (ssh SOCKS timeout)
 
 ### Samples
 - `assets/samples/phase32/`
