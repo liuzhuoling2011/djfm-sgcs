@@ -873,7 +873,7 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 - Harness uses omniAttack + killFlag for boss deaths after engaging (not pure WASD play).
 
 ### Deploy
-- source `b7ee77e`, Pages `583c803`, NAS sync attempted.
+- source `b7ee77e` / note `7c12ce7`, Pages `c27a7d2`, NAS NAS_OK.
 
 ### Samples
 - `assets/samples/phase25/playthrough_grid.png`, `pt_*.png`, `console.txt`, `playthrough_log.txt`
