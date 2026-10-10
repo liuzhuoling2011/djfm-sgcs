@@ -1,0 +1,24 @@
+{
+  "attack": "attack.wav",
+  "slash": "slash.wav",
+  "hit": "hit.wav",
+  "hit2": "hit2.wav",
+  "hurt": "hurt.wav",
+  "death": "death.wav",
+  "potion": "potion.wav",
+  "step": "step.wav",
+  "pickup": "pickup.wav",
+  "ui": "ui.wav",
+  "sources": {
+    "attack": "JIANSHIGONGJI.sy",
+    "slash": "daokan01.sy",
+    "hit": "JIZHONG.sy",
+    "hit2": "kanzhong.sy",
+    "hurt": "aida1.sy",
+    "death": "JIANSHISI.sy",
+    "potion": "HESHUI.sy",
+    "step": "jiaobu.sy",
+    "pickup": "BAOSHILUODI.sy",
+    "ui": "001.sy"
+  }
+}
