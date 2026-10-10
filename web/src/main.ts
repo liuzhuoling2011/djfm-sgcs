@@ -70,55 +70,6 @@ async function main() {
       <div id="toast" class="toast hidden"></div>
       <div id="dialog" class="dialog hidden"></div>
       <div id="inv" class="desk-wrap hidden"></div>
-      <div id="hud" class="game-hud" aria-label="状态栏">
-        <div class="hud-vitals">
-          <div class="vital">
-            <img class="orb-art" src="game/hud/jm_417.png" alt="">
-            <div class="vital-copy">
-              <div class="vital-top"><span>气血</span><b id="hud-hp">—</b></div>
-              <div class="meter hp"><i id="hud-hp-fill"></i></div>
-            </div>
-          </div>
-          <div class="vital">
-            <img class="orb-art" src="game/hud/jm_415.png" alt="">
-            <div class="vital-copy">
-              <div class="vital-top"><span>真气</span><b id="hud-mp">—</b></div>
-              <div class="meter mp"><i id="hud-mp-fill"></i></div>
-            </div>
-          </div>
-          <div class="hud-side">
-            <div class="meter thin stam" title="体力"><i id="hud-sp-fill"></i></div>
-            <div class="meter thin exp" title="经验"><i id="hud-exp-fill"></i></div>
-            <div class="lvl" id="hud-lvl">Lv 1</div>
-          </div>
-        </div>
-        <div class="hud-pots">
-          <button type="button" class="pot" data-pot="0"><span class="pot-key">1</span><span class="pot-name">小血瓶</span><span class="pot-qty" data-pot-qty="0">×0</span><i class="pot-cd" data-pot-cd="0"></i></button>
-          <button type="button" class="pot" data-pot="1"><span class="pot-key">2</span><span class="pot-name">小血瓶</span><span class="pot-qty" data-pot-qty="1">×0</span><i class="pot-cd" data-pot-cd="1"></i></button>
-          <button type="button" class="pot" data-pot="2"><span class="pot-key">3</span><span class="pot-name">小气瓶</span><span class="pot-qty" data-pot-qty="2">×0</span><i class="pot-cd" data-pot-cd="2"></i></button>
-          <button type="button" class="pot" data-pot="3"><span class="pot-key">4</span><span class="pot-name">小气瓶</span><span class="pot-qty" data-pot-qty="3">×0</span><i class="pot-cd" data-pot-cd="3"></i></button>
-        </div>
-        <div class="hud-combat">
-          <button type="button" class="slot" id="hud-weapon" title="Space 攻击">
-            <img src="game/hud/jm_1910.png" alt="">
-            <span class="slot-key">Space</span>
-            <span class="slot-state" id="hud-weapon-state">就绪</span>
-          </button>
-          <button type="button" class="slot" id="hud-q" title="Q">
-            <img src="game/hud/jm_63.png" alt="">
-            <span class="slot-key">Q</span>
-            <span class="slot-state" id="hud-q-state">就绪</span>
-          </button>
-        </div>
-        <div class="hud-info">
-          <div class="hud-money" id="hud-money">金钱 0</div>
-          <div class="hud-hints">E 对话 · I 行囊 · 1/3 药</div>
-          <div class="hud-skill-row">
-            <button type="button" class="mini" id="hud-f1">F1 扫叶</button>
-            <button type="button" class="mini" id="hud-f2">F2 疾电</button>
-          </div>
-        </div>
-      </div>
     </div>
     <p class="hint" id="hint">Loading…</p>
     <section class="panel"><h2>样本</h2><div class="grid" id="grid"></div></section>
@@ -130,7 +81,6 @@ async function main() {
   const invEl = document.querySelector<HTMLDivElement>('#inv')!
   const toastEl = document.querySelector<HTMLDivElement>('#toast')!
   const dialogEl = document.querySelector<HTMLDivElement>('#dialog')!
-  const hudEl = document.querySelector<HTMLDivElement>('#hud')!
   if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · WASD移动 · Shift奔跑 · E对话 · Space攻击 · I行囊 · 1/3药'
   for (const id of packIds) {
     const btn = document.createElement('button')
@@ -493,74 +443,20 @@ async function main() {
     invEl.querySelectorAll('[data-close-inv]').forEach((b) => b.addEventListener('click', () => { inv.open = false; renderInv() }))
     placeChrome()
   }
-  /** Stack dialog and desks above the CSS status bar. Sizes come from layout, not an 800px Wine grid. */
+  /** Lift HTML dialog and desks above the canvas stone bar (110px in 800-space, scaled with the view). */
   let hudSpace = 0
   function placeChrome() {
-    const hudH = hudEl.offsetHeight
-    if (!hudH || hudH === hudSpace) return
-    hudSpace = hudH
-    stageEl.style.setProperty('--hud-space', `${hudH + 8}px`)
+    const w = canvas.getBoundingClientRect().width
+    if (w < 8) return
+    const space = Math.round(110 * (w / 800) + 10)
+    if (space === hudSpace) return
+    hudSpace = space
+    stageEl.style.setProperty('--hud-space', `${space}px`)
   }
   window.addEventListener('resize', () => { hudSpace = 0; placeChrome() })
   function renderToast() {
     toastEl.classList.toggle('hidden', inv.toastT <= 0)
     if (inv.toastT > 0) toastEl.textContent = inv.toast
-  }
-  const hudHp = document.querySelector<HTMLElement>('#hud-hp')!
-  const hudHpFill = document.querySelector<HTMLElement>('#hud-hp-fill')!
-  const hudMp = document.querySelector<HTMLElement>('#hud-mp')!
-  const hudMpFill = document.querySelector<HTMLElement>('#hud-mp-fill')!
-  const hudSpFill = document.querySelector<HTMLElement>('#hud-sp-fill')!
-  const hudExpFill = document.querySelector<HTMLElement>('#hud-exp-fill')!
-  const hudLvl = document.querySelector<HTMLElement>('#hud-lvl')!
-  const hudMoney = document.querySelector<HTMLElement>('#hud-money')!
-  const hudWeapon = document.querySelector<HTMLElement>('#hud-weapon')!
-  const hudWeaponState = document.querySelector<HTMLElement>('#hud-weapon-state')!
-  const hudQ = document.querySelector<HTMLElement>('#hud-q')!
-  const hudQState = document.querySelector<HTMLElement>('#hud-q-state')!
-  const hudF1 = document.querySelector<HTMLButtonElement>('#hud-f1')!
-  const hudF2 = document.querySelector<HTMLButtonElement>('#hud-f2')!
-  const potQtyEls = [...hudEl.querySelectorAll<HTMLElement>('[data-pot-qty]')]
-  const potCdEls = [...hudEl.querySelectorAll<HTMLElement>('[data-pot-cd]')]
-  const potBtns = [...hudEl.querySelectorAll<HTMLElement>('.pot')]
-  function syncHud() {
-    const hpF = stats.maxHp > 0 ? Math.max(0, Math.min(1, stats.hp / stats.maxHp)) : 0
-    const mpF = stats.maxMp > 0 ? Math.max(0, Math.min(1, stats.mp / stats.maxMp)) : 0
-    hudHp.textContent = `${Math.round(stats.hp)} / ${Math.round(stats.maxHp)}`
-    hudMp.textContent = `${Math.round(stats.mp)} / ${Math.round(stats.maxMp)}`
-    hudHpFill.style.width = `${(hpF * 100).toFixed(1)}%`
-    hudMpFill.style.width = `${(mpF * 100).toFixed(1)}%`
-    hudSpFill.style.width = `${(Math.max(0, Math.min(1, stats.sp ?? 1)) * 100).toFixed(1)}%`
-    const expNeed = (INIT.exp_per_lv ?? 100) * Math.max(1, stats.lvl)
-    const expF = Math.max(0, Math.min(1, stats.exp / Math.max(1, expNeed)))
-    hudExpFill.style.width = `${(expF * 100).toFixed(1)}%`
-    hudLvl.textContent = `Lv ${stats.lvl}`
-    hudMoney.textContent = `金钱 ${inv.money}`
-    const pots = inv.potSlots()
-    const counts = [pots[0], pots[0], pots[2], pots[2]]
-    const cdFrac = inv.potCdMax > 0 ? Math.max(0, Math.min(1, inv.potCd / inv.potCdMax)) : 0
-    for (let i = 0; i < 4; i++) {
-      if (potQtyEls[i]) potQtyEls[i].textContent = `×${counts[i]}`
-      potBtns[i]?.classList.toggle('empty', counts[i] <= 0)
-      if (potCdEls[i]) potCdEls[i].style.height = cdFrac > 0 ? `${Math.round(cdFrac * 100)}%` : '0'
-    }
-    const swinging = attackT > 0.02
-    const cooling = attackCd > 0.02 && !swinging
-    const ready = !swinging && !cooling
-    hudWeapon.classList.toggle('ready', ready)
-    hudWeapon.classList.toggle('swing', swinging)
-    hudWeapon.classList.toggle('cool', cooling)
-    hudWeaponState.textContent = swinging ? '挥砍' : cooling ? '冷却' : '就绪'
-    const qPoor = stats.mp < 10 && ready
-    hudQ.classList.toggle('ready', ready && !qPoor)
-    hudQ.classList.toggle('swing', swinging)
-    hudQ.classList.toggle('cool', cooling || qPoor)
-    hudQState.textContent = swinging ? '挥砍' : qPoor ? '真气不足' : cooling ? '冷却' : '就绪'
-    const left = inv.skill('left')?.name
-    const right = inv.skill('right')?.name
-    if (left) hudF1.textContent = `F1 ${left}`
-    if (right) hudF2.textContent = `F2 ${right}`
-    placeChrome()
   }
 
   function clampDialog() {
@@ -1247,13 +1143,6 @@ async function main() {
     if (dialogOpen || inv.shopOpen || inv.embedOpen) return
     if (inv.usePotionSlot(slot, stats)) { playSfx('potion'); hud.pots = [...inv.potSlots()]; renderInv() }
   }
-  hudEl.querySelectorAll<HTMLButtonElement>('[data-pot]').forEach((b) => {
-    b.addEventListener('click', () => doPotion(Number(b.dataset.pot)))
-  })
-  hudEl.querySelector('#hud-weapon')?.addEventListener('click', () => doMelee())
-  hudEl.querySelector('#hud-q')?.addEventListener('click', () => doQSkill())
-  hudEl.querySelector('#hud-f1')?.addEventListener('click', () => doSkillLeft())
-  hudEl.querySelector('#hud-f2')?.addEventListener('click', () => doSkillRight())
 
   const keys = new Set<string>()
   let facing = 0, animT = 0, moving = false, attackPending = false
@@ -1887,7 +1776,8 @@ async function main() {
       ctx.fillText('正在返回落脚处…', canvas.width / 2, canvas.height / 2 + 22)
       ctx.textAlign = 'left'
     }
-    syncHud()
+    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax, attackCd, attackReady: attackCd <= 0 && attackT <= 0 })
+    placeChrome()
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })
