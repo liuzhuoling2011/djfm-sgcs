@@ -854,7 +854,7 @@ Skipped (schema still broken).
 4. QA screenshots + honesty note on playtest readiness.
 
 ### Deploy
-- (hashes after push)
+- Source `d3d4e99` · Pages `284c641` · NAS `/volume4/web/djfm/`
 
 ### Samples
 - `assets/samples/phase32/`
