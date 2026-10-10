@@ -875,5 +875,5 @@ Skipped (schema still broken).
 - Some Type-12 auto NPCs share wrong graph 601.
 
 ### Deploy
-- Pages + NAS; source commit + PROGRESS.
+- Source `368f54c`, Pages `1853f90`, NAS_OK.
 
