@@ -843,6 +843,31 @@ Skipped (schema still broken).
 
 
 
+## Phase 28 — act-1 polish (JM / VFX / Init growth / gait)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Goals
+1. Tighten walk gait vs Wine (stride ↔ speed).
+2. ShowJM shop/embed/bag closer to original ResJM 326×226.
+3. Skill VFX timing + ice hazard art animation.
+4. Player Level/AT/DF/HP/MP from `mb/player/Init.txt` (not only foe caps).
+
+### Changes
+- **Walk:** `animT += speed * dt * 1.15` (distance-locked stride); walk 4.6 / run 7.2; stamina regen/use from Init.
+- **ShowJM:** panels sized **326×226**; shop BUY/SELL/CLOSE strip; embed gem 25×25 grid; bag list with prop icons.
+- **VFX:** `loadFxSprites` from `game/fx/index.json` (jidian/q/ice frames); slash peak-timed 0.24s; ice hazards cycle Map_Icecave plates @1.35× with pulse.
+- **Growth:** `setInitGrowth` / `applyInitLevel` / `tryLevelUp` in `hud.ts` — AT+4 DF+4 HP+80 MP+1.2 per lv; HUD shows `AT`; `game/data/init_male.json` + `game.json` combat.init_male.
+- Foes still **RolePrivate → scene_tier cap** (raw AT 315+ unwinnable at Init scale).
+
+### Samples
+- `assets/samples/phase28/` (shop, embed, bag, ice, walk, HUD AT)
+
+### Deploy
+- Source + Pages + NAS (hashes filled after push)
+
+---
+
 ## Phase 27 — act-1 polish (walk + NPC names priority)
 
 **Date:** 2026-10-10 (UTC+8)

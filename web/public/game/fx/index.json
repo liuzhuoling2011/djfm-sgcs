@@ -620,5 +620,36 @@
       "h": 218,
       "op": 16311
     }
+  ],
+  "ice_hazard_frames": [
+    "ice_hazard.png",
+    "ice_hazard_b.png",
+    "ice_2472.png"
+  ],
+  "jidian_frames": [
+    "jidian_250.png",
+    "jidian_251.png",
+    "jidian_283.png",
+    "jidian_284.png",
+    "jidian_285.png",
+    "jidian_286.png",
+    "jidian_287.png",
+    "jidian_288.png",
+    "jidian_289.png",
+    "jidian_471.png",
+    "jidian_473.png",
+    "jidian_474.png"
+  ],
+  "q_frames": [
+    "q_attack_390.png",
+    "q_attack_391.png",
+    "q_attack_392.png",
+    "q_attack_393.png",
+    "q_attack_394.png",
+    "q_attack_396.png",
+    "q_attack_397.png",
+    "q_attack_398.png",
+    "q_attack_399.png",
+    "q_attack_400.png"
   ]
 }

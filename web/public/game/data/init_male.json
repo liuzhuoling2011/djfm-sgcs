@@ -1,0 +1,23 @@
+{
+  "name": "男主角",
+  "id": 4,
+  "at": 40.0,
+  "at_per_lv": 4.0,
+  "df": 30.0,
+  "df_per_lv": 4.0,
+  "hp": 800.0,
+  "hp_per_lv": 80.0,
+  "hp_regen": 1.4,
+  "mp": 36.0,
+  "mp_per_lv": 1.2,
+  "mp_regen": 1.2,
+  "stamina": 80.0,
+  "stamina_per_lv": 0.4,
+  "stamina_regen": 3.0,
+  "stamina_use": 10.0,
+  "hit": 21.0,
+  "hit_per_lv": 3.0,
+  "money": 400,
+  "move": 16.0,
+  "exp_per_lv": 100
+}

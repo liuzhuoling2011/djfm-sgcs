@@ -197,7 +197,7 @@
   "interact_key": "e",
   "interact_range": 2.0,
   "combat": {
-    "note": "PLACEHOLDER melee: AT−DF/2 ±10% (exe formula not in mb tables; ComeOn strings only name RolePrivate.txt). Soft-DF OFF unless ?softdf=1. Foe caps from Init.txt 男主角 AT40+4/lv so expected scene level can clear. Ice DoT uses define.ini-style contact (not MaxIceDp).",
+    "note": "Melee AT−DF/2 ±10%. Soft-DF only with ?softdf=1. Player growth from mb/player/Init.txt 男主角. Foe RolePrivate raw AT/HP are era-scaled; scene_tier caps keep act-1 clearable at Init AT for expected scene level.",
     "softdf_query": "softdf=1",
     "scene_tier": {
       "1-1s": 1,
@@ -245,13 +245,28 @@
       58
     ],
     "init_male": {
-      "at": 40,
-      "at_per_lv": 4,
-      "df": 30,
-      "df_per_lv": 4,
-      "hp": 800,
-      "hp_per_lv": 80
+      "name": "男主角",
+      "id": 4,
+      "at": 40.0,
+      "at_per_lv": 4.0,
+      "df": 30.0,
+      "df_per_lv": 4.0,
+      "hp": 800.0,
+      "hp_per_lv": 80.0,
+      "hp_regen": 1.4,
+      "mp": 36.0,
+      "mp_per_lv": 1.2,
+      "mp_regen": 1.2,
+      "stamina": 80.0,
+      "stamina_per_lv": 0.4,
+      "stamina_regen": 3.0,
+      "stamina_use": 10.0,
+      "hit": 21.0,
+      "hit_per_lv": 3.0,
+      "money": 400,
+      "move": 16.0,
+      "exp_per_lv": 100
     },
-    "help": "占位数值：怪物 AT/DF/HP 按场景档位封顶（见 game.json combat），伤害 AT−DF/2。加 ?softdf=1 启用软DF。"
+    "help": "成长：Init 男主角 AT40+4/lv DF30+4 HP800+80 MP36+1.2。怪物先取 RolePrivate 再按场景档位封顶。"
   }
 }

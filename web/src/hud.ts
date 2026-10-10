@@ -6,6 +6,40 @@ export type Foe = {
   kbX?: number; kbY?: number; gone?: boolean; event?: string
 }
 export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
+/** mb/player/Init.txt 男主角 growth */
+export type InitGrowth = {
+  at: number; at_per_lv: number; df: number; df_per_lv: number
+  hp: number; hp_per_lv: number; mp: number; mp_per_lv: number
+  stamina?: number; stamina_per_lv?: number; exp_per_lv?: number
+  hp_regen?: number; mp_regen?: number; stamina_regen?: number; stamina_use?: number
+}
+export const DEFAULT_INIT: InitGrowth = {
+  at: 40, at_per_lv: 4, df: 30, df_per_lv: 4, hp: 800, hp_per_lv: 80, mp: 36, mp_per_lv: 1.2,
+  stamina: 80, stamina_per_lv: 0.4, exp_per_lv: 100, hp_regen: 1.4, mp_regen: 1.2, stamina_regen: 3, stamina_use: 10,
+}
+export let INIT = { ...DEFAULT_INIT }
+export function setInitGrowth(g: Partial<InitGrowth>) { INIT = { ...DEFAULT_INIT, ...g } }
+/** Apply Init.txt stats for absolute level (1-based). */
+export function applyInitLevel(st: Stats, lvl: number) {
+  const L = Math.max(1, Math.floor(lvl))
+  const n = L - 1
+  st.lvl = L
+  st.at = INIT.at + INIT.at_per_lv * n
+  st.df = INIT.df + INIT.df_per_lv * n
+  st.maxHp = INIT.hp + INIT.hp_per_lv * n
+  st.maxMp = INIT.mp + INIT.mp_per_lv * n
+  st.hp = Math.min(st.hp, st.maxHp)
+  st.mp = Math.min(st.mp, st.maxMp)
+}
+export function tryLevelUp(st: Stats): boolean {
+  const need = (INIT.exp_per_lv ?? 100) * st.lvl
+  if (st.exp < need) return false
+  st.exp -= need
+  applyInitLevel(st, st.lvl + 1)
+  st.hp = st.maxHp
+  st.mp = st.maxMp
+  return true
+}
 // Damage: original formula is exe-only. Working model AT−DF/2 ±10% min1 (PROGRESS Phase 17c).
 // Soft-DF formula hack is OPT-IN only (?softdf=1). Default uses raw DF; act-1 playability comes from
 // PLACEHOLDER foe stat caps in main.ts (game.json combat.scene_tier), not this formula.
@@ -52,7 +86,7 @@ export class Hud {
     const sf = Math.max(0, Math.min(1, s.sp ?? 1))
     if (this.stam) { const w = Math.round(this.stam.width * sf); if (w > 0) ctx.drawImage(this.stam, 0, 0, w, this.stam.height, x0 + 255, y0 + 65, w, this.stam.height) }
     // EXP: thin strip in the right-hand groove (x415..555); the bar art there is empty in Wine at 0 EXP
-    ctx.fillStyle = '#c89a3a'; ctx.fillRect(x0 + 415, y0 + 66, Math.round(140 * (s.exp % (s.lvl * 100)) / (s.lvl * 100)), 3)
+    const expNeed = (INIT.exp_per_lv ?? 100) * s.lvl; ctx.fillStyle = '#c89a3a'; ctx.fillRect(x0 + 415, y0 + 66, Math.round(140 * Math.min(1, s.exp / Math.max(1, expNeed))), 3)
     // Potion slots 1–4 (Wine: icons at x258+24k, y572; JM 92 red, 90 blue; yellow key digit at +10,+5)
     ctx.font = 'bold 11px ui-sans-serif,system-ui'; ctx.textBaseline = 'top'
     for (let k = 0; k < 4; k++) {
@@ -71,7 +105,7 @@ export class Hud {
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
-    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF(?softdf=1)' : '  ·占位AT−DF/2') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
+    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl} AT${Math.round(s.at ?? INIT.at)}` + (SOFT_DF ? '  ·软DF(?softdf=1)' : '  ·Init成长') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
   }
   // Minimap: JM 1549 frame (137×133) at Wine (663,0) = top-right; interior 6..131 × 6..104; name strip below
   drawMinimap(ctx: CanvasRenderingContext2D, ground: CanvasImageSource | null, gx: number, gy: number, k: number,
@@ -134,7 +168,7 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
       f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.28; hits++
       // knockback away from player
       if (d > 0.01) { f.kbX = (dx / d) * 4.5; f.kbY = (dy / d) * 4.5 }
-      if (f.hp <= 0) { f.dead = 0.9; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
+      if (f.hp <= 0) { f.dead = 0.9; f.actT = 0; st.exp += f.exp ?? 25; while (tryLevelUp(st)) { /* Init.txt growth */ } }
     }
   }
   return hits

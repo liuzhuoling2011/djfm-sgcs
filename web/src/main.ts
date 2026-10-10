@@ -1,8 +1,8 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, type Foe, type Stats } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, INIT, type Foe, type Stats } from './hud'
 import { Inventory } from './inventory'
-import { spawnFx, tickFx, drawFx, type SkillFx } from './fx'
+import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 
 type Vec = { x: number; y: number }
 type MapObj = {
@@ -103,13 +103,22 @@ async function main() {
   helpEl.className = 'combat-help'
   helpEl.id = 'combat-help'
   const helpTxt = (gameData as { combat?: { help?: string } } | null)?.combat?.help
-    ?? '占位数值：伤害 AT−DF/2；怪物按场景档位封顶。?softdf=1 软DF。'
+    ?? 'Init成长 AT40+4/lv；伤害 AT−DF/2；怪物 RolePrivate+场景封顶。?softdf=1 软DF。'
   helpEl.innerHTML = helpTxt + ' <button type="button" style="margin-left:8px">知道了</button>'
   document.body.append(helpEl)
   helpEl.querySelector('button')?.addEventListener('click', () => helpEl.classList.add('hidden'))
   window.setTimeout(() => helpEl.classList.add('hidden'), 14000)
   if (SOFT_DF) console.info('[djfm] soft-DF ON (?softdf=1)')
   else console.info('[djfm] soft-DF off; using placeholder foe caps')
+  {
+    const ig = (gameData as { combat?: { init_male?: Record<string, number> } })?.combat?.init_male
+    if (ig) setInitGrowth(ig)
+    try {
+      const j = await (await fetch('game/data/init_male.json')).json()
+      setInitGrowth(j)
+    } catch { /* game.json combat.init_male already applied */ }
+  }
+  await loadFxSprites()
   let tintOn = qs.get('tint') !== '0'
   let rainOn = qs.get('rain') !== '0'
   let ground: HTMLImageElement | null = null
@@ -302,8 +311,9 @@ async function main() {
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
-  // mb/player/Init.txt 男主角: AT40(+4/lv) DF30(+4) HP800(+80) regen1.4 MP36 Stamina80 regen3/s use10/s
-  const stats: Stats = { hp: 800, maxHp: 800, mp: 36, maxMp: 36, exp: 0, lvl: 1, at: 40, df: 30, sp: 1 }
+  // mb/player/Init.txt 男主角 — applied via applyInitLevel / setInitGrowth
+  const stats: Stats = { hp: INIT.hp, maxHp: INIT.hp, mp: INIT.mp, maxMp: INIT.mp, exp: 0, lvl: 1, at: INIT.at, df: INIT.df, sp: 1 }
+  applyInitLevel(stats, 1)
   let monSets: NonNullable<MapMeta['monster_sets']> = {}
   const monImgs = new Map<string, HTMLImageElement>()
   let foes: Foe[] = []
@@ -335,41 +345,48 @@ async function main() {
     if (!show) return
     const rows = inv.items.map((it) => {
       const d = inv.props[String(it.id)]
-      return `<li><span>${d?.name ?? '#'+it.id}</span><span>×${it.qty}</span></li>`
-    }).join('') || '<li>（空）</li>'
+      const ico = d?.icon ? `<img class="ico" src="game/props/${d.icon}.png" alt="" onerror="this.style.display='none'"/>` : ''
+      return `<li>${ico}<span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
+    }).join('') || '<li class="empty">（空）</li>'
     if (inv.shopOpen) {
-      // ShowJM 20|86 → JM_DEAL layout; panel_1550 = ResJM size-matched deal/list frame
+      // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226; BUY/SELL/CLOSE from JMMDL
       const slots = inv.shopCatalog().map((r, i) => {
         const n = inv.props[String(r.id)]?.name ?? r.id
-        return `<button data-buy="${r.id}">${i + 1}. ${n}<br/><small>${r.price} 金</small></button>`
+        return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}</span><span class="pr">${r.price} 金</span></button>`
       }).join('')
       invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
-        <div class="jm-title">铁匠铺 · 买卖（金锭购买）</div>
+        <div class="jm-title">买卖</div>
         <div class="jm-body"><div class="jm-slots">${slots}</div></div>
-        <div class="jm-foot">金钱 ${inv.money} · 蜀水×${inv.qty(120)}</div>
-        <button class="jm-close" data-close-shop title="关闭">×</button>
+        <div class="jm-money">金钱 ${inv.money}</div>
+        <div class="jm-deal-btns">
+          <button type="button" class="jm-deal buy" data-close-shop title="购入后点商品">购入</button>
+          <button type="button" class="jm-deal sell" data-close-shop>卖出</button>
+          <button type="button" class="jm-deal close" data-close-shop>关闭</button>
+        </div>
       </div></div>`
     } else if (inv.embedOpen) {
-      // ShowJM 20|62|92 → JM_Enchase; panel_591 = equip/embed stone frame
+      // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226; gem rects 25×25
       invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
-        <div class="jm-title">镶嵌 · ${inv.weaponName()}</div>
-        <div class="jm-embed-info">经蜀水淬火的兵器可镶嵌更多宝石。<br/>
-          当前槽位 ×${inv.weaponSlots}　金钱 ${inv.money}<br/>
-          花费 200 金强化兵器（AT+${2 * inv.weaponSlots}）</div>
-        <div class="jm-embed-actions">
-          <button data-embed>确认镶嵌</button>
-          <button data-close-embed>取消</button>
+        <div class="jm-title">镶嵌</div>
+        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽位 ×${inv.weaponSlots}<br/>
+          金钱 ${inv.money}　花费 200 金（AT+${2 * inv.weaponSlots}）</div>
+        <div class="jm-gem-grid" aria-hidden="true">
+          ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.weaponSlots ? ' on' : ''}"></div>`).join('')}
         </div>
-        <button class="jm-close" data-close-embed>×</button>
+        <div class="jm-embed-actions">
+          <button type="button" data-embed>确认</button>
+          <button type="button" data-close-embed>关闭</button>
+        </div>
       </div></div>`
     } else {
       invEl.innerHTML = `<div class="box"><div class="jm-frame bag">
-        <div class="jm-title">行囊 · ${inv.money} 金</div>
-        <div class="jm-body"><ul>${rows}</ul>
-          <p style="margin-top:8px;color:#c9a86a">装备：${inv.weaponName()}　F1 ${inv.skill('left')?.name ?? ''}　F2 ${inv.skill('right')?.name ?? ''}<br/>
-          <small>I 开关 · 1/3 药 · 5 飞蝗石 · 6 指南珠 · Esc</small></p>
+        <div class="jm-title">行囊</div>
+        <div class="jm-money">金钱 ${inv.money}</div>
+        <div class="jm-body"><ul class="jm-bag-list">${rows}</ul>
+          <p class="jm-bag-foot">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'}<br/>
+          <small>I 开关 · 1–4 药 · Esc 关</small></p>
         </div>
-        <button class="jm-close" data-close-inv>×</button>
+        <button type="button" class="jm-close" data-close-inv>×</button>
       </div></div>`
     }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
@@ -504,10 +521,12 @@ async function main() {
   let groundLoot: GroundLoot[] = []
   type IceHaz = { x: number; y: number }
   let iceHazards: IceHaz[] = []
-  let iceImg: HTMLImageElement | null = null
-  let iceImgB: HTMLImageElement | null = null
-  try { iceImg = await loadImage('game/fx/ice_hazard.png') } catch { /* */ }
-  try { iceImgB = await loadImage('game/fx/ice_hazard_b.png') } catch { /* */ }
+  const iceFrames: HTMLImageElement[] = []
+  for (const n of ['ice_hazard.png', 'ice_hazard_b.png', 'ice_2472.png', 'ice_2417.png']) {
+    try { iceFrames.push(await loadImage(`game/fx/${n}`)) } catch { /* */ }
+  }
+  const iceImg = iceFrames[0] ?? null
+  const iceImgB = iceFrames[1] ?? iceFrames[0] ?? null
   function spawnSceneLoot(scene: string) {
     groundLoot = []
     if (lootedScenes.has(scene)) return
@@ -932,7 +951,7 @@ async function main() {
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
-      attackT = 0.28; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.28)
+      attackT = 0.24; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.24)
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
       playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats)
@@ -982,7 +1001,7 @@ async function main() {
         const at0 = stats.at ?? 40; stats.at = at0 * (mult > 0 && mult < 5 ? Math.max(mult, 1) : 1.2)
         for (let a = 0; a < 8; a++) playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.2)
         stats.at = at0
-        skillFx = spawnFx('saoye', 0, 0.5)
+        skillFx = spawnFx('saoye', 0)
         inv.flash(`${sk?.name ?? '扫叶'}！`)
       } else inv.flash('真气不足')
     }
@@ -996,7 +1015,7 @@ async function main() {
         const at0 = stats.at ?? 40; stats.at = at0 * mult
         playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2)
         stats.at = at0
-        skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI, 0.4)
+        skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI)
         inv.flash(`${sk?.name ?? '疾电'}！`)
       } else inv.flash('真气不足')
     }
@@ -1025,7 +1044,7 @@ async function main() {
     }
     if (k === 'q' && !dialogOpen && attackCd <= 0 && stats.mp >= 10) {
       stats.mp -= 10; attackT = 0.4; attackCd = 0.8
-      skillFx = spawnFx('q', 0, 0.45)
+      skillFx = spawnFx('q', 0)
       for (let a = 0; a < 8; a++) playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.5)
     }
   })
@@ -1064,18 +1083,21 @@ async function main() {
       const sdx = dx - dy, sdy = dx + dy
       const oct = Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4))
       facing = (7 - ((oct % 8) + 8) % 8 + 8) % 8
-      const sprinting = keys.has('shift') && (stats.sp ?? 1) > 0.02
-      animT += dt * (sprinting ? 9 : 6)
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
-    stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -10 / 80 : 3 / 80) * dt))
-    const speed = running ? 8 : 5
+    const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)
+    const stamRegen = (INIT.stamina_regen ?? 3) / Math.max(1, INIT.stamina ?? 80)
+    stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -stamUse : stamRegen) * dt))
+    // Init move 16 ≈ cells/s scale; web uses 5 walk / 8 run (tuned for map cells)
+    const speed = running ? 7.2 : 4.6
     const nx = pos.x + (dx / len) * speed * dt
     const ny = pos.y + (dy / len) * speed * dt
     if (walkable(nx, pos.y)) pos.x = nx
     if (walkable(pos.x, ny)) pos.y = ny
     pos.x = Math.max(0, Math.min(mapW - 1, pos.x))
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
+    // Phase 28: stride locked to distance (~1.15 cycles per cell) so gait matches speed
+    if (moving) animT += speed * dt * 1.15
 
     // AddFellow companion follows player (TransToPlayer approx)
     if (fellow) {
@@ -1151,7 +1173,8 @@ async function main() {
       }
     }
     stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.2)
-    stats.hp = Math.min(stats.maxHp, stats.hp + dt * 1.4)
+    stats.hp = Math.min(stats.maxHp, stats.hp + dt * (INIT.hp_regen ?? 1.4))
+    stats.mp = Math.min(stats.maxMp, stats.mp + dt * (INIT.mp_regen ?? 1.2))
     if (stats.hp <= 0) { stats.hp = stats.maxHp; pos.x = spawnPos.x; pos.y = spawnPos.y }
     const focus = iso(pos.x, pos.y)
     cam.x += (canvas.width / 2 - focus.x - cam.x) * Math.min(1, 6 * dt)
@@ -1339,9 +1362,20 @@ async function main() {
     for (const hz of iceHazards) {
       const p = iso(hz.x, hz.y)
       const x = p.x + cam.x, y = p.y + cam.y
-      const im = ((Math.floor(performance.now() / 400) + Math.floor(hz.x + hz.y)) % 2 === 0 ? iceImg : iceImgB) || iceImg
-      if (im) ctx.drawImage(im, x - im.width / 2, y - im.height + 4)
-      else { ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 14, 8, 0, 0, Math.PI * 2); ctx.fill() }
+      const fi = iceFrames.length
+        ? (Math.floor(performance.now() / 280) + Math.floor(hz.x * 3 + hz.y * 5)) % iceFrames.length
+        : 0
+      const im = iceFrames[fi] || iceImg
+      if (im) {
+        ctx.save()
+        ctx.globalAlpha = 0.88 + 0.1 * Math.sin(performance.now() / 400 + hz.x)
+        // slight scale pulse so plate reads as live hazard (Map_Icecave art)
+        const sc = 1.35
+        ctx.drawImage(im, x - im.width * sc / 2, y - im.height * sc + 6, im.width * sc, im.height * sc)
+        ctx.restore()
+      } else {
+        ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 16, 9, 0, 0, Math.PI * 2); ctx.fill()
+      }
     }
         // Phase 20: 蜀水 prop marker on 1-6s
     for (const g of groundLoot) {
