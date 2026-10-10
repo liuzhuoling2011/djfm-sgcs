@@ -33,7 +33,7 @@ BODY = {'CA': (34, 0), 'HD': (112, 128), 'TK': (114, 256)}
 RH_SID, RH_BASE = 165, 896
 RH_DIR_OFF = 3
 # Phase41: Wine strips — sword behind for S/SW/W/NW/N/NE; over for E/SE
-RH_UNDER_BODY = [0, 1, 2, 3, 4, 5]
+RH_UNDER_BODY = [3, 4, 5]
 
 CX, CY = 64, 100
 CANVAS = (128, 128)

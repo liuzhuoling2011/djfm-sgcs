@@ -1342,8 +1342,8 @@ async function main() {
     const moved = Math.hypot(pos.x - ox0, pos.y - oy0)
     if (moved > 1e-5) {
       const prev = animT
-      // Phase41: ~2.2 cells/cycle walk (slower footwork vs slide); run same scale via moved
-      animT += moved * 2.4
+      // Phase42: Wine hold GIFs — walk ~2.0 (weightier), run ~1.65 (longer stride per cycle)
+      animT += moved * (running ? 1.65 : 2.0)
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 

@@ -1,0 +1,82 @@
+{
+  "hold_W.gif": {
+    "facing": 4,
+    "bytes": 126876,
+    "moving": true
+  },
+  "hold_A.gif": {
+    "facing": 2,
+    "bytes": 134102,
+    "moving": true
+  },
+  "hold_S.gif": {
+    "facing": 0,
+    "bytes": 99051,
+    "moving": true
+  },
+  "hold_D.gif": {
+    "facing": 6,
+    "bytes": 117926,
+    "moving": true
+  },
+  "hold_WA.gif": {
+    "facing": 3,
+    "bytes": 126948,
+    "moving": true
+  },
+  "hold_WD.gif": {
+    "facing": 5,
+    "bytes": 146010,
+    "moving": true
+  },
+  "hold_SA.gif": {
+    "facing": 1,
+    "bytes": 142132,
+    "moving": true
+  },
+  "hold_SD.gif": {
+    "facing": 7,
+    "bytes": 124755,
+    "moving": true
+  },
+  "run_hold_W.gif": {
+    "facing": 4,
+    "bytes": 135676,
+    "moving": true
+  },
+  "run_hold_A.gif": {
+    "facing": 2,
+    "bytes": 122070,
+    "moving": true
+  },
+  "run_hold_S.gif": {
+    "facing": 0,
+    "bytes": 122254,
+    "moving": true
+  },
+  "run_hold_D.gif": {
+    "facing": 6,
+    "bytes": 111779,
+    "moving": true
+  },
+  "run_hold_WA.gif": {
+    "facing": 3,
+    "bytes": 106869,
+    "moving": true
+  },
+  "run_hold_WD.gif": {
+    "facing": 5,
+    "bytes": 127046,
+    "moving": true
+  },
+  "run_hold_SA.gif": {
+    "facing": 1,
+    "bytes": 137966,
+    "moving": true
+  },
+  "run_hold_SD.gif": {
+    "facing": 7,
+    "bytes": 120777,
+    "moving": true
+  }
+}
