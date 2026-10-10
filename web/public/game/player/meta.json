@@ -10,6 +10,7 @@
     128
   ],
   "frame_order": "sequential_0246",
-  "dir_convention": "d0=NE…d5=S…d7=E",
-  "source": "Phase33 first-8 nest idxs 0,2,4,6; layers CA,TK,HD,RH"
+  "dir_convention": "screen: E→6 SE→7 S→0 SW→1 W→2 NW→3 N→4 NE→5; facing=(screenOct+6)%8",
+  "source": "Phase33 first-8 nest idxs 0,2,4,6; layers CA,TK,HD,RH",
+  "facing_note": "Phase34 fix: was (7-oct) which mapped D→7 (wrong); now (oct+6)%8 → D→6"
 }

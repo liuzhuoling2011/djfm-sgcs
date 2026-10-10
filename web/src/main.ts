@@ -1070,10 +1070,10 @@ async function main() {
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
-      attackT = 0.24; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.24); playSfx('attack'); playSfx('slash', { vol: 0.7 })
+      attackT = 0.24; skillFx = spawnFx('slash', facingWorldAng(facing), 0.24); playSfx('attack'); playSfx('slash', { vol: 0.7 })
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
-      { const fl = playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats); floaters.push(...fl); if (fl.length) playSfx('hit') }
+      { const fl = playerAttack(foes, pos, facingWorldAng(facing), stats); floaters.push(...fl); if (fl.length) playSfx('hit') }
       for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
@@ -1093,7 +1093,7 @@ async function main() {
     // 5 = 飞蝗石 throw, 6 = 指南珠 return spawn
     if (k === '5' && !dialogOpen) {
       if (inv.throwStone()) {
-        const ang = (facing % 8) * (Math.PI / 4) - Math.PI
+        const ang = facingWorldAng(facing)
         // chip nearest foe in facing cone
         let best: Foe | null = null; let bd = 9
         for (const f of foes) {
@@ -1132,9 +1132,9 @@ async function main() {
         stats.mp -= cost; attackT = 0.35; attackCd = 0.85
         const mult = Number(sk?.at_mult ?? 2) || 2
         const at0 = stats.at ?? 40; stats.at = at0 * mult
-        { const fl = playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2); floaters.push(...fl); if (fl.length) playSfx('hit2') }
+        { const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, 3.2); floaters.push(...fl); if (fl.length) playSfx('hit2') }
         stats.at = at0
-        skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI)
+        skillFx = spawnFx('jidian', facingWorldAng(facing))
         inv.flash(`${sk?.name ?? '疾电'}！`)
       } else inv.flash('真气不足')
     }
@@ -1171,6 +1171,12 @@ async function main() {
 
   function iso(x: number, y: number): Vec {
     return { x: (x - y) * (tileW / 2), y: (x + y) * (tileH / 2) }
+  }
+  /** World cell atan2 for attack cones — inverse of facing=(screenOct+6)%8 */
+  function facingWorldAng(f: number): number {
+    const o = (f + 2) % 8
+    const sx = Math.cos(o * Math.PI / 4), sy = Math.sin(o * Math.PI / 4)
+    return Math.atan2((sy - sx) / 2, (sx + sy) / 2)
   }
   function drawNameplate(ctx: CanvasRenderingContext2D, label: string, sx: number, sy: number, kind: 'npc' | 'mon' = 'npc') {
     if (!label) return
@@ -1215,10 +1221,12 @@ async function main() {
     const len = Math.hypot(dx, dy) || 1
     moving = dx !== 0 || dy !== 0
     if (moving) {
-      // Screen-space 8-dir (iso): d0=NE … d5=S … d7=E — matches SprRole export
+      // Screen-space 8-dir: atan2(sdy,sdx) oct 0=screen-E … 2=S … 4=W … 6=N
+      // Art dirs (verified forced_facings): screen-E → face 6, SE→7, S→0, … (facing = oct+6)%8
+      // Old (7-oct) mapped D→7 which faces wrong (user: walk RIGHT faces LEFT).
       const sdx = dx - dy, sdy = dx + dy
-      const oct = Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4))
-      facing = (7 - ((oct % 8) + 8) % 8 + 8) % 8
+      const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8
+      facing = (oct + 6) % 8
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
     const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)
@@ -1288,11 +1296,11 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
-    }, faceAttack: (ang?: number) => { const a = ang ?? ((facing % 8) * (Math.PI / 4) - Math.PI); const before = foes.filter(f => f.dead <= 0 && !f.gone); floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats)); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5)); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
+    }, faceAttack: (ang?: number) => { const a = ang ?? (facingWorldAng(facing)); const before = foes.filter(f => f.dead <= 0 && !f.gone); floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats)); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5)); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
@@ -1483,7 +1491,7 @@ async function main() {
         ctx.drawImage(spr, pp.x + cam.x - hx, pp.y + cam.y - hy)
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
-          const ang = (facing % 8) * (Math.PI / 4) - Math.PI
+          const ang = facingWorldAng(facing)
           ctx.strokeStyle = `rgba(255,220,120,${Math.min(1, attackT * 4)})`
           ctx.lineWidth = 3
           ctx.beginPath()

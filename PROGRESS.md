@@ -844,6 +844,25 @@ Skipped (schema still broken).
 
 
 
+## Phase 34 — CRITICAL facing fix (RIGHT was LEFT)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Bug
+Walk/run RIGHT used `facing=(7-oct)%8` → art dir **7**, which does not face screen-east. User saw RIGHT→faces LEFT/wrong.
+
+### Fix
+Screen oct from `atan2(sdy,sdx)` (0=E…6=N). **`facing=(oct+6)%8`** so D→**6** (verified side-profile east). Attack cones via `facingWorldAng` (inverse map). Walk and Shift-run share same facing.
+
+### Proof
+- `assets/samples/phase34/06_wine_vs_web_east_FINAL.png`
+- `05_east_walk_proof.png`, `05_east_run_proof.png`, `01_wasd_fixed.png`, `walk_right_crop.png`
+
+### Deploy
+- (pending)
+
+---
+
 ## Phase 33 — walk polish + xn multi-face
 
 **Date:** 2026-10-10 (UTC+8)
