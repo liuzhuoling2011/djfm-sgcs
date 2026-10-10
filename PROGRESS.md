@@ -843,6 +843,29 @@ Skipped (schema still broken).
 
 
 
+## Phase 30 — act-1 polish (SFX / camera / death / guide)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Goals
+1. Optional SFX from `sy/*.sy` (WAV) — attack/hit/hurt/death/potion/step/UI.
+2. Smoother camera follow; minimap scale without `/2` mismatch.
+3. Death overlay + delayed respawn; potion cooldown veil + toast.
+4. Wine vs web idle/walk/attack sheet.
+5. README act-1 play guide (controls + quest outline).
+
+### Notes
+- SFX: `web/public/game/sfx/*.wav` (copied from Leyi `sy/`); mute with **M** or `?sfx=0`.
+- Remake death UX is web-side (not ComeOn script).
+
+### Deploy
+- (hashes after push)
+
+### Samples
+- `assets/samples/phase30/`
+
+---
+
 ## Phase 29 — act-1 polish (names / combat feel / dialog / density)
 
 **Date:** 2026-10-10 (UTC+8)

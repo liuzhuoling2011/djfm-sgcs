@@ -29,6 +29,8 @@ export class Inventory {
   embedOpen = false // 镶嵌 stub
   toast = ''
   toastT = 0
+  potCd = 0  // shared potion cooldown (s)
+  potCdMax = 1.1
 
   async load(base = 'game/data') {
     const [props, skills, init] = await Promise.all([
@@ -64,7 +66,8 @@ export class Inventory {
 
   usePotionSlot(slot: number, stats: { hp: number; maxHp: number; mp: number; maxMp: number }) {
     const id = slot < 2 ? 4 : 8
-    if (this.qty(id) <= 0) return false
+    if (this.qty(id) <= 0) { this.flash('没有药剂'); return false }
+    if (this.potCd > 0) { this.flash(`药剂冷却 ${this.potCd.toFixed(1)}s`); return false }
     const def = this.props[String(id)]
     this.miss(id, 1)
     if (id === 4) {
@@ -74,6 +77,7 @@ export class Inventory {
       const v = Number(def?.heal_mp || 18)
       stats.mp = Math.min(stats.maxMp, stats.mp + v)
     }
+    this.potCd = this.potCdMax
     this.flash(`使用 ${def?.name ?? id}`)
     return true
   }
@@ -107,7 +111,7 @@ export class Inventory {
 
   flash(msg: string) { this.toast = msg; this.toastT = 2.2 }
 
-  tick(dt: number) { if (this.toastT > 0) this.toastT -= dt }
+  tick(dt: number) { if (this.toastT > 0) this.toastT -= dt; if (this.potCd > 0) this.potCd = Math.max(0, this.potCd - dt) }
 
   /** Simple blacksmith shop: buy 小血瓶/小气瓶/飞蝗石 */
   shopCatalog() {

@@ -74,7 +74,7 @@ export class Hud {
     } catch { /* optional */ }
   }
   // Layout measured on Wine 800x600: bar top y=490; HP orb (11,+20); MP orb (41,+18); weapon (156,+61)
-  draw(ctx: CanvasRenderingContext2D, s: Stats, extra?: { skillL?: string; skillR?: string; money?: number; weapon?: string }) {
+  draw(ctx: CanvasRenderingContext2D, s: Stats, extra?: { skillL?: string; skillR?: string; money?: number; weapon?: string; potCd?: number; potCdMax?: number }) {
     const W = ctx.canvas.width, H = ctx.canvas.height
     if (!this.bar) return
     const x0 = Math.round((W - 800) / 2), y0 = H - 110
@@ -101,6 +101,17 @@ export class Hud {
       if (img) { ctx.globalAlpha = this.pots[k] > 0 ? 1 : 0.35; ctx.drawImage(img, px, py); ctx.globalAlpha = 1 }
       ctx.fillStyle = '#f8e800'; ctx.fillText(String(k + 1), px + 10, py - 1)
       if (this.pots[k] > 0) { ctx.fillStyle = '#fff'; ctx.font = 'bold 10px ui-sans-serif,system-ui'; ctx.fillText('×'+this.pots[k], px + 2, py + 18) }
+      // potion cooldown veil
+      const pcd = extra?.potCd ?? 0, pmax = extra?.potCdMax ?? 1.1
+      if (pcd > 0 && pmax > 0) {
+        const frac = Math.min(1, pcd / pmax)
+        ctx.fillStyle = 'rgba(0,0,0,0.55)'
+        ctx.fillRect(px, py + Math.round(20 * (1 - frac)), 18, Math.round(20 * frac))
+        if (k === 0) {
+          ctx.fillStyle = '#ffd24a'; ctx.font = '9px ui-sans-serif,system-ui'
+          ctx.fillText(pcd.toFixed(1), px + 20, py + 6)
+        }
+      }
       ctx.font = 'bold 11px ui-sans-serif,system-ui'
     }
     // Skill slots F1/F2 (Wine x425/448, y552) — labels from Skill.txt 扫叶/疾电

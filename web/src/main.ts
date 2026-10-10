@@ -3,6 +3,7 @@ import { DialogSys } from './dialog'
 import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, type Foe, type Stats, type FloatDmg } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
+import { loadSfx, playSfx, setSfxEnabled } from './sfx'
 
 type Vec = { x: number; y: number }
 type MapObj = {
@@ -119,6 +120,7 @@ async function main() {
     } catch { /* game.json combat.init_male already applied */ }
   }
   await loadFxSprites()
+  await loadSfx()
   let tintOn = qs.get('tint') !== '0'
   let rainOn = qs.get('rain') !== '0'
   let ground: HTMLImageElement | null = null
@@ -153,6 +155,7 @@ async function main() {
   let skillFx: SkillFx | null = null
   let floaters: FloatDmg[] = []
   let playerHurtFlash = 0
+  let dying = 0  // death overlay timer; >0 = respawning
   type Fellow = { id: string; x: number; y: number; dir: number; imgs: HTMLImageElement[] }
   let fellow: Fellow | null = null
   const fellowImgs = new Map<string, HTMLImageElement[]>()
@@ -959,7 +962,7 @@ async function main() {
     keys.add(k)
     if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault()
     if (k === 'g') useGround = !useGround
-    if (k === 'm' && audio) { muted = !muted; audio.muted = muted }
+    if (k === 'm') { muted = !muted; if (audio) audio.muted = muted; setSfxEnabled(!muted) }
     if (k === 'escape') { dialogOpen = false; renderDialog() }
     if ((k === 'e' || k === 'enter') && dialogOpen) { advanceDialog(); e.preventDefault(); return }
     if (k === 'e' && !dialogOpen) {
@@ -978,10 +981,10 @@ async function main() {
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
-      attackT = 0.24; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.24)
+      attackT = 0.24; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.24); playSfx('attack'); playSfx('slash', { vol: 0.7 })
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
-      floaters.push(...playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats))
+      { const fl = playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats); floaters.push(...fl); if (fl.length) playSfx('hit') }
       for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
@@ -996,7 +999,7 @@ async function main() {
     // Potions from Init stacks: key1 = 小血瓶, key3 = 小气瓶 (slots 0 & 2)
     if (['1', '2', '3', '4'].includes(k) && !dialogOpen && !inv.shopOpen) {
       const i = Number(k) - 1
-      if (inv.usePotionSlot(i, stats)) { hud.pots = [...inv.potSlots()]; renderInv() }
+      if (inv.usePotionSlot(i, stats)) { playSfx('potion'); hud.pots = [...inv.potSlots()]; renderInv() }
     }
     // 5 = 飞蝗石 throw, 6 = 指南珠 return spawn
     if (k === '5' && !dialogOpen) {
@@ -1040,7 +1043,7 @@ async function main() {
         stats.mp -= cost; attackT = 0.35; attackCd = 0.85
         const mult = Number(sk?.at_mult ?? 2) || 2
         const at0 = stats.at ?? 40; stats.at = at0 * mult
-        floaters.push(...playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2))
+        { const fl = playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2); floaters.push(...fl); if (fl.length) playSfx('hit2') }
         stats.at = at0
         skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI)
         inv.flash(`${sk?.name ?? '疾电'}！`)
@@ -1113,7 +1116,8 @@ async function main() {
     inv.tick(dt); if (inv.toastT > 0) renderToast()
 
     let dx = 0, dy = 0
-    if (!dialogOpen) {
+    if (dying > 0) { /* freeze controls while downed */ }
+    else if (!dialogOpen) {
       if (keys.has('w') || keys.has('arrowup')) { dx -= 1; dy -= 1 }
       if (keys.has('s') || keys.has('arrowdown')) { dx += 1; dy += 1 }
       if (keys.has('a') || keys.has('arrowleft')) { dx -= 1; dy += 1 }
@@ -1140,7 +1144,7 @@ async function main() {
     pos.x = Math.max(0, Math.min(mapW - 1, pos.x))
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
     // Phase 28: stride locked to distance (~1.15 cycles per cell) so gait matches speed
-    if (moving) animT += speed * dt * 1.35
+    if (moving) { animT += speed * dt * 1.35; if (Math.floor(animT) !== Math.floor(animT - speed * dt * 1.35)) playSfx('step', { vol: 0.35, minGap: 180 }) }
 
     // AddFellow companion follows player (TransToPlayer approx)
     if (fellow) {
@@ -1158,6 +1162,7 @@ async function main() {
       stepFoes(foes, pos, stats, dt, walkable)
       if (stats.hp < hp0 - 0.5) {
         playerHurtFlash = 0.35
+        playSfx('hurt')
         floaters.push({ x: pos.x, y: pos.y, text: String(Math.round(hp0 - stats.hp)), t: 0.7, max: 0.7, color: '#ff6060' })
       }
     }
@@ -1189,7 +1194,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
@@ -1225,10 +1230,26 @@ async function main() {
     stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.2)
     stats.hp = Math.min(stats.maxHp, stats.hp + dt * (INIT.hp_regen ?? 1.4))
     stats.mp = Math.min(stats.maxMp, stats.mp + dt * (INIT.mp_regen ?? 1.2))
-    if (stats.hp <= 0) { stats.hp = stats.maxHp; pos.x = spawnPos.x; pos.y = spawnPos.y }
+    // Death / respawn (Phase 30): brief overlay then return to scene spawn
+    if (dying > 0) {
+      dying -= dt
+      if (dying <= 0) {
+        stats.hp = stats.maxHp; stats.mp = Math.max(stats.mp, stats.maxMp * 0.35)
+        pos.x = spawnPos.x; pos.y = spawnPos.y
+        inv.flash('重生于落脚处')
+        playSfx('ui')
+      }
+    } else if (stats.hp <= 0) {
+      dying = 1.6
+      playSfx('death')
+      inv.flash('你倒下了…')
+      stats.hp = 0.01 // hold until overlay ends
+    }
     const focus = iso(pos.x, pos.y)
-    cam.x += (canvas.width / 2 - focus.x - cam.x) * Math.min(1, 6 * dt)
-    cam.y += (canvas.height / 2 - focus.y - 40 - cam.y) * Math.min(1, 6 * dt)
+    // Smoother camera follow (critically-damped-ish lerp ~3.2)
+    const camK = 1 - Math.exp(-3.2 * dt)
+    cam.x += (canvas.width / 2 - focus.x - cam.x) * camK
+    cam.y += (canvas.height / 2 - focus.y - 36 - cam.y) * camK
 
     ctx.fillStyle = '#0a1220'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -1496,14 +1517,28 @@ async function main() {
       ctx.globalAlpha = 1
       if (cutscene.t <= 0) cutscene = null
     }
-    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName() })
+    if (dying > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.75, 0.25 + (1.6 - dying) * 0.35)})`
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = '#ffb0a0'
+      ctx.font = 'bold 28px "Microsoft YaHei",ui-sans-serif,system-ui'
+      ctx.textAlign = 'center'
+      ctx.fillText('阵亡', canvas.width / 2, canvas.height / 2 - 10)
+      ctx.font = '14px ui-sans-serif,system-ui'
+      ctx.fillStyle = '#c9a86a'
+      ctx.fillText('正在返回落脚处…', canvas.width / 2, canvas.height / 2 + 22)
+      ctx.textAlign = 'left'
+    }
+    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax })
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })
       const me = g(pos.x, pos.y)
       const dots = [...foes.filter((f) => f.dead <= 0).map((f) => ({ ...g(f.x, f.y), c: '#ff3030' })), ...objects.map((o) => ({ ...g((o.x ?? 0) - origin.x, (o.y ?? 0) - origin.y), c: '#3a6cff' })), { ...me, c: '#30ff30' }]
-      if (miniImg) hud.drawMinimap(ctx, miniImg, me.x / 2, me.y / 2, 0.75, dots.map((d) => ({ ...d, x: d.x / 2, y: d.y / 2 })), mapLabel.split(' ')[0])
-      else hud.drawMinimap(ctx, ground, me.x, me.y, 0.25, dots, mapLabel.split(' ')[0])
+      // Phase 30: consistent ground-pixel space (no /2 mismatch); scale by map size
+      const mapSpan = Math.max(mapW, mapH, 64)
+      const kMini = miniImg ? Math.min(0.55, 90 / (mapSpan * (tw / 2))) : Math.min(0.35, 70 / (mapSpan * (tw / 2)))
+      hud.drawMinimap(ctx, miniImg ?? ground, me.x, me.y, kMini, dots, mapLabel.split(' ')[0])
     }
     ctx.fillStyle = '#9ecbff'
     ctx.font = '12px ui-sans-serif,system-ui'
