@@ -16,7 +16,9 @@
 - 镶嵌: 200 金 or 1×蜀水, `AT += 2×weaponSlots`, gem +1, toast, then the panel closes. Not enough money/蜀水 or a full socket leaves it open.
 
 ### Samples
-`assets/samples/phase42/bag.png`, `shop.png`, `shop_sell.png`, `embed.png`
+`assets/samples/phase42/bag.png`, `shop.png`, `shop_bought.png`, `shop_sell.png`, `embed.png`
+
+Playwright on the production build: panel 392×272 sits inside the canvas with ~69px above the HUD; buy 小血瓶 400→360 and ×2→×3; poor buy toasts 金钱不足 and stays open; sell 飞蝗石 +4 and ×5→×4; 指南珠 is not listed; 关闭 / × / Esc leave `open=shopOpen=embedOpen=false`; I from the desk opens the bag; embed with 50 金 stays open; embed with 400 金 → 200 金, AT 40→42, gem 1, panel closes.
 
 ### Facing
 Unchanged: `web/src/main.ts` `facing = (oct + 6) % 8`.
