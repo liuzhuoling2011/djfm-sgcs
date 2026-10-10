@@ -97,6 +97,7 @@ async function main() {
   let rainOn = qs.get('rain') !== '0'
   let ground: HTMLImageElement | null = null
   let groundMeta: MapMeta['ground_full'] | null = null
+  let miniImg: HTMLImageElement | null = null
   let useGround = true
   let atlases: Atlas[] = []
   const atlasImgs = new Map<string, HTMLImageElement>()
@@ -211,6 +212,9 @@ async function main() {
       try { ground = await loadImage(`${base}/${groundMeta.file}`) } catch { ground = null }
     }
     useGround = !!ground
+    miniImg = null
+    const mm = (meta as { minimap?: { file: string } }).minimap
+    if (mm) loadImage(`${base}/${mm.file}`).then((im) => { miniImg = im }).catch(() => {})
 
     mapLabel = `${meta.scene_name ?? meta.scene ?? id} ${mapW}x${mapH} bld=${buildings.length} npc=${objects.length} atlases=${atlases.length}`
     pos.x = meta.spawn?.[0] ?? mapW / 2
@@ -541,7 +545,8 @@ async function main() {
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })
       const me = g(pos.x, pos.y)
       const dots = [...foes.filter((f) => f.dead <= 0).map((f) => ({ ...g(f.x, f.y), c: '#ff3030' })), ...objects.map((o) => ({ ...g((o.x ?? 0) - origin.x, (o.y ?? 0) - origin.y), c: '#3a6cff' })), { ...me, c: '#30ff30' }]
-      hud.drawMinimap(ctx, ground, me.x, me.y, 0.25, dots, mapLabel.split(' ')[0])
+      if (miniImg) hud.drawMinimap(ctx, miniImg, me.x / 2, me.y / 2, 0.75, dots.map((d) => ({ ...d, x: d.x / 2, y: d.y / 2 })), mapLabel.split(' ')[0])
+      else hud.drawMinimap(ctx, ground, me.x, me.y, 0.25, dots, mapLabel.split(' ')[0])
     }
     ctx.fillStyle = '#9ecbff'
     ctx.font = '12px ui-sans-serif,system-ui'

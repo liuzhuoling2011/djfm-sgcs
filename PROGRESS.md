@@ -610,3 +610,9 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
   - 1-1s → 1-2s (127,238)
   - 1-2s → 1-1s (209,95)
 - **Shots:** `assets/samples/phase17/warp_*.png`.
+
+## Phase 17b — minimap with buildings (2026-10-10 14:25 UTC+8)
+
+- `tools/phase17_minimap.py`: for each map, draws ground_full plus every BLD part at half pitch, in depth order, then halves the result (16×8 px per cell). Output is `minimap.png` and `meta.minimap`. Sizes: 1-0s 2080×1056, 1-1s/1-2s 4128×2080.
+- The HUD minimap now samples this image at 0.75 (about 1/5.3 world scale, eyeballed to match Wine's zoom), with dots for the player, monsters and NPCs.
+- **Compare:** `assets/samples/phase17/wine_vs_web_minimap.png` (left Wine, right web).
