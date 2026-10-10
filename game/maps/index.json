@@ -32,6 +32,24 @@
       "label": "1-2s 野外 (鬼兵)"
     },
     {
+      "id": "1-3as",
+      "file": "map_ren.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "1-3as"
+    },
+    {
+      "id": "1-3s",
+      "file": "map_ren.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "1-3s 野外"
+    },
+    {
       "id": "diyu",
       "file": "map_diyu.lib",
       "dims": [
