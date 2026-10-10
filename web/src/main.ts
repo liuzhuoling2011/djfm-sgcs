@@ -76,7 +76,7 @@ async function main() {
   const invEl = document.createElement('div'); invEl.id='inv'; invEl.className='inv-panel hidden'; document.body.append(invEl)
   const toastEl = document.createElement('div'); toastEl.className='toast hidden'; document.body.append(toastEl)
   const dialogEl = document.querySelector<HTMLDivElement>('#dialog')!
-  if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · WASD移动 · Shift奔跑 · I行囊 · F1/F2技能 · 1/3药'
+  if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · WASD移动 · Shift奔跑 · E对话 · Space攻击 · I行囊 · 1/3药'
   for (const id of packIds) {
     const btn = document.createElement('button')
     btn.textContent = id
@@ -351,8 +351,7 @@ async function main() {
     if (!show) return
     const rows = inv.items.map((it) => {
       const d = inv.props[String(it.id)]
-      const ico = d?.icon ? `<img class="ico" src="game/props/${d.icon}.png" alt="" onerror="this.style.display='none'"/>` : ''
-      return `<li>${ico}<span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
+      return `<li><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
     }).join('') || '<li class="empty">（空）</li>'
     if (inv.shopOpen) {
       // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226; BUY/SELL/CLOSE from JMMDL
@@ -387,12 +386,10 @@ async function main() {
     } else {
       invEl.innerHTML = `<div class="box"><div class="jm-frame bag">
         <div class="jm-title">行囊</div>
+        <button type="button" class="jm-close" data-close-inv aria-label="关闭">×</button>
+        <div class="jm-body"><ul class="jm-bag-list">${rows}</ul></div>
+        <div class="jm-bag-equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'}</div>
         <div class="jm-money">金钱 ${inv.money}</div>
-        <div class="jm-body"><ul class="jm-bag-list">${rows}</ul>
-          <p class="jm-bag-foot">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'}<br/>
-          <small>I 开关 · 1–4 药 · Esc 关</small></p>
-        </div>
-        <button type="button" class="jm-close" data-close-inv>×</button>
       </div></div>`
     }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
@@ -402,31 +399,43 @@ async function main() {
     invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); inv.embedOpen = false; renderInv() })
     invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => { inv.embedOpen = false; renderInv() }))
     invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
+    placeChrome()
   }
+  /** Pin dialog + bag to the canvas. HUD is 110px in 800-space, scaled to canvas width. */
+  function placeChrome() {
+    const r = canvas.getBoundingClientRect()
+    if (r.width < 8 || r.height < 8) return
+    const barDisplay = r.height * (110 * (canvas.width / 800)) / canvas.height
+    const aboveHud = Math.max(0, window.innerHeight - r.bottom + barDisplay)
+    if (dialogEl.style.display !== 'none' && dialogEl.classList.contains('jm-dialog')) {
+      const w = Math.round(r.width * 0.74)
+      dialogEl.style.left = `${Math.round(r.left + r.width * 0.02)}px`
+      dialogEl.style.width = `${w}px`
+      dialogEl.style.right = 'auto'
+      dialogEl.style.bottom = `${Math.round(aboveHud + 2)}px`
+      dialogEl.style.top = 'auto'
+      dialogEl.style.transform = 'none'
+    }
+    if (!invEl.classList.contains('hidden')) {
+      const bw = Math.round(Math.max(300, Math.min(460, r.width * (326 / 800))))
+      const bh = Math.round(bw * (226 / 326))
+      invEl.style.setProperty('--jm-w', `${bw}px`)
+      invEl.style.setProperty('--jm-h', `${bh}px`)
+      invEl.style.left = `${Math.round(r.left + r.width / 2)}px`
+      invEl.style.top = `${Math.round(r.top + (r.height - barDisplay) * 0.46)}px`
+      invEl.style.right = 'auto'
+      invEl.style.transform = 'translate(-50%, -50%)'
+    }
+  }
+  window.addEventListener('resize', () => placeChrome())
+  window.addEventListener('scroll', () => placeChrome(), true)
   function renderToast() {
     toastEl.classList.toggle('hidden', inv.toastT <= 0)
     if (inv.toastT > 0) toastEl.textContent = inv.toast
   }
 
   function clampDialog() {
-    // Phase 36: bottom-anchored Wine dialog — keep above HUD, inside viewport
-    requestAnimationFrame(() => {
-      const pad = 10
-      const hudClear = 118 // Phase37: match Wine dialog clearance above HUD
-      dialogEl.style.bottom = `${hudClear}px`
-      dialogEl.style.top = 'auto'
-      dialogEl.style.transform = 'translateX(-50%)'
-      const r = dialogEl.getBoundingClientRect()
-      let dx = 0
-      if (r.left < pad) dx = pad - r.left
-      if (r.right > window.innerWidth - pad) dx = window.innerWidth - pad - r.right
-      if (r.top < pad) {
-        // grow upward room: raise bottom if board too tall
-        const overflow = pad - r.top
-        dialogEl.style.bottom = `${hudClear - overflow}px`
-      }
-      dialogEl.style.transform = `translateX(calc(-50% + ${dx}px))`
-    })
+    requestAnimationFrame(() => placeChrome())
   }
   function renderDialog() {
     // Phase 29: ResJM-styled board (dialog_board from JM_DlgModel corner tiles)

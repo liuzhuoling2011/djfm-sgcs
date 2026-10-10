@@ -121,17 +121,22 @@ export function drawFx(
       }
     }
   } else {
-    // slash — peak at mid windup
+    // slash — wide gold arc around the 128px body so the swing reads past the sprite
     const peak = Math.sin(Math.min(1, u / 0.45) * Math.PI)
-    ctx.strokeStyle = `rgba(255,240,180,${a * (0.55 + 0.45 * peak)})`
-    ctx.lineWidth = 3 + peak * 2
+    ctx.strokeStyle = `rgba(255,186,60,${0.28 + a * 0.45})`
+    ctx.lineWidth = 10 + peak * 4
     ctx.beginPath()
-    ctx.arc(0, 0, 28 + peak * 10, fx.ang - 0.9, fx.ang + 0.9)
+    ctx.arc(6, -22, 50 + peak * 18, fx.ang - 1.2, fx.ang + 1.05)
     ctx.stroke()
-    ctx.strokeStyle = `rgba(255,255,255,${a * 0.5 * peak})`
-    ctx.lineWidth = 1.5
+    ctx.strokeStyle = `rgba(255,236,170,${a * (0.65 + 0.35 * peak)})`
+    ctx.lineWidth = 4 + peak * 2
     ctx.beginPath()
-    ctx.arc(0, 0, 34 + peak * 8, fx.ang - 0.55, fx.ang + 0.55)
+    ctx.arc(6, -22, 46 + peak * 16, fx.ang - 1.05, fx.ang + 0.95)
+    ctx.stroke()
+    ctx.strokeStyle = `rgba(255,255,236,${a * 0.9 * peak})`
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(6, -22, 40 + peak * 12, fx.ang - 0.65, fx.ang + 0.6)
     ctx.stroke()
   }
   ctx.restore()

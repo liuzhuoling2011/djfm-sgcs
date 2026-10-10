@@ -26,6 +26,10 @@ Phase24 `pd*` paper-doll overwrote Phase23 full-body remaps. Re-bound act-1 comb
 ### Proofs
 `assets/samples/phase40/mon_remap_board.png`, `current_mon_samples.png`
 
+### PR #1 merge note (UI bot)
+Merged `cursor/act1-ui-polish-5db4` into master **keeping Phase39** `facing=(oct+6)%8` / RH_002 / art6=east.
+UI bot PR body claimed Phase38 art0=E — **rejected**. Kept: cream dialog border-image, canvas-pinned `placeChrome()`, bag/HUD scaling, samples under `phase39/web_*`.
+
 ### Deploy
 Source + GitHub Pages + NAS `/volume4/web/djfm/`.
 
@@ -55,6 +59,39 @@ Source + GitHub Pages + NAS `/volume4/web/djfm/`.
 ---
 
 
+
+## Phase 39 — act-1 dialog / 行囊 / HUD playability
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Goal
+First-town play (E talk, I 行囊, Space melee) should read like Wine ComeOn, using existing ResJM chrome. Act-1 only. Walk facing from Phase 38 is unchanged (`facing = (8 - oct) % 8`).
+
+### Gaps (measured)
+
+**Dialog**
+- Wine (800×600 town captures): one line of light text on a thin strip sitting on the stone bar (bar top y=490). No separate HTML card.
+- Web before: `#dialog` used `dialog_board.png` (520×140, center RGB 28,22,14) stretched to min-height 128px and capped at **max-width 640px**, anchored `bottom: 118px` to the **viewport** rather than the canvas. Body color `#2a1a0a` on that dark board — contrast about 1:1, so the Chinese was effectively invisible. Choices were light HTML chips with dark ink.
+- Fix: border-image of `panels/dialog_board.png` (slice 22/40/22), cream ink `#f7f0dc` / title `#ffe7a8` at 18px SimSun (WenQuanYi fallback). Width **74% of the canvas** (712px on a 962px canvas), left inset 2%, bottom = top of the scaled HUD. Choices are gold text rows.
+
+**行囊**
+- Wine bag clicks under DirectInput were unreliable; chrome is ResJM `panel_625.png` (native **326×226**). Starting items: 小血瓶×2, 小气瓶×2, 飞蝗石×5, 指南珠×2, 金钱 400, 初锻剑 / 扫叶 / 疾电.
+- Web before: same panel, but `top: 44%` of the viewport, money `bottom: 14px` overlapping the foot note inside the scroll body, and `<img>` icons pointing at missing `game/props/*.png` (PropMdl icon ids are not files).
+- Fix: panel sized to **326/800 of the canvas width** (392×272 on a 962px canvas), centered in the playfield above the HUD. Slot rows (name + gold ×qty), equip line and `金钱` pinned in the bottom groove, close in the corner. No broken icon requests.
+
+**HUD / melee**
+- Wine bar `jm_1478.png` is **800×110** and spans the 800px window. Orbs (11,20)/(41,18), weapon (156,61), stamina (255,65) 134×7, potion icons (258+24k, 82), yellow key digits on the stamina’s lower edge (y≈63–68), F1/F2 at (425,61)/(448,61), Q `jm_63` at (606,61). Menu icons `jm_515–520` matched on `wine_alive.png` at bar-relative (728,22), (756,23), (708,48), (771,48), (708,82), (775,83).
+- Web before: bar drawn at native 800px centered on the **1280×720** canvas (62% of the width) with only a 50px black gutter, so the town showed beside a thin strip. A debug line `HP … ·Init成长 金…` was painted at bar y=52 over the hotbar. Key digits were drawn at y=81, on top of the 8px bottles. Menu icons were not composited. Ready-glow was a faint halo.
+- Fix: scale the whole 800-space bar (and the 137×133 minimap) by `canvasWidth/800` so sockets stay aligned and the stone spans the playfield. Digits moved to y=63. Menu icons drawn. Debug growth line removed from the bar face. Weapon/Q glow pulses while melee is ready and strokes the weapon slot during the swing. Slash arc in `fx.ts` is a wide gold sweep (radius ~46–68) around the 128px body instead of a 28px line hidden in the sprite.
+
+### Samples
+- `assets/samples/phase39/wine_vs_web_ui_board.png` — Wine town + web HUD / dialog / 行囊 / choices / melee
+- `assets/samples/phase39/wine_vs_web_hud.png` — Wine bar vs web bar scaled back to 800×110
+- `assets/samples/phase39/web_{dialog,dialog_board,dialog_choices,bag,bag_panel,hud,melee}.png`
+
+### Build / deploy
+- `cd web && npm run build` → `web/dist` (gitignored). GitHub Pages serves that directory from `main` (see README). This branch does not publish Pages by itself.
+- Manual QA for 重温老游戏: open the town, E 沈云 (Chinese on the JM board, E advances, number keys on choices), I 行囊 (four stacks + 金钱 400, Esc closes), Space (gold swing + weapon-slot flash, amber glow when the swing is ready). Walk facing should still match Phase 38.
 
 ## Phase 37 — Wine dialog / JM bag / melee + HUD glow
 
