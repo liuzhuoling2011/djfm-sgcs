@@ -1536,4 +1536,4 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 
 ### Combat
 - Hit connect window 0.18→0.20; hitStop 0.045→0.055; melee cone 0.95→0.92; KB 1.6→1.75.
-
+**Deploy:** Source `ed80fd9` · Pages `a8bbe11` · NAS light (index-DE_Q-XBu.js).
