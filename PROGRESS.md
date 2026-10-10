@@ -663,3 +663,30 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 - Strings scan of ComeOn.exe found `ChangeObjHp`, `ATB HP`, `ATB MAXHP`, `ATB MP`, `ATB HPRESUME`, `PoisonRate` / `define.ini` (matches known DoT). No `Stamina` ASCII string; no 耐力 hits in a quick GBK pass.
 - Opened the PE in REA successfully; `search_strings` then failed with an MCP schema error (`result`/`evidence_id` required), so no xrefs or decompile of the damage path.
 - **Still blocked:** original damage formula and stamina-bar draw. Placeholders remain (AT−DF/2 ±10%; Wine-cropped stamina strip).
+
+## Phase 19a — Player + town NPC sprites (2026-10-10 Asia/Shanghai)
+
+**Priority change:** fix ResPlayer / town NPC models before inventory/skills.
+
+### Player (ResPlayer paper-doll composite)
+- Legs = `ResPlayer1.lib[0]` (32 = 8×4 walk), body = `[256]` (shirtless CA), attack body ≈ `[260]`.
+- Foot-aligned composite → `web/public/game/player/{walk,idle,attack}/{dir}_{frame}.png` + HD sheet.
+- Client (`main.ts`) loads 8-dir walk/idle/attack; no more Phase-6 striped stub as primary.
+- Spr.lib 901 / full HD+RH+TK part map still open (heads/weapons approximate; saber layers still blocked).
+
+### Town NPCs (瓦当镇 ONT)
+- Role.graph entries often RLE-empty (shadow-only); used visual ResNpc3 matches:
+  - sy→1008, zs→1014, cjg→1007, sws→624, tj→630, gbw→625, td→618, cds→1112, bq/zhs→620, xn→bag-ish ResNpc2.
+- Exported to `web/public/game/map/props/npc_*.png` + `map/npcs/{ev}_{dir}.png`; meta `file`/`npc_dirs` wired; NPCs face player.
+- Script: `tools/phase19_sprites.py`.
+
+### Samples
+- `assets/samples/phase19/player_sheet(_hd).png`, `town_npcs.png`, `web_town.png`, `wine_town*.png`, `compare_wine_web.png`.
+
+### Deploy
+- Rebuild + Pages + NAS after this section (see commit).
+
+### Still blocked / paused
+- Full Spr↔ResPlayer part table (CA/HD/RH/TK exact IDs).
+- Saber ghost multi-layer (lep header offsets).
+- Inventory / F1–F2 skills / further dialog / more act-1 maps (paused per steering).
