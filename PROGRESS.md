@@ -31,7 +31,10 @@ Merged `cursor/act1-ui-polish-5db4` into master **keeping Phase39** `facing=(oct
 UI bot PR body claimed Phase38 art0=E — **rejected**. Kept: cream dialog border-image, canvas-pinned `placeChrome()`, bag/HUD scaling, samples under `phase39/web_*`.
 
 ### Deploy
-Source + GitHub Pages + NAS `/volume4/web/djfm/`.
+- Source `adbd6f9` (master) — Phase40 + merged PR#1 UI polish; Phase39 facing/RH_002 kept
+- Pages `d6285c1` (main) → https://liuzhuoling2011.github.io/djfm-sgcs/
+- NAS_OK `/volume4/web/djfm/` (RH_002 meta + rex72 etc. verified)
+- PR #1 merged (GitHub); UI bot art0=E claim rejected
 
 ---
 
