@@ -1244,7 +1244,7 @@ async function main() {
     const moved = Math.hypot(pos.x - ox0, pos.y - oy0)
     if (moved > 1e-5) {
       const prev = animT
-      animT += moved * 2.4 // Phase33: ~2.5 cells per ping-pong cycle (Wine-ish)
+      animT += moved * 2.0 // Phase35: ~2 cells per 4-frame walk cycle
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 
@@ -1347,25 +1347,27 @@ async function main() {
       inv.flash('你倒下了…')
       stats.hp = 0.01 // hold until overlay ends
     }
+    // Phase 35: Wine-style locked camera — player fixed on screen, world scrolls.
+    // Integer pixels only (no lerp / no subpixel) — kills ground wobble vs buildings.
     const focus = iso(pos.x, pos.y)
-    // Smoother camera follow (critically-damped-ish lerp ~3.2)
-    const camK = 1 - Math.exp(-3.2 * dt)
-    cam.x += (canvas.width / 2 - focus.x - cam.x) * camK
-    cam.y += (canvas.height / 2 - focus.y - 36 - cam.y) * camK
+    cam.x = Math.round(canvas.width / 2 - focus.x)
+    cam.y = Math.round(canvas.height / 2 - 36 - focus.y)
 
     ctx.fillStyle = '#0a1220'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.imageSmoothingEnabled = false
 
     if (useGround && ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const wx = pos.x + origin.x, wy = pos.y + origin.y
       const gFocusX = (wx - wy) * (tw / 2) - groundMeta.min_sx
       const gFocusY = (wx + wy) * (th / 2) - groundMeta.min_sy
-      ctx.globalAlpha = 0.92
-      // ground_full is exported at half pitch (tile_w=32); buildings use full 64x32 iso → scale ground to match
+      // Same lock point as cam (-36), integer blit — must stay in sync with entity cam
       const gs = tileW / tw
-      ctx.imageSmoothingEnabled = false
-      ctx.drawImage(ground, canvas.width / 2 - gFocusX * gs, canvas.height / 2 - 40 - gFocusY * gs, ground.width * gs, ground.height * gs)
+      const gx = Math.round(canvas.width / 2 - gFocusX * gs)
+      const gy = Math.round(canvas.height / 2 - 36 - gFocusY * gs)
+      ctx.globalAlpha = 0.92
+      ctx.drawImage(ground, gx, gy, ground.width * gs, ground.height * gs)
       ctx.globalAlpha = 1
     }
 
@@ -1471,15 +1473,10 @@ async function main() {
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
       else if (moving && playerWalk[d]?.length) {
-        // Phase 33: 4-frame ping-pong (0-1-2-3-2-1) — Wine gait without hanging on wide frames
+        // Phase 35: sequential 0..3 loop (Wine walk strips); distance-locked animT
         const n = playerWalk[d].length
-        if (n <= 1) spr = playerWalk[d][0]
-        else {
-          const cycle = n * 2 - 2 // 4→6
-          const t = ((Math.floor(animT) % cycle) + cycle) % cycle
-          const fi = t < n ? t : cycle - t
-          spr = playerWalk[d][fi]
-        }
+        const fi = ((Math.floor(animT) % n) + n) % n
+        spr = playerWalk[d][fi]
       } else if (playerIdle[d]) spr = playerIdle[d]
     }
     const pp = iso(pos.x, pos.y)
@@ -1488,7 +1485,7 @@ async function main() {
       fn: () => {
         // foot hotspot from meta (fixed 128 canvas → 64,100)
         const hx = playerHotspot.x * (spr.width / 128), hy = playerHotspot.y * (spr.height / 128)
-        ctx.drawImage(spr, pp.x + cam.x - hx, pp.y + cam.y - hy)
+        ctx.drawImage(spr, Math.round(pp.x + cam.x - hx), Math.round(pp.y + cam.y - hy))
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
           const ang = facingWorldAng(facing)

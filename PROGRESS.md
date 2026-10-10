@@ -844,6 +844,28 @@ Skipped (schema still broken).
 
 
 
+## Phase 35 — camera lock + 8-dir walk/run polish
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Camera / ground wobble
+Root cause: **lerped `cam`** for sprites vs **instant separate ground blit** (−40 vs −36). Ground swam under buildings/player.
+Fix: Wine-style **hard lock** `cam = round(center − iso(player))`; ground uses **same −36 lock + integer blit**; player sprite draw rounded.
+
+### Walk / run
+- Re-export walk idxs 0/2/4/6 from first-8 nest; sequential loop (not ping-pong).
+- Facing map unchanged: `(oct+6)%8` (E→6…N→4).
+- Stride `animT += moved * 2.0`.
+- Grids: walk + Shift-run all 8 screen dirs.
+
+### Samples
+- `assets/samples/phase35/` — `01_camera_lock_*`, `02_walk_8dir_grid.png`, `03_run_8dir_grid.png`, `04_wine_vs_web_east.png`
+
+### Deploy
+- (pending)
+
+---
+
 ## Phase 34 — CRITICAL facing fix (RIGHT was LEFT)
 
 **Date:** 2026-10-10 (UTC+8)
