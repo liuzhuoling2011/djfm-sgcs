@@ -1176,9 +1176,9 @@ async function main() {
   function iso(x: number, y: number): Vec {
     return { x: (x - y) * (tileW / 2), y: (x + y) * (tileH / 2) }
   }
-  /** World cell atan2 for attack cones — inverse of facing=(8-screenOct)%8 */
+  /** World cell atan2 for attack cones — inverse of facing=(screenOct+6)%8 */
   function facingWorldAng(f: number): number {
-    const o = (8 - (f % 8) + 8) % 8
+    const o = (f + 2) % 8
     const sx = Math.cos(o * Math.PI / 4), sy = Math.sin(o * Math.PI / 4)
     return Math.atan2((sy - sx) / 2, (sx + sy) / 2)
   }
@@ -1238,11 +1238,11 @@ async function main() {
     moving = dx !== 0 || dy !== 0
     if (moving) {
       // Screen-space 8-dir: atan2(sdy,sdx) oct 0=screen-E … 2=S … 4=W … 6=N
-      // Art dirs (ResPlayer CA 0..7): E=0 NE=1 N=2 NW=3 W=4 SW=5 S=6 SE=7 (CCW from E).
-      // facing = (8-oct)%8 → E→0 … SE→7. Phase34 (oct+6) mapped E→6(=S front) — only D move felt OK.
+      // Art dirs: S=0 SW=1 W=2 NW=3 N=4 NE=5 E=6 SE=7. facing=(oct+6)%8 → E→6…SE→7.
+      // Phase39: RH_002 at (body+3)%8 fixes saber; keep P34 facing (D→art6 east profile).
       const sdx = dx - dy, sdy = dx + dy
       const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8
-      facing = (8 - oct) % 8
+      facing = (oct + 6) % 8
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
     const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)

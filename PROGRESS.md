@@ -1,3 +1,22 @@
+## Phase 39 — RH/saber handedness + layer order (2026-10-10)
+
+**Goal:** Fix sword held backwards and non-east walk dirs vs Wine for all 8 WASD + Shift run. Act-1 only.
+
+**Root causes**
+1. **RH_005** (Spr 116) early nests tip LEFT for east → looks backwards. Init/equip uses **RH_002** (Spr 165, Res 896).
+2. RH dir index is offset from body: **`rh_dir = (body_dir + 3) % 8`** (E body6 → RH1 high-forward).
+3. Phase 38 `facing=(8-oct)%8` (art0=E) fought the verified P34 map — restored **`facing=(oct+6)%8`** (E→art6).
+4. Draw order: RH under body for NW/N/NE `{3,4,5}`; over otherwise.
+5. Walk nests from Spr sole-res groups (`phase24_paperdoll` / `walk_subs`); per-sub ox/oy (not averages).
+
+**Export:** `python3 tools/phase39_player_sprites.py` → `web/public/game/player/{walk,idle,attack}/` + `meta.json`.
+
+**Proofs:** `assets/samples/phase39/` (`walk_8dir_grid.png`, `proof_east_p39.png`, `wine_vs_web_EWNS.png`, `map_hold_to_art.png`). Wine live re-capture this session was black/menu-stuck; used phase37 WASD strips.
+
+**Deploy:** source + GitHub Pages. NAS optional (SOCKS often times out).
+
+---
+
 
 
 ## Phase 37 — Wine dialog / JM bag / melee + HUD glow

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Phase 19b: SprRole.h paper-doll for player + town NPC SprRole TK → Res* frames.
+"""Phase 19b (legacy entry): player paper-doll.
 
-Player (role 901 / 剑客):
-  SprRole.h SPR_ROLE_901_{CA,HD,TK,RH_005}_001_001 → Spr.lib indices 34/112/114/116
-  Each Spr entry: 512 slots, res = ResPlayer1 base+dir (CA:0-7, HD:128-135, TK:256-263, RH:384-391)
-  ox/oy = foot hotspot in each part sprite; composite at shared (CX,CY).
+**Phase 39 superseded the player export.** Running this file now delegates to
+`phase39_player_sprites.export_player` so walk uses first-4 nests, Spr per-frame
+ox/oy, RH under NW/N/NE, and art CW-from-SE. NPC export below is unchanged if
+invoked separately — see phase39 for player.
 
-Town NPCs:
-  SPR_ROLE_{graph}_TK_001_001 → Spr index (e.g. 623→1619); ResExNpc/ResNpc frames with size filter.
-  Civilian fallbacks when SprRole hits combat/partial art (sy→1008, etc.).
+Original phase19b logic remains in git history; do not reintroduce n/4 sampling
+or averaged anchors for the player.
 """
 from __future__ import annotations
 # Re-run logic lives in this module; invoke: python3 tools/phase19b_sprites.py
@@ -84,4 +83,6 @@ def export_player():
     print('player ok')
 
 if __name__ == '__main__':
-    export_player()
+    import phase39_player_sprites as P39
+    composite = P39.export_player()
+    P39.make_samples(composite)
