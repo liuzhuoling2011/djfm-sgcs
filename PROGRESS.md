@@ -18,7 +18,8 @@ Rebuilt synthetic `web_hold/` from re-exported arts; refreshed `wine_vs_web_{wal
 魔猿(46)/狐精(12)/雪地巨人(55) already SprRole full-body `pd008`/`pd003`/`pd113`. Probed ResNpc3/ResEx/ResBoss candidates — none match ape/fox-archer/giant. **No remap** this pass.
 
 ### Deploy
-(see footer after push)
+**Source:**  · **Pages:**  · **NAS_OK**  (, RH under [3,4,5])
+https://liuzhuoling2011.github.io/djfm-sgcs/
 
 ---
 
