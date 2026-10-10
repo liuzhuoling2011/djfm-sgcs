@@ -862,7 +862,7 @@ Fix: Wine-style **hard lock** `cam = round(center − iso(player))`; ground uses
 - `assets/samples/phase35/` — `01_camera_lock_*`, `02_walk_8dir_grid.png`, `03_run_8dir_grid.png`, `04_wine_vs_web_east.png`
 
 ### Deploy
-- (pending)
+- Source `7fdf63f` · Pages `9741674` (main)
 
 ---
 
