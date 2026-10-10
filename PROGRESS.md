@@ -843,6 +843,44 @@ Skipped (schema still broken).
 
 
 
+## Phase 27 — Act-1 fine polish (人物/UI/动作/数值)
+
+**No act-2.** Continue act-1 comfort playability.
+
+### Done
+1. **Characters**
+   - 天冰: Map_Icecave ice tile → `game/fx/ice_hazard.png` (+ shimmer); 74 hazards draw real art.
+   - Type-12 gaps: SprRole paper-dolls for **狐狸刀兵 (015)** and **号角小妖 (607)** wired into 1-7s / 1-4s.
+   - Player **attack frame sync**: windup (walk) → hit (attack) → recover.
+2. **UI**
+   - Inventory always JM panel mode (bag `panel_625`); larger JM frames.
+   - Potion HUD shows ×qty; dimmed empty slots.
+   - Combat help banner: placeholder AT−DF/2 + foe caps (`?softdf=1` only).
+3. **Motion**
+   - Skill VFX: sharper slash; `ice` burst on 天冰 contact.
+   - Hurt 0.28s / death 0.9s.
+4. **Numbers**
+   - ComeOn.exe: only `RolePrivate.txt` name string — no melee formula (GBK/UTF-16 empty).
+   - `define.ini`: Ice/Fire/Poison DoT rates only.
+   - Init.txt 男主角 AT40+4/lv in `game.json` `combat.init_male`; scene-tier caps remain PLACEHOLDER.
+5. **Pathing playthrough** (`tools/phase27_walk_playthrough.py`): greedy walks + faceAttack.
+   - Reached **bq2=100** with sy1=100 / 玲珑心.
+   - Friction: boss approach sometimes misses; 1-11s jiguan walks can miss switches.
+
+### Screenshots
+`assets/samples/phase27/` — web_town/inv/shop/ice/fox, `wine_vs_web_*.png`, `panel_vs_web_shop.png`.
+
+### Remaining
+- Exe melee formula still unknown (needs deeper disasm).
+- Collision A* on MAP walk bytes not in harness.
+- Act-2 deferred.
+
+### Deploy
+- Source: (pending push)
+- Pages `main` `9bdef5f`
+- NAS_OK `/volume4/web/djfm/` (+ ice/fox/horn map props)
+
+
 ## Phase 26 — Act-1 polish (playable town → bq2=100 without soft-DF / killFlag)
 
 **Stopped act-2 export expansion** (user priority). Prior act-2 map export (16 maps) remains in tree; quest scripting deferred.

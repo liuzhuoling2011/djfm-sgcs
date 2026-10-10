@@ -57,8 +57,10 @@ export class Hud {
     ctx.font = 'bold 11px ui-sans-serif,system-ui'; ctx.textBaseline = 'top'
     for (let k = 0; k < 4; k++) {
       const img = k < 2 ? this.potR : this.potB, px = x0 + 258 + 24 * k, py = y0 + 82
-      if (img && this.pots[k] > 0) ctx.drawImage(img, px, py)
+      if (img) { ctx.globalAlpha = this.pots[k] > 0 ? 1 : 0.35; ctx.drawImage(img, px, py); ctx.globalAlpha = 1 }
       ctx.fillStyle = '#f8e800'; ctx.fillText(String(k + 1), px + 10, py - 1)
+      if (this.pots[k] > 0) { ctx.fillStyle = '#fff'; ctx.font = 'bold 10px ui-sans-serif,system-ui'; ctx.fillText('×'+this.pots[k], px + 2, py + 18) }
+      ctx.font = 'bold 11px ui-sans-serif,system-ui'
     }
     // Skill slots F1/F2 (Wine x425/448, y552) — labels from Skill.txt 扫叶/疾电
     ctx.fillStyle = '#f8e800'; ctx.fillText('F1', x0 + 425, y0 + 61); ctx.fillText('F2', x0 + 448, y0 + 61)
@@ -69,7 +71,7 @@ export class Hud {
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
-    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF' : '  ·占位数值') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
+    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (SOFT_DF ? '  ·软DF(?softdf=1)' : '  ·占位AT−DF/2') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
   }
   // Minimap: JM 1549 frame (137×133) at Wine (663,0) = top-right; interior 6..131 × 6..104; name strip below
   drawMinimap(ctx: CanvasRenderingContext2D, ground: CanvasImageSource | null, gx: number, gy: number, k: number,
@@ -129,10 +131,10 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     if (d < 1.05 || diff < 1.35) {
-      f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.35; hits++
+      f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.28; hits++
       // knockback away from player
       if (d > 0.01) { f.kbX = (dx / d) * 4.5; f.kbY = (dy / d) * 4.5 }
-      if (f.hp <= 0) { f.dead = 1.4; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
+      if (f.hp <= 0) { f.dead = 0.9; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
     }
   }
   return hits

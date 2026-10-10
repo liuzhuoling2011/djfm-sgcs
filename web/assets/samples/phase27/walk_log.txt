@@ -1,0 +1,44 @@
+START pathing playthrough
+[ren] foes=0
+[1-2s] foes=4
+  walk→(10.2,130.0) steps=190
+  fight ['魔豕兽'] hits=0 left=['魔豕兽战士', '持刀鬼兵', '持枪鬼兵', '持枪鬼兵', '魔豕兽']
+54 0
+[ren] foes=0
+[1-3as] foes=1
+  fight ['玉衡'] hits=28 left=[]
+[1-3s] foes=0
+[ren] foes=0
+[1-6s] foes=0
+  walk→(100.0,32.0) steps=228
+[ren] foes=0
+sy1 100
+[1-4s] foes=0
+[ren] foes=0
+[1-5s] foes=0
+  walk→(185.0,154.0) steps=203
+[1-7s] foes=0
+  walk→(139.0,63.0) steps=156
+[1-8s] foes=0
+ice 74
+  walk→(110.0,68.0) steps=99
+[ren] foes=0
+[1-4s] foes=0
+119 1
+[ren] foes=0
+[1-9s] foes=24
+  fight ['战象'] hits=0 left=['战象']
+zhs1 None
+[ren] foes=0
+[1-11s] foes=24
+  walk→(197.0,157.0) steps=239
+  walk→(130.0,70.0) steps=239
+  walk→(186.0,160.0) steps=239
+124 0 bq2 1
+[1-10a6s] foes=11
+  fight ['天机'] hits=68 left=[]
+bq2 50
+[ren] foes=0
+FINAL {"sy1": 100, "cjg1": 1, "bq1": 100, "bq": 2, "xss": 1, "tj": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "bq2": 100} 1-0s
+friction ['魔豕兽 not killed with pathing fight']
+errs []

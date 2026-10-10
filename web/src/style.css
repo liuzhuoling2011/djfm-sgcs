@@ -50,7 +50,7 @@ img { max-width:100%; image-rendering: pixelated; }
 /* Phase 20: ResJM shop / embed panels (size-matched inventory frames; anim IDs 834/814 empty in ResJM) */
 .inv-panel.jm-mode{width:auto;max-width:90vw;right:50%;transform:translateX(50%);top:60px;background:transparent;border:none;padding:0;overflow:visible}
 .inv-panel.jm-mode .box{background:transparent;border:none;padding:0;box-shadow:none}
-.jm-frame{position:relative;width:326px;height:226px;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated}
+.jm-frame{position:relative;width:360px;height:250px;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated}
 .jm-frame.shop{background-image:url(game/hud/panels/panel_1550.png)}
 .jm-frame.embed{background-image:url(game/hud/panels/panel_591.png)}
 .jm-frame.bag{background-image:url(game/hud/panels/panel_625.png)}
@@ -74,3 +74,9 @@ img { max-width:100%; image-rendering: pixelated; }
 .foreword .fore-box{max-width:640px;max-height:70vh;overflow:auto;background:rgba(8,10,18,.92);border:1px solid #6a5a3a;padding:28px 32px;color:#e8dcc0;font:16px/1.7 "Noto Serif CJK SC",serif;white-space:pre-wrap}
 .fore-title{font-size:22px;color:#f0c860;margin-bottom:16px;text-align:center}
 .fore-body{text-indent:2em}
+
+.jm-frame.bag{width:360px;height:280px}
+.jm-frame .jm-body li .ico{width:20px;height:20px;image-rendering:pixelated;vertical-align:middle;margin-right:6px}
+.jm-frame .jm-slots button small{display:block;color:#c9a86a}
+.combat-help{position:fixed;left:12px;bottom:56px;z-index:22;max-width:340px;background:rgba(8,14,28,.88);border:1px solid #3a5a8a;border-radius:8px;padding:8px 10px;color:#cfe;font-size:12px;line-height:1.35}
+.combat-help.hidden{display:none}

@@ -99,6 +99,15 @@ async function main() {
   let origin = { x: 0, y: 0 }
   const qs = new URLSearchParams(location.search)
   setSoftDf(qs.get('softdf') === '1')
+  const helpEl = document.createElement('div')
+  helpEl.className = 'combat-help'
+  helpEl.id = 'combat-help'
+  const helpTxt = (gameData as { combat?: { help?: string } } | null)?.combat?.help
+    ?? '占位数值：伤害 AT−DF/2；怪物按场景档位封顶。?softdf=1 软DF。'
+  helpEl.innerHTML = helpTxt + ' <button type="button" style="margin-left:8px">知道了</button>'
+  document.body.append(helpEl)
+  helpEl.querySelector('button')?.addEventListener('click', () => helpEl.classList.add('hidden'))
+  window.setTimeout(() => helpEl.classList.add('hidden'), 14000)
   if (SOFT_DF) console.info('[djfm] soft-DF ON (?softdf=1)')
   else console.info('[djfm] soft-DF off; using placeholder foe caps')
   let tintOn = qs.get('tint') !== '0'
@@ -322,7 +331,7 @@ async function main() {
   function renderInv() {
     const show = inv.open || inv.shopOpen || inv.embedOpen
     invEl.classList.toggle('hidden', !show)
-    invEl.classList.toggle('jm-mode', inv.shopOpen || inv.embedOpen)
+    invEl.classList.toggle('jm-mode', true) // Phase 27: bag also uses JM panel_625
     if (!show) return
     const rows = inv.items.map((it) => {
       const d = inv.props[String(it.id)]
@@ -495,6 +504,10 @@ async function main() {
   let groundLoot: GroundLoot[] = []
   type IceHaz = { x: number; y: number }
   let iceHazards: IceHaz[] = []
+  let iceImg: HTMLImageElement | null = null
+  let iceImgB: HTMLImageElement | null = null
+  try { iceImg = await loadImage('game/fx/ice_hazard.png') } catch { /* */ }
+  try { iceImgB = await loadImage('game/fx/ice_hazard_b.png') } catch { /* */ }
   function spawnSceneLoot(scene: string) {
     groundLoot = []
     if (lootedScenes.has(scene)) return
@@ -1068,7 +1081,10 @@ async function main() {
 
     stepFoes(foes, pos, stats, dt, walkable)
     for (const hz of iceHazards) {
-      if (Math.hypot(hz.x - pos.x, hz.y - pos.y) < 0.85) stats.hp -= 18 * dt
+      if (Math.hypot(hz.x - pos.x, hz.y - pos.y) < 0.85) {
+        stats.hp -= 12 * dt
+        if (!skillFx || skillFx.kind !== 'ice') skillFx = spawnFx('ice', 0, 0.35)
+      }
     }
     // Boss death loot from scene scripts
     {
@@ -1092,7 +1108,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), groundLoot: () => groundLoot, iceHazards: () => iceHazards, triggers: () => curTriggers, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, triggers: () => curTriggers, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
@@ -1235,7 +1251,14 @@ async function main() {
     let spr = player
     {
       const d = ((facing % 8) + 8) % 8
-      if (attackT > 0 && playerAttackSpr[d]) spr = playerAttackSpr[d]
+      // Phase 27: attack frame sync — windup (walk), hit (attack), recover (idle)
+      if (attackT > 0) {
+        const u = attackT / 0.28
+        if (u > 0.65 && playerWalk[d]?.[0]) spr = playerWalk[d][0]
+        else if (u > 0.25 && playerAttackSpr[d]) spr = playerAttackSpr[d]
+        else if (playerAttackSpr[d]) spr = playerAttackSpr[d]
+        else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
+      }
       else if (moving && playerWalk[d]?.length) spr = playerWalk[d][Math.floor(animT) % playerWalk[d].length]
       else if (playerIdle[d]) spr = playerIdle[d]
     }
@@ -1287,8 +1310,9 @@ async function main() {
     for (const hz of iceHazards) {
       const p = iso(hz.x, hz.y)
       const x = p.x + cam.x, y = p.y + cam.y
-      ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 14, 8, 0, 0, Math.PI * 2); ctx.fill()
-      ctx.strokeStyle = 'rgba(200,240,255,0.8)'; ctx.stroke()
+      const im = ((Math.floor(performance.now() / 400) + Math.floor(hz.x + hz.y)) % 2 === 0 ? iceImg : iceImgB) || iceImg
+      if (im) ctx.drawImage(im, x - im.width / 2, y - im.height + 4)
+      else { ctx.fillStyle = 'rgba(140,210,255,0.45)'; ctx.beginPath(); ctx.ellipse(x, y, 14, 8, 0, 0, Math.PI * 2); ctx.fill() }
     }
         // Phase 20: 蜀水 prop marker on 1-6s
     for (const g of groundLoot) {

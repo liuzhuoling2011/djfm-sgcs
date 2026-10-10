@@ -1,0 +1,60 @@
+BOOT sy1=100 soft-lv8 {'sy1': 100, 'cjg1': 100, 'bq': 3, 'bq1': 0, 'tj': 1, 'tj1': 100, 'xss': 1} {'hp': 1360, 'maxHp': 1360, 'mp': 36, 'maxMp': 36, 'exp': 800, 'lvl': 8, 'at': 68, 'df': 58, 'sp': 1}
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 0, "tj": 1, "tj1": 100, "xss": 1} foes=0 lock={} bld={}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 1, "tj": 1, "tj1": 100, "xss": 1}
+  talk sws → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 10, "tj": 1, "tj1": 100, "xss": 1}
+  exit 1-4s -1
+[1-4s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 10, "tj": 1, "tj1": 100, "xss": 1} foes=0 lock={} bld={}
+  talk sdyx → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 20, "tj": 1, "tj1": 100, "xss": 1}
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 20, "tj": 1, "tj1": 100, "xss": 1} foes=0 lock={} bld={}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 30, "tj": 1, "tj1": 100, "xss": 1}
+  bq1 30 exit 1-7as -1
+[1-5s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 30, "tj": 1, "tj1": 100, "xss": 1} foes=0 lock={} bld={}
+  pickProp=True inv121=0 122=1 123=0 124=0
+[1-7s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 30, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  jiutianchi lock 208
+  pickProp=True inv121=0 122=1 123=1 124=0
+  after approach jiutianchi scene= 1-7s dialog True
+[1-8s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 30, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  pickProp=True inv121=1 122=1 123=1 124=0
+  bq1 after tzxs 40
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 40, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  after hand 121: bq1 31
+[1-7s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  jiutianchi unlock 208
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+[1-4s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  talk sdyx → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  玲珑心 0 bq1 31
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  talk sws → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  bq2 start {'sy1': 100, 'cjg1': 100, 'bq': 3, 'bq1': 31, 'tj': 1, 'tj1': 100, 'xss': 1, 'xbjsm': 1, 'xqnxbz': 1, 'xtzxs': 1} exit 1-9s 303
+  talk zhs → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+[1-9s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=24 lock={"jiutianchi": 208} bld={}
+  talk bossdaxiang → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  fight swings=40 left=20 lv=12 at=84 exp=1280
+  zhs1 None
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=0 lock={"jiutianchi": 208} bld={}
+  talk zs → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1}
+  zhs1 after zs None
+[1-11s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1} foes=24 lock={"jiutianchi": 208} bld={}
+  pickProp=True inv121=1 122=1 123=1 124=0
+  pickProp=True inv121=1 122=1 123=1 124=0
+  pickProp=True inv121=1 122=1 123=1 124=1
+  after jiguan {'jiguan1': 1, 'jiguan2': 1, 'jiguan3': 1} 124 1 bq2 40
+  ▶ 1-11s
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40} foes=0 lock={"jiutianchi": 208} bld={"jiguan1": 1, "jiguan2": 1, "jiguan3": 1}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  talk sws → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  ▶ 1-10a6s
+[1-10a6s] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40} foes=11 lock={"jiutianchi": 208} bld={"jiguan1": 1, "jiguan2": 1, "jiguan3": 1}
+  talk bosstianji → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  fight swings=50 left=6 lv=19 at=112 exp=2120
+  bq2 after dual 40
+[ren] flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40} foes=0 lock={"jiutianchi": 208} bld={"jiguan1": 1, "jiguan2": 1, "jiguan3": 1}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  talk sws → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  talk bq → flags={"sy1": 100, "cjg1": 100, "bq": 3, "bq1": 31, "tj": 1, "tj1": 100, "xss": 1, "xbjsm": 1, "xqnxbz": 1, "xtzxs": 1, "xqnz": 1, "bq2": 40}
+  FINAL flags {'sy1': 100, 'cjg1': 100, 'bq': 3, 'bq1': 31, 'tj': 1, 'tj1': 100, 'xss': 1, 'xbjsm': 1, 'xqnxbz': 1, 'xtzxs': 1, 'xqnz': 1, 'bq2': 40} scene 1-0s
+page errors []

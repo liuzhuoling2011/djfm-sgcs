@@ -2,7 +2,7 @@
 // behavior graphs, not ResJM/ResEx sprite indices (those IDs decode as map props / paper-doll
  // fragments). Canvas overlays approximate the leaf-whirl / lightning / slash looks until a
 // true effect-lib map is cracked.
-export type FxKind = 'saoye' | 'jidian' | 'q' | 'slash'
+export type FxKind = 'saoye' | 'jidian' | 'q' | 'slash' | 'ice'
 
 export type SkillFx = { kind: FxKind; t: number; max: number; ang: number }
 
@@ -78,12 +78,28 @@ export function drawFx(
       ctx.fillStyle = `rgba(255,240,160,${a})`
       ctx.fillRect(Math.cos(ang) * (22 + u * 14) - 2, Math.sin(ang) * (10 + u * 6) - 2, 4, 4)
     }
+  } else if (fx.kind === 'ice') {
+    for (let i = 0; i < 6; i++) {
+      const ang = i * Math.PI / 3 + u * 2
+      const r = 10 + u * 16
+      ctx.fillStyle = `rgba(180,230,255,${a * 0.85})`
+      ctx.beginPath()
+      ctx.moveTo(Math.cos(ang) * r, Math.sin(ang) * r * 0.55)
+      ctx.lineTo(Math.cos(ang + 0.2) * (r + 8), Math.sin(ang + 0.2) * (r + 8) * 0.55)
+      ctx.lineTo(Math.cos(ang - 0.2) * (r + 4), Math.sin(ang - 0.2) * (r + 4) * 0.55)
+      ctx.fill()
+    }
   } else {
-    // basic slash arc
-    ctx.strokeStyle = `rgba(255,220,120,${a})`
-    ctx.lineWidth = 3
+    // slash arc + trailing gleam
+    ctx.strokeStyle = `rgba(255,240,180,${a})`
+    ctx.lineWidth = 4
     ctx.beginPath()
-    ctx.arc(0, 0, 28, fx.ang - 0.7, fx.ang + 0.7)
+    ctx.arc(0, 0, 30 + u * 6, fx.ang - 0.85, fx.ang + 0.85)
+    ctx.stroke()
+    ctx.strokeStyle = `rgba(255,255,255,${a * 0.55})`
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(0, 0, 34 + u * 8, fx.ang - 0.5, fx.ang + 0.5)
     ctx.stroke()
   }
   ctx.restore()
