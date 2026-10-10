@@ -205,7 +205,7 @@ async function main() {
         })
         // ensure frames loaded
         if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
-          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+          if (f && !monImgs.has(f[0])) loadImageHd(`${base}/mon_hd/${f[0]}`, `${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('玉衡来袭！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyuheng'
@@ -220,7 +220,7 @@ async function main() {
         })
         const st = monSets['pd006']
         if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
-          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+          if (f && !monImgs.has(f[0])) loadImageHd(`${base}/mon_hd/${f[0]}`, `${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('魔豕兽出现！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyezhu'
@@ -242,7 +242,7 @@ async function main() {
         })
         const st = monSets['pd009']
         if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
-          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+          if (f && !monImgs.has(f[0])) loadImageHd(`${base}/mon_hd/${f[0]}`, `${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('战象来袭！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossdaxiang'
@@ -256,7 +256,7 @@ async function main() {
           })
           const st = monSets[set]
           if (st) for (const a of Object.values(st)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
-            if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+            if (f && !monImgs.has(f[0])) loadImageHd(`${base}/mon_hd/${f[0]}`, `${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
           }
         }
         const o1 = objects.find((x) => String(x.EventID).toLowerCase() === 'bosstianji')
@@ -965,7 +965,7 @@ async function main() {
     npcImgs = new Map()
     await Promise.all([
       ...[...new Set(buildings.flatMap((b) => (b.parts ?? []).map((q) => q.file)))].map(async (f) => {
-        try { buildingImgs.set(f, await loadImage(`${base}/props/${f}`)) } catch { /* */ }
+        try { buildingImgs.set(f, await loadImageHd(`${base}/props_hd/${f}`, `${base}/props/${f}`)) } catch { /* */ }
       }),
       ...[...new Set(objects.filter((n) => n.file).map((n) => n.file!))].map(async (f) => {
         try { npcImgs.set(f, await loadImage(`${base}/props/${f}`)) } catch { /* */ }
@@ -977,7 +977,9 @@ async function main() {
     ground = null
     groundMeta = meta.ground_full ?? null
     if (groundMeta?.file) {
-      try { ground = await loadImage(`${base}/${groundMeta.file}`) } catch { ground = null }
+      const gf = groundMeta.file
+      try { ground = await loadImageHd(`${base}/ground_hd/${gf}`, `${base}/${gf}`) } catch { ground = null }
+      // If HD ground is 2× pixels, keep world scale via groundMeta.tile dims (unchanged)
     }
     useGround = !!ground
     miniImg = null
@@ -1031,7 +1033,7 @@ async function main() {
     foes = []
     monSets = meta.monster_sets ?? {}
     for (const [sid, acts] of Object.entries(monSets)) for (const a of Object.values(acts)) for (const f of ((a as { frames?: unknown[] })?.frames ?? []) as ([string, number, number] | null)[]) {
-      if (f && !monImgs.has(f[0])) { const k = f[0]; loadImage(`${base}/mon/${k}`).then((im) => monImgs.set(k, im)).catch(() => {}) ; void sid }
+      if (f && !monImgs.has(f[0])) { const k = f[0]; loadImageHd(`${base}/mon_hd/${k}`, `${base}/mon/${k}`).then((im) => monImgs.set(k, im)).catch(() => {}) ; void sid }
     }
     {
       let mons = [...(meta.monsters ?? [])]
@@ -1479,9 +1481,15 @@ async function main() {
       const gFocusX = (wx - wy) * (tw / 2) - groundMeta.min_sx
       const gFocusY = (wx + wy) * (th / 2) - groundMeta.min_sy
       // Same lock point as cam (-36), integer blit — must stay in sync with entity cam
-      const gs = tileW / tw
-      const gx = Math.round(canvas.width / 2 - gFocusX * gs)
-      const gy = Math.round(canvas.height / 2 - 36 - gFocusY * gs)
+      // HD ground may be 2× pixels; lock world scale to meta tile size
+      const nativeW = (groundMeta as { px_w?: number }).px_w
+      const srcScale = nativeW && nativeW > 0 ? ground.width / nativeW : (ground.width > 5000 ? 2 : 1)
+      const gs = (tileW / tw) / Math.max(1, srcScale)
+      const gx = Math.round(canvas.width / 2 - gFocusX * (tileW / tw))
+      const gy = Math.round(canvas.height / 2 - 36 - gFocusY * (tileW / tw))
+      // blit using focus in SD ground space mapped to HD pixels
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       ctx.globalAlpha = 0.92
       ctx.drawImage(ground, gx, gy, ground.width * gs, ground.height * gs)
       ctx.globalAlpha = 1
@@ -1523,7 +1531,9 @@ async function main() {
         const img = buildingImgs.get(q.file)
         if (!img) continue
         const sx0 = op.x + cam.x + q.ox, sy0 = op.y + cam.y + q.oy
-        if (sx0 > canvas.width || sy0 > canvas.height || sx0 + img.width < 0 || sy0 + img.height < 0) continue
+        const _pw = q.w && q.w > 0 ? q.w : img.width
+        const _ph = q.h && q.h > 0 ? q.h : img.height
+        if (sx0 > canvas.width || sy0 > canvas.height || sx0 + _pw < 0 || sy0 + _ph < 0) continue
         // Phase 13: hotspot from BLD part (ox,oy); depth = anchor cell iso row
         // footprint rule: anchor = front corner of footprint; player is behind iff not past anchor on either axis
         const pz = pos.x + pos.y + 0.25
@@ -1532,7 +1542,15 @@ async function main() {
         let z = lx + ly + 0.2
         if (inFoot) z = Math.max(z, pz + 0.01)       // player under/behind this building's footprint → building on top
         else if (past) z = Math.min(z, pz - 0.01)    // player past the front corner → player on top
-        draws.push({ z, fn: () => ctx.drawImage(img, sx0, sy0) })
+                draws.push({ z, fn: () => {
+          // props_hd may be 2×; scale to original part size
+          const pw = q.w && q.w > 0 ? q.w : img.width
+          const ph = q.h && q.h > 0 ? q.h : img.height
+          const sc = img.width / pw
+          const disp = sc >= 1.5 ? 1 : 1 // keep 1× world size (sharp HD downscale)
+          ctx.imageSmoothingEnabled = true
+          ctx.drawImage(img, sx0, sy0, pw * disp, ph * disp)
+        } })
       }
     }
 
@@ -1549,10 +1567,15 @@ async function main() {
         z: ox + oy + 0.2,
         fn: () => {
           if (img) {
-            // SprRole oy = foot hotspot Y in sprite; fallback bottom-center
-            const hotY = o.oy != null && o.oy > 0 ? o.oy : img.height - 8
-            const hotX = o.ox != null && o.ox > 0 ? o.ox : img.width / 2
-            ctx.drawImage(img, sx - hotX, sy - hotY)
+            // HD NPC sheets ×4 → draw ~2× original logical size (sharp, not screen-filling)
+            const baseW = o.sw && o.sw > 0 ? o.sw : img.width
+            const baseH = o.sh && o.sh > 0 ? o.sh : img.height
+            const sc = img.width / baseW
+            const disp = sc >= 2 ? 2 : 1
+            const hotY = (o.oy != null && o.oy > 0 ? o.oy : baseH - 8) * disp
+            const hotX = (o.ox != null && o.ox > 0 ? o.ox : baseW / 2) * disp
+            ctx.imageSmoothingEnabled = true
+            ctx.drawImage(img, sx - hotX, sy - hotY, baseW * disp, baseH * disp)
           }
 
           else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill() }
@@ -1561,7 +1584,10 @@ async function main() {
           const rawName = (o as { name?: string }).name || (eid ? (dlg.names[eid] ?? '') : '')
           const skip = !rawName || /^auto$/i.test(eid) || rawName === '天冰' || Number(o.ModelID) === 220
           if (!skip) {
-            const top = img ? (sy - (o.oy != null && o.oy > 0 ? o.oy : img.height - 8) - 4) : sy - 18
+            const baseH2 = o.sh && o.sh > 0 ? o.sh : (img?.height ?? 24)
+            const sc2 = img && o.sh && o.sh > 0 ? img.height / o.sh : 1
+            const disp2 = sc2 >= 2 ? 2 : sc2
+            const top = img ? (sy - (o.oy != null && o.oy > 0 ? o.oy * disp2 : baseH2 * disp2 - 8) - 4) : sy - 18
             drawNameplate(ctx, rawName, sx, top, 'npc')
           }
         },
@@ -1651,7 +1677,13 @@ async function main() {
       draws.push({ z: f.x + f.y + 0.24, fn: () => {
         if (img) {
           if (f.hitT > 0) { ctx.filter = 'brightness(2.4) saturate(1.6)'; ctx.globalAlpha = 0.92 }
-          ctx.drawImage(img, fx - img.width / 2, fy - img.height + 6)
+          {
+            const mw = img.width, mh = img.height
+            const msc = mw > 256 ? 0.5 : mw > 160 ? 0.75 : 1
+            const dw = mw * msc, dh = mh * msc
+            ctx.imageSmoothingEnabled = true
+            ctx.drawImage(img, fx - dw / 2, fy - dh + 6, dw, dh)
+          }
           ctx.filter = 'none'
         } else { ctx.fillStyle = '#7a2a2a'; ctx.beginPath(); ctx.ellipse(fx, fy - 18, 10, 18, 0, 0, Math.PI * 2); ctx.fill() }
         if (f.dead <= 0) {
