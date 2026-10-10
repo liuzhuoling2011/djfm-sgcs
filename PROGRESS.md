@@ -789,5 +789,5 @@ Still not exported: 1-10s / 1-10a* / 1-11s (next after 炎炀关).
 - `assets/samples/phase20/web_1-4s.png`, `web_1-6s.png`, `maps_new.png`
 
 ### Deploy
-- Pages + NAS this milestone; source commit + PROGRESS.
+- Source `eb5a9f7`, Pages `f4c5ca2`, NAS_OK.
 
