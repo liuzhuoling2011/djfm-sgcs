@@ -872,7 +872,7 @@ Skipped (schema still broken).
 - Walk gait still approximate (Phase 35).
 
 ### Deploy
-- (pending)
+- Source `8642ef5` · Pages `2ef99be` (main)
 
 ---
 
