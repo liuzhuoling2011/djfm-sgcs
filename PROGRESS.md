@@ -870,8 +870,8 @@ Skipped (schema still broken).
 - Act-2 quest scripting intentionally **not** started.
 
 ### Deploy
-- Pages `main` `f59277e` (pending refresh if needed)
-- NAS: (pending)
+- Pages `main` `ab38a2d` (GitHub Pages)
+- NAS_OK `/volume4/web/djfm/` (core assets + game.json; full tile sync skipped)
 
 ---
 
