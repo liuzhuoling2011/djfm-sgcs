@@ -859,7 +859,7 @@ Skipped (schema still broken).
 - Remake death UX is web-side (not ComeOn script).
 
 ### Deploy
-- (hashes after push)
+- Source ; Pages ; NAS 
 
 ### Samples
 - `assets/samples/phase30/`
