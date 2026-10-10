@@ -43,6 +43,8 @@ Unchanged: `web/src/main.ts` `facing = (oct + 6) % 8`.
 
 ---
 
+**Deploy (PR#2 merge):** Source `5fb8f7f` · Pages `818d4ba` · NAS_OK `/volume4/web/djfm/` (shopMode+RH_002+facing oct+6). Wine town hold-key GIFs: in progress under `assets/samples/phase42/wine_hold/` (prior char-create batch rejected).
+
 ## Phase 40 — Act-1 polish: monsters + dialog/item/melee UX (2026-10-10)
 
 **Goal:** Replace remaining placeholder/wrong paper-doll trash with full-body ResNpc art; tighten dialog/item UX vs Wine; melee hit feel. Keep Phase39 facing/RH_002. No jump. No act-2.
