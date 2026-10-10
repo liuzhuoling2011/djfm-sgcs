@@ -870,8 +870,9 @@ Skipped (schema still broken).
 - Act-2 quest scripting intentionally **not** started.
 
 ### Deploy
-- Pages `main` `ab38a2d` (GitHub Pages)
-- NAS_OK `/volume4/web/djfm/` (core assets + game.json; full tile sync skipped)
+- Source `cdfbead` (master)
+- Pages `main` `9685549` (PROGRESS) / `ab38a2d` (dist)
+- NAS_OK `/volume4/web/djfm/` (core assets + game.json; full map re-sync skipped this pass)
 
 ---
 
