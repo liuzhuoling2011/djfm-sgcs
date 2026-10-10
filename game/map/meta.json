@@ -6633,8 +6633,8 @@
       "name": "行囊",
       "graph": "661",
       "file": "npc_661.png",
-      "sw": 41,
-      "sh": 45,
+      "sw": 94,
+      "sh": 117,
       "npc_dirs": [
         "xn_0.png",
         "xn_1.png",
@@ -6681,7 +6681,7 @@
       "name": "蔡大婶",
       "graph": "619",
       "file": "npc_619.png",
-      "sw": 55,
+      "sw": 31,
       "sh": 88,
       "npc_dirs": [
         "cds_0.png",
@@ -6867,98 +6867,43 @@
   ],
   "triggers": [
     {
-      "x": 63,
-      "y": 43,
+      "x": 64,
+      "y": 2,
       "bid": 40,
       "script": "go 1-1s",
-      "label": "北门"
-    },
-    {
-      "x": 62,
-      "y": 43,
-      "bid": 40,
-      "script": "go 1-1s"
-    },
-    {
-      "x": 84,
-      "y": 59,
-      "bid": 43,
-      "script": "go 1-4s",
-      "label": "东门"
-    },
-    {
-      "x": 41,
-      "y": 59,
-      "bid": 43,
-      "script": "go 1-7as",
-      "label": "西门"
+      "label": "北门",
+      "remake": "pad: original go 1-1s, reachable chunk edge"
     },
     {
       "x": 63,
-      "y": 74,
+      "y": 2,
+      "bid": 40,
+      "script": "go 1-1s",
+      "remake": "pad"
+    },
+    {
+      "x": 125,
+      "y": 64,
+      "bid": 43,
+      "script": "go 1-4s",
+      "label": "东门",
+      "remake": "pad: original go 1-4s"
+    },
+    {
+      "x": 2,
+      "y": 64,
+      "bid": 43,
+      "script": "go 1-7as",
+      "label": "西门",
+      "remake": "pad: original go 1-7as"
+    },
+    {
+      "x": 64,
+      "y": 125,
       "bid": 40,
       "script": "go 1-9s",
-      "label": "南门"
-    },
-    {
-      "x": 68,
-      "y": 117,
-      "bid": 40,
-      "script": "go 1-9s"
-    },
-    {
-      "x": 119,
-      "y": 64,
-      "bid": 43,
-      "script": "go 1-4s"
-    },
-    {
-      "x": 62,
-      "y": 119,
-      "bid": 43,
-      "script": "go 1-9s"
-    },
-    {
-      "x": 112,
-      "y": 64,
-      "bid": 43,
-      "script": "go 1-4s"
-    },
-    {
-      "x": 62,
-      "y": 80,
-      "bid": 701,
-      "script": "SetFlag 1-0s 2*SetBldAni CSD 1*ShowJM 103 3"
-    },
-    {
-      "x": 71,
-      "y": 24,
-      "bid": 680,
-      "script": "Quest"
-    },
-    {
-      "x": 72,
-      "y": 12,
-      "bid": 43,
-      "script": "go 1-1s un"
-    },
-    {
-      "x": 27,
-      "y": 52,
-      "bid": 43,
-      "script": "go 1-7as"
-    },
-    {
-      "x": 71,
-      "y": 6,
-      "bid": 40,
-      "script": "go 1-1s"
-    },
-    {
-      "x": 20,
-      "y": 52,
-      "bid": 43,
-      "script": "go 1-7as"
+      "label": "南门",
+      "remake": "pad: original go 1-9s"
     }
   ],
   "blocked_sample": [
@@ -15944,24 +15889,21 @@
   },
   "quest_gate_cells": [
     [
-      24,
+      64,
       1
     ],
     [
-      23,
+      63,
       1
     ],
     [
-      25,
+      65,
       1
     ],
     [
-      24,
-      2
-    ],
-    [
-      23,
+      64,
       2
     ]
-  ]
+  ],
+  "warp_note": "Phase32: reachable remake pads at chunk edges for original BNT exits (1-1s/1-4s/1-7as/1-9s). Story locks via exitText from scene/1-0s.txt + 沈云 talk. Off-chunk original BNT coords removed (unreachable in 48×36 export)."
 }
