@@ -62,7 +62,7 @@ async function main() {
   app.innerHTML = `
     <header>
       <h1>刀剑封魔录外传 · Phase 12</h1>
-      <p>瓦当镇 · 地面钻石修复 + 图集 · BGM · E对话 / Space攻击 · WASD</p>
+      <p>瓦当镇 · 地面钻石修复 + 图集 · BGM · E对话 / Space攻击 / I·B行囊 · WASD</p>
     </header>
     <div class="toolbar" id="packs"></div>
     <canvas id="c" width="1280" height="720"></canvas>
@@ -333,6 +333,7 @@ async function main() {
   }
   let spawnPos = { x: 0, y: 0 }
   let attackCd = 0
+  let hitStop = 0 // Phase 40: brief freeze on melee connect
 
   function showDialog(eid: string) {
     const d = gameData?.dialogs?.[eid]
@@ -441,7 +442,11 @@ async function main() {
         dialogEl.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { dlg.pick(Number((b as HTMLButtonElement).dataset.i)); dialogOpen = dlg.open; renderDialog() }))
       } else {
         const line = dlg.lines[dlg.idx] ?? ''
-        dialogEl.innerHTML = wrap(dlg.npc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
+        dialogEl.innerHTML = wrap(dlg.npc || '对话', `<p>${line}</p>`, '点击 / E / Enter 继续 · Esc 关闭')
+        dialogEl.querySelector('.dlg-board')?.addEventListener('click', (ev) => {
+          if ((ev.target as HTMLElement).closest('button')) return
+          advanceDialog()
+        })
       }
       clampDialog()
       return
@@ -450,7 +455,8 @@ async function main() {
     dialogEl.style.display = 'block'
     dialogEl.classList.add('jm-dialog')
     const line = dialogLines[dialogIdx] ?? ''
-    dialogEl.innerHTML = wrap(dialogNpc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
+    dialogEl.innerHTML = wrap(dialogNpc || '对话', `<p>${line}</p>`, '点击 / E / Enter 继续 · Esc 关闭')
+    dialogEl.querySelector('.dlg-board')?.addEventListener('click', () => advanceDialog())
     clampDialog()
   }
   function advanceDialog() {
@@ -1085,7 +1091,8 @@ async function main() {
     }
     if (k === 'escape' && dlg.open) { dlg.close(); dialogOpen = false; renderDialog(); return }
     // Inventory toggle
-    if (k === 'i' && !dialogOpen) { inv.open = !inv.open; if (!inv.open) { inv.shopOpen = false; inv.embedOpen = false }; renderInv(); return }
+    // Phase 40: Wine-style B bag + I (same toggle)
+    if ((k === 'i' || k === 'b') && !dialogOpen) { inv.open = !inv.open; if (!inv.open) { inv.shopOpen = false; inv.embedOpen = false }; playSfx('ui'); renderInv(); return }
     if (k === 'escape' && (inv.open || inv.shopOpen || inv.embedOpen)) {
       inv.open = inv.shopOpen = inv.embedOpen = false; renderInv(); return
     }
@@ -1204,7 +1211,8 @@ async function main() {
 
   let last = performance.now()
   function frame(now: number) {
-    const dt = Math.min(0.05, (now - last) / 1000)
+    let dt = Math.min(0.05, (now - last) / 1000)
+    if (hitStop > 0) { hitStop = Math.max(0, hitStop - dt); dt *= 0.12 }
     last = now
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
@@ -1215,7 +1223,7 @@ async function main() {
       const range = gameData?.attack?.range ?? 1.55
       const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, range)
       floaters.push(...fl)
-      if (fl.length) playSfx('hit')
+      if (fl.length) { playSfx('hit'); hitStop = Math.max(hitStop, 0.045) }
       else playSfx('slash', { vol: 0.25 })
       for (const f of before) if (f.dead > 0) onFoeKilled(f)
     }
@@ -1506,10 +1514,17 @@ async function main() {
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
           const ang = facingWorldAng(facing)
-          ctx.strokeStyle = `rgba(255,220,120,${Math.min(1, attackT * 4)})`
-          ctx.lineWidth = 3
+          // Phase 40: punchier Wine-like slash wedge
+          const a = Math.min(1, attackT * 4)
+          ctx.strokeStyle = `rgba(255,230,140,${a})`
+          ctx.lineWidth = 4
           ctx.beginPath()
-          ctx.arc(pp.x + cam.x, pp.y + cam.y - 12, 28, ang - 0.7, ang + 0.7)
+          ctx.arc(pp.x + cam.x, pp.y + cam.y - 12, 30, ang - 0.85, ang + 0.85)
+          ctx.stroke()
+          ctx.strokeStyle = `rgba(255,180,60,${a * 0.45})`
+          ctx.lineWidth = 8
+          ctx.beginPath()
+          ctx.arc(pp.x + cam.x, pp.y + cam.y - 12, 22, ang - 0.55, ang + 0.55)
           ctx.stroke()
         }
       },
@@ -1700,7 +1715,7 @@ async function main() {
     const wx = (pos.x + origin.x).toFixed(1), wy = (pos.y + origin.y).toFixed(1)
     const bgmState = muted ? 'BGM:mute' : 'BGM:on'
     ctx.fillText(
-      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | WASD Shift跑 E谈 Space砍 I囊 S存 L读 M静音`,
+      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | WASD Shift跑 E谈 Space砍 I/B囊 S存 L读 M静音`,
       12, 20,
     )
     requestAnimationFrame(frame)

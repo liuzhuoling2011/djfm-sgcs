@@ -267,7 +267,7 @@
       "move": 16.0,
       "exp_per_lv": 100
     },
-    "help": "操作：WASD/方向键移动 · <b>Shift 奔跑</b>（耗体力）· E 对话/交互 · Space 攻击 · F1/F2 技能 · 1/3 吃药 · I 行囊 · S/L 快速存读 · M 静音。<br>原版无跳跃键；本重制亦不提供跳跃。",
+    "help": "操作：WASD/方向键移动 · <b>Shift 奔跑</b>（耗体力）· E 对话/交互 · Space 攻击 · F1/F2 技能 · 1/3 吃药 · I / B 行囊 · S/L 快速存读 · M 静音。<br>原版无跳跃键；本重制亦不提供跳跃。",
     "remake": {
       "note": "Remake tuning (not from ComeOn tables): thin late-map trash + shorter aggro leash so WASD clears feel less exhausting.",
       "sight_cap": 5.5,

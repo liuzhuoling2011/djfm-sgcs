@@ -44,7 +44,11 @@ img { max-width:100%; image-rendering: pixelated; }
 .inv-panel li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #24304a;font-size:13px}
 .inv-panel .eq{margin-top:10px;font-size:12px;color:#9ab}
 .inv-panel .shop button{margin:2px 4px 2px 0;background:#1a2740;color:#cfe;border:1px solid #3a5070;border-radius:4px;padding:3px 8px;cursor:pointer;font:inherit;font-size:12px}
-.toast{position:fixed;left:50%;top:56px;transform:translateX(-50%);z-index:46;background:rgba(20,30,50,.9);border:1px solid #4a6a9a;padding:6px 14px;border-radius:8px;color:#ffe9a0;font-size:13px;pointer-events:none}
+.toast{position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:46;
+  background:linear-gradient(180deg,rgba(40,28,12,.94),rgba(20,14,8,.94));
+  border:1px solid #8a6a3a;padding:7px 16px;border-radius:4px;color:#ffe9a0;
+  font-size:13px;pointer-events:none;font-family:"Microsoft YaHei","SimSun",sans-serif;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);letter-spacing:.04em}
 .toast.hidden{display:none}
 
 /* Phase 20: ResJM shop / embed panels (size-matched inventory frames; anim IDs 834/814 empty in ResJM) */

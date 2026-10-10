@@ -109,7 +109,7 @@ export class Inventory {
     return names[this.init.equip.weapon] ?? `兵器#${this.init.equip.weapon}`
   }
 
-  flash(msg: string) { this.toast = msg; this.toastT = 2.2 }
+  flash(msg: string) { this.toast = msg; this.toastT = 2.8 }
 
   tick(dt: number) { if (this.toastT > 0) this.toastT -= dt; if (this.potCd > 0) this.potCd = Math.max(0, this.potCd - dt) }
 

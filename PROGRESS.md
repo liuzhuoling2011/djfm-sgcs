@@ -1,3 +1,36 @@
+## Phase 40 — Act-1 polish: monsters + dialog/item/melee UX (2026-10-10)
+
+**Goal:** Replace remaining placeholder/wrong paper-doll trash with full-body ResNpc art; tighten dialog/item UX vs Wine; melee hit feel. Keep Phase39 facing/RH_002. No jump. No act-2.
+
+### Monsters
+Phase24 `pd*` paper-doll overwrote Phase23 full-body remaps. Re-bound act-1 combat casts:
+| Role | Name | Set tag | Source |
+|------|------|---------|--------|
+| 189 | 狐猴 | rex72 | ResExNpc1 @72 |
+| 10 | 魔豕兽战士 | r348 | ResNpc3 @48 |
+| 190/191 | 鬼兵 | r3594 | ResNpc3 @594 |
+| 158 | 战象 | boss564 | ResBoss @564 |
+| 196 | 玉衡 | boss196 | ResBoss @196 |
+魔猿/狐精/雪地巨人 kept existing `pd*` (no better ResNpc setstart found this pass).
+
+### Dialog / item UX
+- Click parchment board to advance (plus E/Enter)
+- **B** toggles bag (Wine-style) alongside **I**; UI open SFX
+- JM toast styling + slightly longer flash
+- Help text: I/B 行囊; 原版无跳跃
+
+### Melee
+- Keep Phase36 range 1.55 / CD 520ms / delayed mid-swing
+- Brief hitstop (~45ms) on connect; punchier slash wedge
+
+### Proofs
+`assets/samples/phase40/mon_remap_board.png`, `current_mon_samples.png`
+
+### Deploy
+Source + GitHub Pages + NAS `/volume4/web/djfm/`.
+
+---
+
 ## Phase 39 — RH/saber handedness + layer order (2026-10-10)
 
 **Goal:** Fix sword held backwards and non-east walk dirs vs Wine for all 8 WASD + Shift run. Act-1 only.
