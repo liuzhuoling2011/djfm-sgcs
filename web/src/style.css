@@ -48,7 +48,7 @@ img { max-width:100%; image-rendering: pixelated; }
 .toast.hidden{display:none}
 
 /* Phase 20: ResJM shop / embed panels (size-matched inventory frames; anim IDs 834/814 empty in ResJM) */
-.inv-panel.jm-mode{width:auto;max-width:96vw;left:50%;right:auto;transform:translate(-50%,-50%);top:46%;background:transparent;border:none;padding:0;overflow:visible;z-index:42}
+.inv-panel.jm-mode{width:auto;max-width:96vw;left:50%;right:auto;transform:translate(-50%,-50%);top:44%;background:transparent;border:none;padding:0;overflow:visible;z-index:42;filter:drop-shadow(0 8px 24px rgba(0,0,0,.65))}
 .inv-panel.jm-mode .box{background:transparent;border:none;padding:0;box-shadow:none}
 /* ResJM panels are 326×226 — match Wine pixel size */
 .jm-frame{position:relative;width:326px;height:226px;background-size:326px 226px;background-repeat:no-repeat;image-rendering:pixelated;font-family:"Microsoft YaHei","SimSun",ui-sans-serif,system-ui}
@@ -98,10 +98,12 @@ img { max-width:100%; image-rendering: pixelated; }
 
 /* Phase 36 dialog — Wine-like bottom board (ResJM parchment), SimSun body */
 #dialog.jm-dialog{
-  display:block;position:fixed;left:50%;bottom:108px;top:auto;
+  /* Phase 37: Wine dialog sits just above bottom HUD (~100–120px clear) */
+  display:block;position:fixed;left:50%;bottom:118px;top:auto;
   transform:translateX(-50%);z-index:45;pointer-events:auto;
   border:none;background:transparent;padding:0;
-  width:min(520px,94vw);max-height:42vh;overflow:visible;
+  width:min(560px,96vw);max-height:40vh;overflow:visible;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.55));
 }
 #dialog.jm-dialog .dlg-board{
   width:100%;min-height:128px;max-height:42vh;overflow:auto;

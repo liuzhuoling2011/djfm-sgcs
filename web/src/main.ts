@@ -411,7 +411,7 @@ async function main() {
     // Phase 36: bottom-anchored Wine dialog — keep above HUD, inside viewport
     requestAnimationFrame(() => {
       const pad = 10
-      const hudClear = 100 // leave room for bottom HUD orb/bar
+      const hudClear = 118 // Phase37: match Wine dialog clearance above HUD
       dialogEl.style.bottom = `${hudClear}px`
       dialogEl.style.top = 'auto'
       dialogEl.style.transform = 'translateX(-50%)'
@@ -1684,7 +1684,7 @@ async function main() {
       ctx.fillText('正在返回落脚处…', canvas.width / 2, canvas.height / 2 + 22)
       ctx.textAlign = 'left'
     }
-    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax })
+    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax, attackCd, attackReady: attackCd <= 0 && attackT <= 0 })
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })

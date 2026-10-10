@@ -1,4 +1,31 @@
 
+
+## Phase 37 — Wine dialog / JM bag / melee + HUD glow
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Goal
+Match web dialog, inventory (JM bag), and melee feel to **real in-game Wine ComeOn** captures (not ResJM error boxes). Soft HUD glow on weapon/Q. Act-1 only. (Walk facing remapped in Phase 38 — higher priority interrupt.)
+
+### Wine captures
+- In-game town + full HUD: `assets/samples/phase37/wine_alive.png`, `wine_town_ingame.png`, `wine_hud_bar.png` (+ orb/hotbar/Q/menu crops).
+- Continuous WASD walk/run strips: `wine_walk/` (original does not bind arrow keys for move).
+- Live bag/dialog clicks under Wine were unreliable (DirectInput / UI hit-testing); HUD + town frames used as layout ground truth. ResJM `dialog_board` / `panel_625` already match Wine JM chrome.
+
+### Web changes
+- **HUD glow:** amber radial glow under weapon slot + Q when melee ready / swinging (`hud.ts`).
+- **Dialog:** bottom clearance 118px, width ≤560px, drop-shadow; still SimSun JM parchment board.
+- **JM bag:** centered ~44% with stronger drop-shadow; panel 326×226 unchanged.
+- **Melee:** keep Phase 36 delayed mid-swing hit (range 1.55, cone 0.95, KB 1.6, CD 520ms).
+
+### Samples
+- `wine_vs_web_ui_board.png` — Wine HUD vs web HUD/dialog/bag/melee
+- `web_{hud,inv,dialog,melee}_glow.png`
+
+### Deploy
+- Source + GitHub Pages (see hashes below). NAS skipped if SOCKS down.
+
+
 ## Phase 38 — 8-dir walk/run facing remap (CRITICAL)
 
 **Date:** 2026-10-10 (UTC+8)

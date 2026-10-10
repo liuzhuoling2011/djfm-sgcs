@@ -74,7 +74,7 @@ export class Hud {
     } catch { /* optional */ }
   }
   // Layout measured on Wine 800x600: bar top y=490; HP orb (11,+20); MP orb (41,+18); weapon (156,+61)
-  draw(ctx: CanvasRenderingContext2D, s: Stats, extra?: { skillL?: string; skillR?: string; money?: number; weapon?: string; potCd?: number; potCdMax?: number }) {
+  draw(ctx: CanvasRenderingContext2D, s: Stats, extra?: { skillL?: string; skillR?: string; money?: number; weapon?: string; potCd?: number; potCdMax?: number; attackCd?: number; attackReady?: boolean }) {
     const W = ctx.canvas.width, H = ctx.canvas.height
     if (!this.bar) return
     const x0 = Math.round((W - 800) / 2), y0 = H - 110
@@ -119,8 +119,23 @@ export class Hud {
     if (extra?.skillL) { ctx.fillStyle = '#cfe6ff'; ctx.font = '9px ui-sans-serif,system-ui'; ctx.fillText(extra.skillL, x0 + 420, y0 + 78) }
     if (extra?.skillR) { ctx.fillStyle = '#cfe6ff'; ctx.font = '9px ui-sans-serif,system-ui'; ctx.fillText(extra.skillR, x0 + 448, y0 + 78) }
     ctx.font = 'bold 11px ui-sans-serif,system-ui' 
+    // Phase 37: soft amber glow on weapon + Q when melee ready (Wine hotbar highlight feel)
+    const glow = (bx: number, by: number, bw: number, bh: number, on: boolean) => {
+      if (!on) return
+      const g = ctx.createRadialGradient(bx + bw / 2, by + bh / 2, 2, bx + bw / 2, by + bh / 2, Math.max(bw, bh) * 0.85)
+      g.addColorStop(0, 'rgba(255,210,80,0.55)')
+      g.addColorStop(0.55, 'rgba(255,160,40,0.22)')
+      g.addColorStop(1, 'rgba(255,120,0,0)')
+      ctx.fillStyle = g
+      ctx.fillRect(bx - 6, by - 6, bw + 12, bh + 12)
+    }
+    const ready = extra?.attackReady !== false && (extra?.attackCd ?? 0) <= 0.02
+    const swinging = (extra?.attackCd ?? 0) > 0.02 && (extra?.attackCd ?? 0) < 0.45
+    glow(x0 + 156, y0 + 61, 43, 47, ready || swinging)
+    glow(x0 + 606, y0 + 61, 43, 47, ready)
     // Q skill icon (JM 63 at Wine (606,551)) + 'Q' label
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
+    if (this.weapon) ctx.drawImage(this.weapon, x0 + 156, y0 + 61)
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
     ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl} AT${Math.round(s.at ?? INIT.at)}` + (SOFT_DF ? '  ·软DF(?softdf=1)' : '  ·Init成长') + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
