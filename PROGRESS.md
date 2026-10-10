@@ -842,6 +842,34 @@ Skipped (schema still broken).
 - Source `7e5dc16`, Pages `a1316de`, NAS_OK.
 
 
+
+## Phase 23 — sprite remaps, RemItem/SetFlagTable, combat polish, DHP stub (2026-10-10)
+
+### Done
+1. **Monster/NPC remaps** (`tools/phase23_fix_sprites.py`):
+   - **狐猴 (189)** Autos on graph 601 (halberd torso / paper-doll idle) → **ResExNpc1 set 72** full-body (`rex72`); converted Type-13 Auto → monsters on 1-9s/1-10s/1-10a*.
+   - **魔豕兽 (10/11)** set0 human walk + **1712×1 death strip** → **ResNpc3 set 48** (`r348`) full walk/idle/hurt/attack/death (strip frames filtered). Exact Spr/PLI graph-006 composite still open — set48 is best full-body match.
+   - **战象 / bossdaxiang (158)** graph 009 nests are 1px strips → **ResBoss set 564** (`boss564`) interim full-body; talk NPC restored with `npc_daxiang.png`. Exact paper-doll 009 still open.
+   - Ghosts 190/191 stay ResNpc3 **594**.
+2. **RemItem / SetFlagTable / ResetObj**: `dialog.ts` + `main.ts` `onRem` / `hiddenEvents` / `flagTable[111]`. Scene-enter hooks for 1-0s, 1-2s, 1-3as per scripts.
+3. **Combat polish**: foe HP bars (already), hurt frames + **knockback**, death anim ~1.4s then **remove** (no 12s respawn). `bossdaxiang` combat wired.
+4. **DHP**: MPEG-1 PES confirmed (`ffprobe`); stub frames via ffmpeg → `web/public/game/cutscenes/{1-3s,swss}.png`; `PlayAvi` shows overlay ~2.8s (not full video playback).
+5. **Act-2 export**: **skipped** — act-1 sprite exactness (魔豕/战象 PLI) and 魔猿(46) Autos on 1-10s still open.
+
+### Samples
+- `assets/samples/phase23/fixed_monsters.png` — r348 / rex72 / boss564 / 594 / DHP frame
+- `assets/samples/phase23/web_1-2s.png`, `web_1-9s.png`, `web_1-10s.png`
+- `assets/samples/phase23/dhp_1-3s_f0.png`
+
+### Remaining gaps → playable act-1 E2E
+- Exact **魔豕/野猪王** graph-006 and **战象** graph-009 Spr/PLI paper-doll composites (interim sets are wrong species for 战象).
+- **魔猿 (46)** graph 008 Autos still NPC placeholders on 1-10s.
+- True skill particle lib; pixel-exact ShowJM; damage formula (REA); gem sockets; saber multi-layer.
+- Full DHP video playback (only still-frame stub).
+- Side-quest / flag coverage beyond sy1/蜀水/cds/td/cjg subset.
+- Act-2 maps not started.
+
+
 ## Phase 22 — 玉衡 sprites, AddFellow, Type-12 NPCs, side quests (2026-10-10)
 
 ### 1. 玉衡 boss art (ResNpc / ResExNpc)

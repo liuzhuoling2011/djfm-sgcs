@@ -14,10 +14,10 @@ from phase10_run_export import compose_iso_ground
 from phase13_bld_place import parse_records
 
 ROOT = Path('/workspace/djfm-sgcs'); EXT = P.EXT; ZY = P.ZY
-# ResNpc3 action-set start per role (12 entries: 0 walk(8×10) 1 idle(8×2) 2 hurt(8×1) 3 (8×2) 4-7 attacks(8×8) 8 (8×7) 9 death(8×2) 10 (8×5)).
-# 594 = complete spear ghost-soldier body (matched visually); the saber variant is a multi-layer paper-doll
-# (sets 522/546/570) we cannot composite yet → both use 594.
-MONSTER_SETS = {190: 594, 191: 594}
+# ResNpc action-set start per role (12 entries). Phase 23: see tools/phase23_fix_sprites.py for
+# multi-lib sets (r3/rex/boss). Numeric keys here remain ResNpc3-only for scene_export.
+# 594 = spear ghost; saber paper-doll still unresolved. 10/11/158/189 use phase23 remapper.
+MONSTER_SETS = {190: 594, 191: 594, 10: 48, 11: 48, 75: 48}
 ACTIONS = {'walk': (0, 10), 'idle': (1, 2), 'hurt': (2, 1), 'attack': (4, 8), 'death': (9, 2)}
 
 def tsv(name):

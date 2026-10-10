@@ -178,14 +178,29 @@ async function main() {
         foes = foes.filter((f) => f.name !== '魔豕兽')
         foes.push({
           x: bx, y: by, hx: bx, hy: by, hp: 500, maxHp: 500, cd: 1, hitT: 0, dead: 0,
-          at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 10, act: 'idle', actT: 0, dir: 0,
+          at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 'r348', act: 'idle', actT: 0, dir: 0, event: 'bossyezhu',
         })
-        const st = monSets['10']
+        const st = monSets['r348'] ?? monSets['10']
         if (st) for (const a of Object.values(st)) for (const f of a.frames) {
           if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
         }
         inv.flash('魔豕兽出现！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyezhu'
+      } else if (eventId === 'bossdaxiang') {
+        const o = objects.find((x) => String(x.EventID).toLowerCase() === 'bossdaxiang')
+        const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
+        const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+        foes = foes.filter((f) => f.name !== '战象')
+        foes.push({
+          x: bx, y: by, hx: bx, hy: by, hp: 1200, maxHp: 1200, cd: 1.1, hitT: 0, dead: 0,
+          at: 60, df: 45, exp: 250, sight: 8, spd: 8, name: '战象', set: 'boss564', act: 'idle', actT: 0, dir: 0, event: 'bossdaxiang',
+        })
+        const st = monSets['boss564']
+        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+        }
+        inv.flash('战象来袭！')
+        ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossdaxiang'
       } else {
         inv.flash(`（战斗 ${battleId}/${eventId} 未接线）`)
       }
@@ -208,9 +223,36 @@ async function main() {
         inv.flash(`${dlg.names[eventId] ?? eventId} 加入同行`)
       })()
     }
+    dlg.onRem = (eventId, mode, slot, val) => {
+      const k = eventId.toLowerCase()
+      if (mode === 'rem') {
+        hiddenEvents.add(k)
+        foes = foes.filter((f) => (f.event ?? '').toLowerCase() !== k && (f.name ?? '') !== k)
+        inv.flash(`移除 ${dlg.names[k] ?? k}`)
+      } else if (mode === 'reset') {
+        hiddenEvents.delete(k)
+        if (flagTable[k]) flagTable[k][111] = 0
+        inv.flash(`重置 ${dlg.names[k] ?? k}`)
+      } else if (mode === 'table' && slot != null) {
+        flagTable[k] = flagTable[k] ?? {}
+        flagTable[k][slot] = val ?? 0
+        if (slot === 111 && val === 1) hiddenEvents.add(k)
+        if (slot === 111 && val === 0) hiddenEvents.delete(k)
+      }
+    }
     dlg.onFx = (kind, arg) => {
       if (kind === 'screen') inv.flash(`（ScreenEffect ${arg ?? ''}）`)
-      else if (kind === 'avi') inv.flash(`（PlayAvi ${arg ?? ''} — dhp 未解码）`)
+      else if (kind === 'avi') {
+        const name = (arg ?? '').trim().toLowerCase().replace(/\.dhp$/i, '')
+        const url = `game/cutscenes/${name || '1-3s'}.png`
+        const img = new Image()
+        img.onload = () => {
+          cutscene = { img, t: 2.8 }
+          inv.flash(`PlayAvi ${name || '1-3s'}`)
+        }
+        img.onerror = () => inv.flash(`（PlayAvi ${arg ?? ''} — 无预览帧）`)
+        img.src = url
+      }
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
@@ -219,6 +261,15 @@ async function main() {
   let monSets: NonNullable<MapMeta['monster_sets']> = {}
   const monImgs = new Map<string, HTMLImageElement>()
   let foes: Foe[] = []
+  let cutscene: { img: HTMLImageElement; t: number } | null = null
+  const hiddenEvents = new Set<string>()
+  const flagTable: Record<string, Record<number, number>> = {}
+  const isHidden = (eid: string) => {
+    const k = eid.toLowerCase()
+    if (hiddenEvents.has(k)) return true
+    const slot = flagTable[k]?.[111]
+    return slot === 1
+  }
   let spawnPos = { x: 0, y: 0 }
   let attackCd = 0
 
@@ -354,14 +405,21 @@ async function main() {
       // IsProp 118 + sy1≥20 → SetFlag sy1 30
       if (inv.qty(118) > 0 && (dlg.flags.sy1 ?? 0) >= 20)
         dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
-      // 1-3as.txt: fellow sws while sy1 in [19,30)
-      if ((dlg.flags.sy1 ?? 0) >= 19 && (dlg.flags.sy1 ?? 0) < 30)
+      // RemItem / SetFlagTable / AddFellow from 1-3as.txt
+      if ((dlg.flags.sy1 ?? 0) >= 99) dlg.onRem?.('sws', 'rem')
+      if ((dlg.flags.sy1 ?? 0) >= 20) dlg.onRem?.('sws', 'rem')
+      if ((dlg.flags.sy1 ?? 0) >= 19 && (dlg.flags.sy1 ?? 0) < 30) {
+        dlg.onRem?.('sws', 'reset')
+        dlg.onRem?.('sws', 'table', 111, 0)
         dlg.onFellow?.('sws', true)
+      }
+      if ((dlg.flags.sy1 ?? 0) >= 29) dlg.onRem?.('bossyuheng', 'rem')
       if ((dlg.flags.sy1 ?? 0) < 30 && inv.qty(118) <= 0)
         inv.flash('洞中有妖气——玉衡看守着玉净甘露（E 对话开战）')
     }
     if (scene === '1-2s') {
       // cjg quest: SetPropToObj bossyezhu when cjg1∈[0,10); RemItem when cjg1≥1 after clear
+      if ((dlg.flags.cjg1 ?? 0) >= 1) dlg.onRem?.('bossyezhu', 'rem')
       if ((dlg.flags.cjg1 ?? 0) >= 1 && (dlg.flags.cjg1 ?? 0) < 10 && inv.qty(54) <= 0)
         inv.flash('魔豕兽就在附近（E 对话开战，取心脏交翠娟）')
       if (inv.qty(54) > 0 && (dlg.flags.cjg1 ?? 0) < 10)
@@ -373,7 +431,13 @@ async function main() {
         dlg.onFellow?.('sws', true)
     }
     if (scene === '1-0s' || scene === 'ren') {
-      // after sy1≥100 town restores sws merchant etc. — no client action needed
+      // scene/1-0s.txt RemItem / SetFlagTable visibility
+      if ((dlg.flags.sy1 ?? 0) >= 100) dlg.onRem?.('sws', 'rem')
+      else dlg.onRem?.('sws', 'table', 111, 1) // SetFlagTable sws 111 1 on enter
+      if ((dlg.flags.bq1 ?? 0) >= 70) dlg.onRem?.('zhs', 'rem')
+      if ((dlg.flags.cjg1 ?? 0) >= 100) dlg.onRem?.('zhs', 'rem')
+      if ((dlg.flags.cds1 ?? 0) >= 100) dlg.onRem?.('td', 'rem')
+      if ((dlg.flags.zhs1 ?? 0) >= 100) dlg.onRem?.('zs', 'rem')
     }
   }
 
@@ -471,7 +535,7 @@ async function main() {
     }
     for (const m of meta.monsters ?? []) {
       const lx = m.x - origin.x, ly = m.y - origin.y
-      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: m.hp, maxHp: m.hp, cd: 1, hitT: 0, dead: 0, at: m.at, df: m.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0 })
+      foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: m.hp, maxHp: m.hp, cd: 1, hitT: 0, dead: 0, at: m.at, df: m.df, exp: m.exp, sight: m.sight, spd: m.spd, name: m.name, set: m.set, act: 'idle', actT: 0, dir: 0, event: (m as {event?: string}).event })
     }
     const nf = Number(qs.get('foe') ?? '0')
     for (let i = 0; i < nf; i++) {
@@ -523,6 +587,7 @@ async function main() {
       let best: { d: number; o: MapObj } | null = null
       const range = gameData?.interact_range ?? 2
       for (const o of objects) {
+      if (o.EventID && isHidden(String(o.EventID))) continue
         const ox = o.lx ?? (o.x != null ? o.x - origin.x : null)
         const oy = o.ly ?? (o.y != null ? o.y - origin.y : null)
         if (ox == null || oy == null) continue
@@ -865,7 +930,7 @@ async function main() {
       },
     })
     for (const f of foes) {
-      if (f.dead > 0 && f.dead < 9) continue
+      if (f.gone) continue
       const fp = iso(f.x, f.y), fx = fp.x + cam.x, fy = fp.y + cam.y
       if (!inView(fx, fy, 200)) continue
       const set = f.set != null ? monSets[String(f.set)] : undefined
@@ -931,6 +996,19 @@ async function main() {
       ctx.stroke(); ctx.restore()
     }
 
+    if (cutscene) {
+      cutscene.t -= dt
+      const a = Math.min(1, cutscene.t)
+      ctx.fillStyle = `rgba(0,0,0,${0.55 * a})`
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      const im = cutscene.img
+      const sc = Math.min((canvas.width - 40) / im.width, (canvas.height - 80) / im.height, 1)
+      const dw = im.width * sc, dh = im.height * sc
+      ctx.globalAlpha = a
+      ctx.drawImage(im, (canvas.width - dw) / 2, (canvas.height - dh) / 2 - 20, dw, dh)
+      ctx.globalAlpha = 1
+      if (cutscene.t <= 0) cutscene = null
+    }
     hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName() })
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h

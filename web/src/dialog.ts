@@ -15,6 +15,7 @@ export type GoHook = (scene: string) => void
 export type CombatHook = (battleId: number, eventId: string) => void
 export type FellowHook = (eventId: string, enable: boolean) => void
 export type FxHook = (kind: string, arg?: string) => void
+export type RemHook = (eventId: string, mode: 'rem' | 'reset' | 'table', slot?: number, val?: number) => void
 
 export function evalCond(cond: string, flags: Flags, inv?: InvHook): boolean {
   if (!cond.trim()) return true
@@ -52,6 +53,7 @@ export class DialogSys {
   onCombat?: CombatHook
   onFellow?: FellowHook
   onFx?: FxHook
+  onRem?: RemHook
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([
@@ -90,10 +92,16 @@ export class DialogSys {
       } else if (op === 'screeneffect') {
         this.onFx?.('screen', p[1])
       } else if (op === 'playavi') {
-        // dhp clips exist under extract/.../dhp/ but decoder not wired — toast only
         this.onFx?.('avi', p.slice(1).join(' '))
+      } else if (op === 'remitem' && p.length >= 2) {
+        this.onRem?.(p[1].toLowerCase(), 'rem')
+      } else if (op === 'resetobj' && p.length >= 2) {
+        this.onRem?.(p[1].toLowerCase(), 'reset')
+      } else if (op === 'setflagtable' && p.length >= 4) {
+        // SetFlagTable sws 111 0|1 — slot 111 gates world visibility
+        this.onRem?.(p[1].toLowerCase(), 'table', Number(p[2]), Number(p[3]))
       }
-      // Atb / SetFlagTable / TransToPlayer still stubbed
+      // Atb / TransToPlayer still stubbed
     }
   }
 

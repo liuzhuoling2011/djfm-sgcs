@@ -1,8 +1,9 @@
 // Phase 15: original HUD (ResJM.Lib.chs) + HP/MP orbs + simple combat model.
 export type Foe = {
   x: number; y: number; hp: number; maxHp: number; cd: number; hitT: number; dead: number
-  at?: number; df?: number; exp?: number; sight?: number; spd?: number; name?: string; set?: number
+  at?: number; df?: number; exp?: number; sight?: number; spd?: number; name?: string; set?: number | string
   hx?: number; hy?: number; act?: 'idle' | 'walk' | 'attack' | 'hurt' | 'death'; actT?: number; dir?: number
+  kbX?: number; kbY?: number; gone?: boolean; event?: string
 }
 export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
 // Damage: the original formula is not in any data table (searched mb/*.txt|ini, player/*); it lives in the exe.
@@ -83,12 +84,20 @@ export class Hud {
 export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt: number, walk: (x: number, y: number) => boolean) {
   for (const f of foes) {
     f.actT = (f.actT ?? 0) + dt
+    if (f.gone) continue
     if (f.dead > 0) {
       f.act = 'death'; f.dead -= dt
-      if (f.dead <= 0) { f.hp = f.maxHp; f.x = f.hx ?? f.x; f.y = f.hy ?? f.y; f.act = 'idle'; f.actT = 0 }
+      // play death anim ~1.2s then remove (was 12s respawn)
+      if (f.dead <= 0) { f.gone = true; f.act = 'death' }
       continue
     }
     f.cd -= dt; f.hitT = Math.max(0, f.hitT - dt)
+    // knockback while hurt
+    if (f.hitT > 0 && (f.kbX || f.kbY)) {
+      const nx = f.x + (f.kbX ?? 0) * dt, ny = f.y + (f.kbY ?? 0) * dt
+      if (walk(nx, f.y)) f.x = nx
+      if (walk(f.x, ny)) f.y = ny
+    }
     const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy)
     const sight = f.sight ?? 7
     if (d > 0.01) f.dir = (Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8
@@ -109,13 +118,15 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
 export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.8) {
   let hits = 0
   for (const f of foes) {
-    if (f.dead > 0) continue
+    if (f.dead > 0 || f.gone) continue
     const dx = f.x - p.x, dy = f.y - p.y, d = Math.hypot(dx, dy)
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     if (d < 0.7 || diff < 1.2) {
-      f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.25; hits++
-      if (f.hp <= 0) { f.dead = 12; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
+      f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.35; hits++
+      // knockback away from player
+      if (d > 0.01) { f.kbX = (dx / d) * 4.5; f.kbY = (dy / d) * 4.5 }
+      if (f.hp <= 0) { f.dead = 1.4; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
     }
   }
   return hits
