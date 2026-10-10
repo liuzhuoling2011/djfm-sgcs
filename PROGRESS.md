@@ -843,6 +843,34 @@ Skipped (schema still broken).
 
 
 
+## Phase 24: cutscenes, SprRole paper-dolls, act-1 playthrough (2026-10-10)
+
+### Done
+1. **DHP → mp4**: act-1 clips (1-2s, 1-3s, 1-3as, 1-10a6s, 1-11s, swss) transcoded with ffmpeg (640w H.264 CRF30 + AAC 64k, faststart) to `web/public/game/cutscenes/*.mp4`, about 1.8 MB total. `PlayAvi` plays a fullscreen `<video>`. Click, Esc, Space or Enter skips it. Scene-enter hooks follow the scripts: 1-2s/1-3s (sy1<10), 1-3as (sy1<30), 1-10a6s (bq2<50). Each clip plays once.
+2. **Real Spr/PLI paper-doll composites** (`tools/phase24_paperdoll.py`, `tools/phase24_export_sets.py`):
+   - `SprRole.h` part → Spr.lib groups. Frame record packed = `(sub<<24)|(libnibble<<20)|res`, plus ox/oy. Lib nibbles: 2 ResPrior, 3 ResPlayer1, 4 ResBoss, 5 ResNpc2, 10 ResExNpc1. Shadow parts (`*S`) are skipped.
+   - Each 8-group block = one action in 8 directions. Blocks were picked visually from `assets/samples/phase24/pd_<graph>.png`.
+   - Remapped: 魔豕兽/野猪王 **006**, 战象 **009** (humanoid elephant warrior), 魔猿 **008** (1-10s Autos are now monsters), 狐猴 **601**, 1-11s 狐精弓箭兵 **003** / 雪地巨人 **113**.
+   - Phase 23 interim sets r348/rex72/boss564 were removed.
+3. **Saber ghost layers solved**: 持刀鬼兵 **602** (saber + shield + banner) and 持枪鬼兵 **603** now use the true composites. The old ResNpc3 594 stand-in is gone.
+4. **Scripted act-1 playthrough** (`tools/phase24_playthrough.py`, log `assets/samples/phase24/playthrough_log.txt`):
+   - The harness runs the quest chain through a debug handle (`window.__djfmDbg`): map loads, talk choices, and real Space attacks.
+   - What works: 沈云 → north gate, 1-2s cutscene, 魔豕兽 kill → 猪心 → cjg1 10, sws → sy1 19/20 → 1-3as cutscene, 玉衡 kill → 118 → sy1 30/40, 泊祁 + 铁匠 hand-in → sy1 100, and every act-1 map loads.
+   - Bugs fixed: a `monster_sets` note string crashed 1-3as loading; frames iteration is now guarded.
+
+### Still blocks act-1 E2E
+- **Main bq1/bq2/zhs1 chain after sy1=100 is not scripted**: 1-7s jiutianchi lock (bq1 30–50), 1-5s/1-7s/1-8s quest props 122/123/121 (bq1 40), 1-9s `IsDead bossdaxiang → zhs1 10`, 1-11s jiguan BldStatus + prop 124 → bq2 40, 1-10a6s bosstianji/boss combat (onCombat not wired) → bq2 50, ChangeAct / ShowActForeword.
+- **Damage/balance**: the RolePrivate stats used are too strong for the player, e.g. 狐猴 DF 171 vs player AT 40 = 1 damage per hit, and 战象 HP 10000. The real formula and level curve live in the exe, so the late maps can't be won without cheats.
+- Scene `AddItem` drops/potions (IsScnIn/IsHitBox) are not implemented.
+- 1-8s 天冰 (220, graph 0) Autos are still placeholders (probably hazards).
+- Paper-doll draw order is fixed (CA→arms→TK→HD), not the per-frame PLI order, so some frames layer the weapon/arm wrong.
+- The 蜀水 pickup was simulated in the harness. The 1-6s proximity pickup itself was not re-tested.
+
+### Samples
+- `assets/samples/phase24/pd_{006,009,008,601,602,603,003,113}.png`: composite sheets
+- `assets/samples/phase24/combat_grid.png` + `combat_*.png`
+- `assets/samples/phase24/pt_*.png`, `pt_avi_*.png`, `playthrough_log.txt`
+
 ## Phase 23 — sprite remaps, RemItem/SetFlagTable, combat polish, DHP stub (2026-10-10)
 
 ### Done
@@ -860,6 +888,9 @@ Skipped (schema still broken).
 - `assets/samples/phase23/fixed_monsters.png` — r348 / rex72 / boss564 / 594 / DHP frame
 - `assets/samples/phase23/web_1-2s.png`, `web_1-9s.png`, `web_1-10s.png`
 - `assets/samples/phase23/dhp_1-3s_f0.png`
+
+### Deploy
+- Source `c6e96bf`, Pages `e5bd92d`, NAS check below.
 
 ### Remaining gaps → playable act-1 E2E
 - Exact **魔豕/野猪王** graph-006 and **战象** graph-009 Spr/PLI paper-doll composites (interim sets are wrong species for 战象).
