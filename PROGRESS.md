@@ -854,7 +854,7 @@ Skipped (schema still broken).
 4. **Smoke** — `tools/phase31_smoke.py` town→bq2=100.
 
 ### Deploy
-- (hashes after push)
+- Source `4662970`; Pages `284c641`; NAS `/volume4/web/djfm/`
 
 ### Samples
 - `assets/samples/phase31/`
