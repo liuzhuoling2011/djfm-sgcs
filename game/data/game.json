@@ -197,7 +197,7 @@
   "interact_key": "e",
   "interact_range": 2.0,
   "combat": {
-    "note": "PLACEHOLDER: RolePrivate AT/DF/HP column mapping to exe formula is unconfirmed. Web scales foe stats by scene tier so Init.txt AT+4/lv can clear act-1. Soft-DF formula hack is OFF unless ?softdf=1.",
+    "note": "PLACEHOLDER melee: AT−DF/2 ±10% (exe formula not in mb tables; ComeOn strings only name RolePrivate.txt). Soft-DF OFF unless ?softdf=1. Foe caps from Init.txt 男主角 AT40+4/lv so expected scene level can clear. Ice DoT uses define.ini-style contact (not MaxIceDp).",
     "softdf_query": "softdf=1",
     "scene_tier": {
       "1-1s": 1,
@@ -243,6 +243,15 @@
       42,
       50,
       58
-    ]
+    ],
+    "init_male": {
+      "at": 40,
+      "at_per_lv": 4,
+      "df": 30,
+      "df_per_lv": 4,
+      "hp": 800,
+      "hp_per_lv": 80
+    },
+    "help": "占位数值：怪物 AT/DF/HP 按场景档位封顶（见 game.json combat），伤害 AT−DF/2。加 ?softdf=1 启用软DF。"
   }
 }
