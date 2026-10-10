@@ -876,7 +876,7 @@ Skipped (schema still broken).
 - Act-2 deferred.
 
 ### Deploy
-- Source: (pending push)
+- Source `c12f826` (master)
 - Pages `main` `9bdef5f`
 - NAS_OK `/volume4/web/djfm/` (+ ice/fox/horn map props)
 
