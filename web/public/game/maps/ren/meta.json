@@ -1838,7 +1838,8 @@
       "MoveLevel": 2,
       "EventID": "td",
       "lx": 17,
-      "ly": 18
+      "ly": 18,
+      "name": "铁蛋"
     },
     {
       "Type": 12,
@@ -1849,7 +1850,8 @@
       "MoveLevel": 4,
       "EventID": "xn",
       "lx": 21,
-      "ly": 29
+      "ly": 29,
+      "name": "行囊"
     },
     {
       "Type": 12,
@@ -1860,7 +1862,8 @@
       "MoveLevel": 4,
       "EventID": "tj",
       "lx": 7,
-      "ly": 30
+      "ly": 30,
+      "name": "铁匠"
     },
     {
       "Type": 13,
@@ -1871,7 +1874,8 @@
       "MoveLevel": 2,
       "EventID": "cds",
       "lx": 18,
-      "ly": 16
+      "ly": 16,
+      "name": "蔡大婶"
     },
     {
       "Type": 13,
@@ -1882,7 +1886,8 @@
       "MoveLevel": 2,
       "EventID": "zs",
       "lx": 29,
-      "ly": 17
+      "ly": 17,
+      "name": "张珊"
     },
     {
       "Type": 13,
@@ -1893,7 +1898,8 @@
       "MoveLevel": 2,
       "EventID": "zhs",
       "lx": 29,
-      "ly": 19
+      "ly": 19,
+      "name": "张河生"
     },
     {
       "Type": 13,
@@ -1904,7 +1910,8 @@
       "MoveLevel": 2,
       "EventID": "bq",
       "lx": 39,
-      "ly": 14
+      "ly": 14,
+      "name": "泊祁"
     },
     {
       "Type": 13,
@@ -1915,7 +1922,8 @@
       "MoveLevel": 2,
       "EventID": "sws",
       "lx": 26,
-      "ly": 4
+      "ly": 4,
+      "name": "村长沈万山"
     },
     {
       "Type": 13,
@@ -1926,7 +1934,8 @@
       "MoveLevel": 2,
       "EventID": "sy",
       "lx": 24,
-      "ly": 4
+      "ly": 4,
+      "name": "沈云"
     }
   ],
   "iso": {

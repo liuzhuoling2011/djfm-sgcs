@@ -843,6 +843,37 @@ Skipped (schema still broken).
 
 
 
+## Phase 27 — act-1 polish (walk + NPC names priority)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Highest-priority user feedback
+1. **Player walk** looked wrong vs Wine — fixed frame source, foot hotspot, direction mapping, gait timing.
+2. **NPC names** missing — draw Role/ONT/dialog names above NPCs.
+
+### Walk fixes
+- Re-exported SprRole paper-doll walk as **fixed 128×128** canvas (no bbox crop) with foot at **(64,100)** from Spr ox/oy averages.
+- Walk frames = ResPlayer nested **[0:4]** per dir (CA/HD/TK/RH); dir-aware draw order (RH under when facing away).
+- Screen-space 8-dir facing: `sdx=dx-dy, sdy=dx+dy` → `facing = (7 - oct) % 8` matching d0=NE…d5=S…d7=E.
+- Ping-pong cycle `0,1,2,3,2,1`; gait `animT += dt * (6|9)` walk/sprint.
+- Draw with hotspot offset instead of `height+10` bottom-center (stops sliding).
+
+### NPC names
+- Labels from `o.name` / `dlg.names[EventID]` (GBK→UTF-8 Role + dialog table).
+- Centered above head, stroke+fill cream; skip Autos / 天冰.
+- Backfilled `name` onto map metas (town `ren` objects + scene NPCs).
+
+### Samples
+- `assets/samples/phase27/walk_sheet_p27.png` (foot=red)
+- `walk_cycle_web_east.png` / `walk_cycle_web_north.png`
+- `wine_vs_web_walk.png` / `wine_vs_web_walk_sheet.png`
+- `web_npc_names_town.png`
+
+### Deploy
+- Pages + NAS after this commit (see deploy hashes below).
+
+---
+
 ## Phase 27 — Act-1 fine polish (人物/UI/动作/数值)
 
 **No act-2.** Continue act-1 comfort playability.

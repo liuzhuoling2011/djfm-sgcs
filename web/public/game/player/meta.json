@@ -1,18 +1,15 @@
 {
   "dirs": 8,
   "walk_frames": 4,
-  "spr_parts": {
-    "CA": 34,
-    "HD": 112,
-    "TK": 114,
-    "RH_005": 116
-  },
-  "res_bases": {
-    "CA": 0,
-    "HD": 128,
-    "TK": 256,
-    "RH": 384
-  },
+  "hotspot": [
+    64,
+    100
+  ],
+  "canvas": [
+    128,
+    128
+  ],
+  "frame_order": "pingpong",
   "anchors": {
     "CA": [
       [
@@ -118,15 +115,15 @@
     ],
     "RH": [
       [
-        4,
-        44
+        34,
+        30
       ],
       [
         30,
         63
       ],
       [
-        -2,
+        12,
         47
       ],
       [
@@ -134,16 +131,16 @@
         68
       ],
       [
-        -8,
-        57
+        6,
+        61
       ],
       [
         39,
         68
       ],
       [
-        2,
-        48
+        10,
+        50
       ],
       [
         32,
@@ -151,9 +148,6 @@
       ]
     ]
   },
-  "hotspot": [
-    64,
-    100
-  ],
-  "source": "SprRole.h SPR_ROLE_901_CA/HD/TK/RH_005_001 \u2192 Spr 34/112/114/116"
+  "dir_convention": "d0=NE…d5=S…d7=E",
+  "source": "Phase27 phase19b anchors + nested[0:4] + no crop"
 }

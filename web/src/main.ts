@@ -7,7 +7,7 @@ import { spawnFx, tickFx, drawFx, type SkillFx } from './fx'
 type Vec = { x: number; y: number }
 type MapObj = {
   lx?: number; ly?: number; x?: number; y?: number; MapX?: number; MapY?: number
-  ModelID?: number; Type?: number; EventID?: string; file?: string; sw?: number; sh?: number; npc_dirs?: string[]; ox?: number; oy?: number; graph?: number
+  ModelID?: number; Type?: number; EventID?: string; name?: string; file?: string; sw?: number; sh?: number; npc_dirs?: string[]; ox?: number; oy?: number; graph?: number
 }
 type BldPart = { file: string; ox: number; oy: number; w: number; h: number }
 type Building = { x: number; y: number; bid: number; name: string; parts: BldPart[]; fw?: number; fh?: number }
@@ -882,6 +882,11 @@ async function main() {
   })
 
   // Phase 19: paper-doll composite sheets (8 dirs × 4 walk / 1 idle / 1 attack)
+  let playerHotspot = { x: 64, y: 100 }
+  try {
+    const pm = await (await fetch('game/player/meta.json')).json() as { hotspot?: number[] }
+    if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
+  } catch { /* */ }
   const playerWalk: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerIdle: HTMLImageElement[] = []
   const playerAttackSpr: HTMLImageElement[] = []
@@ -1055,8 +1060,12 @@ async function main() {
     const len = Math.hypot(dx, dy) || 1
     moving = dx !== 0 || dy !== 0
     if (moving) {
-      facing = Math.round((Math.atan2(dy, dx) + Math.PI) / (Math.PI / 4)) % 8
-      animT += dt * 8
+      // Screen-space 8-dir (iso): d0=NE … d5=S … d7=E — matches SprRole export
+      const sdx = dx - dy, sdy = dx + dy
+      const oct = Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4))
+      facing = (7 - ((oct % 8) + 8) % 8 + 8) % 8
+      const sprinting = keys.has('shift') && (stats.sp ?? 1) > 0.02
+      animT += dt * (sprinting ? 9 : 6)
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
     stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -10 / 80 : 3 / 80) * dt))
@@ -1233,8 +1242,22 @@ async function main() {
           }
 
           else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill() }
-          ctx.fillStyle = '#ffe9a0'; ctx.font = '10px ui-sans-serif,system-ui'
-          ctx.fillText(String(o.EventID ?? o.ModelID ?? '?'), sx + 6, sy - 4)
+          // NPC nameplate (Wine-like): Role/ONT name above head; skip Autos / empty
+          const eid = o.EventID != null ? String(o.EventID) : ''
+          const rawName = (o as { name?: string }).name || (eid ? (dlg.names[eid] ?? '') : '')
+          const skip = !rawName || /^auto$/i.test(eid) || rawName === '天冰' || Number(o.ModelID) === 220
+          if (!skip) {
+            const label = rawName
+            const top = img ? (sy - (o.oy != null && o.oy > 0 ? o.oy : img.height - 8) - 4) : sy - 18
+            ctx.font = '11px "Microsoft YaHei","PingFang SC",ui-sans-serif,system-ui'
+            ctx.textAlign = 'center'
+            ctx.lineWidth = 3
+            ctx.strokeStyle = 'rgba(0,0,0,0.75)'
+            ctx.strokeText(label, sx, top)
+            ctx.fillStyle = '#ffe9a0'
+            ctx.fillText(label, sx, top)
+            ctx.textAlign = 'left'
+          }
         },
       })
     }
@@ -1259,14 +1282,20 @@ async function main() {
         else if (playerAttackSpr[d]) spr = playerAttackSpr[d]
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
-      else if (moving && playerWalk[d]?.length) spr = playerWalk[d][Math.floor(animT) % playerWalk[d].length]
-      else if (playerIdle[d]) spr = playerIdle[d]
+      else if (moving && playerWalk[d]?.length) {
+        // ping-pong 0,1,2,3,2,1
+        const seq = [0, 1, 2, 3, 2, 1]
+        const fi = seq[Math.floor(animT) % seq.length] % playerWalk[d].length
+        spr = playerWalk[d][fi]
+      } else if (playerIdle[d]) spr = playerIdle[d]
     }
     const pp = iso(pos.x, pos.y)
     draws.push({
       z: pos.x + pos.y + 0.25,
       fn: () => {
-        ctx.drawImage(spr, pp.x + cam.x - spr.width / 2, pp.y + cam.y - spr.height + 10)
+        // foot hotspot from meta (fixed 128 canvas → 64,100)
+        const hx = playerHotspot.x * (spr.width / 128), hy = playerHotspot.y * (spr.height / 128)
+        ctx.drawImage(spr, pp.x + cam.x - hx, pp.y + cam.y - hy)
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
           const ang = (facing % 8) * (Math.PI / 4) - Math.PI
