@@ -789,5 +789,55 @@ Still not exported: 1-10s / 1-10a* / 1-11s (next after 炎炀关).
 - `assets/samples/phase20/web_1-4s.png`, `web_1-6s.png`, `maps_new.png`
 
 ### Deploy
-- Pages + NAS this milestone; source commit + PROGRESS.
+- Source `eb5a9f7`, Pages `f4c5ca2`, NAS_OK.
+
+
+## Phase 21 — Remaining act-1 maps + 蜀水 sy1 chain (2026-10-10)
+
+### 1. Maps exported & wired
+Added to `web/public/game/maps/` + `index.json` (go-transitions via existing warp):
+| scene | label | notes |
+|-------|-------|-------|
+| 1-10s | 紫凤坪 | ↔1-9s, 1-10a1s, 1-11s |
+| 1-10a1s…a6s | 连珠塔层 | chain a1↔…↔a6 |
+| 1-11s | 气凝洞 | ↔1-10s |
+| sws | 沈万山遇袭 | dialog `go sws` target |
+
+Samples: `assets/samples/phase21/maps_act1_rest.png`, `web_1-10s.png`, `web_1-11s.png`, `web_sws.png`, `web_1-3as.png`.
+
+### 2. Real sy1 → 蜀水 hand-in chain (scripts only)
+Traced from `talk/*.txt` + `scene/*.txt` — **sy1≥99 is satisfied when bq sets sy1=100**:
+
+1. **沈云** `sy1<1` → `SetFlag sy1 1` + unlock 1-1s  
+2. **沈万山** `sy1<19` → dialog + **`go sws`**  
+3. **SWS.txt**: timer (or sy1≥18) → `go 1-3s` + **`SetFlag sy1 19`**  
+4. **sws** talk `sy1≥18 ∧ sy1<20` → `SetFlag sy1 20` + AddFellow  
+5. **1-3as**: `sy1<30` places 玉净甘露 on **bossyuheng**; defeat → prop **118**; with 118+sy1≥20 → **`SetFlag sy1 30`**  
+6. **sws** `sy1≥29` → `SetFlag sy1 40`  
+7. **泊祁** `IsProp 118` + sy1≥29 + sy1<100 → **`SetFlag sy1 100*miss 118`**  
+8. Now **铁匠** `sy1≥99` 蜀水 quest / hand-in (`Miss 120*AddWeaponNum`) can fire; 1-6s `shushui` still supplies prop 120
+
+**Client wiring (Phase 21):**
+- `dialog.applyResult`: case-insensitive ops; **`go <scene>`** → `onGo`; **`miss`** lowercase fixed for bq  
+- `jump_type 4` → `onCombat` (bossyuheng → spawn 玉衡; death → Acquire 118, sy1→30 if ≥20)  
+- `runSceneEnter('sws')`: compressed timer → sy1=19 + warp 1-3s  
+- `runSceneEnter('1-3as')`: sy1 bump when holding 118  
+- Re-exported 1-3as NPCs: bossyuheng @ (101,96), sws @ (49,20)  
+- DEBUG: Alt+Shift+F9 → sy1=100 + 蜀水 (hand-in test only)
+
+### 3. Skill VFX / ShowJM anim
+- ResJM.chs/.cht/.eng entry **834** still empty (len 162, 0 opaque) — no other JM lang pack has art.  
+- Left Phase 20 canvas FX + size-matched panels.
+
+### 4. Damage REA
+Skipped (schema still broken).
+
+### Blockers
+- AddFellow / TransToPlayer / SetFlagTable / ScreenEffect / PlayAvi not simulated (fellow AI absent; sws must be talked on map).  
+- 玉衡 fight is HP-scaled stub (400 vs RolePrivate 5900); no ResNpc3 boss set wired.  
+- Type-12 NPC sprites on 1-3as/sws often missing (placeholder dots).  
+- Full act-1 side quests (cds/td, cjg, …) not required for 蜀水 but still flag-gated.
+
+### Deploy
+- Pages + NAS; source commit + PROGRESS.
 
