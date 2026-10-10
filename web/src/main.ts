@@ -76,7 +76,7 @@ async function main() {
   const invEl = document.createElement('div'); invEl.id='inv'; invEl.className='inv-panel hidden'; document.body.append(invEl)
   const toastEl = document.createElement('div'); toastEl.className='toast hidden'; document.body.append(toastEl)
   const dialogEl = document.querySelector<HTMLDivElement>('#dialog')!
-  if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · I行囊 F1/F2技能 1/3药'
+  if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · WASD移动 · Shift奔跑 · I行囊 · F1/F2技能 · 1/3药'
   for (const id of packIds) {
     const btn = document.createElement('button')
     btn.textContent = id
@@ -407,6 +407,24 @@ async function main() {
     if (inv.toastT > 0) toastEl.textContent = inv.toast
   }
 
+  function clampDialog() {
+    // Phase 32: keep dialog board inside viewport
+    requestAnimationFrame(() => {
+      const r = dialogEl.getBoundingClientRect()
+      const pad = 12
+      let tx = -50, ty = -50
+      if (r.width > window.innerWidth - pad * 2) {
+        dialogEl.style.maxWidth = `${window.innerWidth - pad * 2}px`
+      }
+      const r2 = dialogEl.getBoundingClientRect()
+      let dx = 0, dy = 0
+      if (r2.left < pad) dx = pad - r2.left
+      if (r2.right > window.innerWidth - pad) dx = window.innerWidth - pad - r2.right
+      if (r2.top < pad) dy = pad - r2.top
+      if (r2.bottom > window.innerHeight - pad) dy = window.innerHeight - pad - r2.bottom
+      dialogEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`
+    })
+  }
   function renderDialog() {
     // Phase 29: ResJM-styled board (dialog_board from JM_DlgModel corner tiles)
     const wrap = (title: string, body: string, hint: string) =>
@@ -423,13 +441,15 @@ async function main() {
         const line = dlg.lines[dlg.idx] ?? ''
         dialogEl.innerHTML = wrap(dlg.npc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
       }
+      clampDialog()
       return
     }
-    if (!dialogOpen) { dialogEl.style.display = 'none'; dialogEl.classList.remove('jm-dialog'); return }
+    if (!dialogOpen) { dialogEl.style.display = 'none'; dialogEl.classList.remove('jm-dialog'); dialogEl.style.transform = ''; return }
     dialogEl.style.display = 'block'
     dialogEl.classList.add('jm-dialog')
     const line = dialogLines[dialogIdx] ?? ''
     dialogEl.innerHTML = wrap(dialogNpc || '对话', `<p>${line}</p>`, 'E / Enter 继续 · Esc 关闭')
+    clampDialog()
   }
   function advanceDialog() {
     if (!dialogOpen && !dlg.open) return
@@ -745,10 +765,11 @@ async function main() {
         dlg.flags.bq2 = Math.max(dlg.flags.bq2 ?? 0, 40)
     }
     if (scene === '1-0s' || scene === 'ren') {
-      // exit locks from scene/1-0s.txt
-      if ((dlg.flags.bq1 ?? 0) < 10 && dlg.exitText['1-4s'] !== -1) dlg.exitText['1-4s'] = dlg.exitText['1-4s'] ?? 303
-      if ((dlg.flags.bq1 ?? 0) < 30 && dlg.exitText['1-7as'] !== -1) dlg.exitText['1-7as'] = dlg.exitText['1-7as'] ?? 303
-      if ((dlg.flags.bq2 ?? 0) < 1 && dlg.exitText['1-9s'] !== -1) dlg.exitText['1-9s'] = dlg.exitText['1-9s'] ?? 303
+      // scene/1-0s.txt + talk/sy SetExitTextID: flag gates (force lock/unlock each enter)
+      dlg.exitText['1-1s'] = (dlg.flags.sy1 ?? 0) < 1 ? 308 : -1
+      dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
+      dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
+      dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
     }
     if (scene === '2-0s') {
       // scene/2-0s.txt: ChangeAct 1; ShowActForeword 114 1447 1 once; SetFlagTable 2sws 111 1
@@ -932,8 +953,13 @@ async function main() {
       }
     }
     spawnPos = { x: pos.x, y: pos.y }
-    // Act-1 town: lock 1-1s exit until 沈云 sets sy1 (scene script IsFlag sy1 1 1 → SetExitTextID 1-1s 308)
-    if (curScene === '1-0s' && (dlg.flags.sy1 ?? 0) < 1 && dlg.exitText['1-1s'] === undefined) dlg.exitText['1-1s'] = 308
+    // Act-1 town: north gate locked until 沈云 (sy1≥1 / exitText -1). Re-sync on every load.
+    if (curScene === '1-0s') {
+      dlg.exitText['1-1s'] = (dlg.flags.sy1 ?? 0) < 1 ? 308 : -1
+      dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
+      dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
+      dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
+    }
     const gateCells = (meta as { quest_gate_cells?: [number, number][] }).quest_gate_cells
     if (gateCells && walkGrid) {
       const open = (dlg.flags.sy1 ?? 0) >= 1 || dlg.exitText['1-1s'] === -1
@@ -1198,16 +1224,21 @@ async function main() {
     const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)
     const stamRegen = (INIT.stamina_regen ?? 3) / Math.max(1, INIT.stamina ?? 80)
     stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -stamUse : stamRegen) * dt))
-    // Init move 16 ≈ cells/s scale; web uses 5 walk / 8 run (tuned for map cells)
-    const speed = running ? 7.2 : 4.6
+    const ox0 = pos.x, oy0 = pos.y
+    const speed = running ? 7.2 : 4.5
     const nx = pos.x + (dx / len) * speed * dt
     const ny = pos.y + (dy / len) * speed * dt
     if (walkable(nx, pos.y)) pos.x = nx
     if (walkable(pos.x, ny)) pos.y = ny
     pos.x = Math.max(0, Math.min(mapW - 1, pos.x))
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
-    // Phase 28: stride locked to distance (~1.15 cycles per cell) so gait matches speed
-    if (moving) { animT += speed * dt * 1.35; if (Math.floor(animT) !== Math.floor(animT - speed * dt * 1.35)) playSfx('step', { vol: 0.35, minGap: 180 }) }
+    // Phase 32: stride from actual displacement (Wine: feet only advance when body moves)
+    const moved = Math.hypot(pos.x - ox0, pos.y - oy0)
+    if (moved > 1e-5) {
+      const prev = animT
+      animT += moved * 1.85 // ~2.2 cells per full 4-frame cycle
+      if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
+    }
 
     // AddFellow companion follows player (TransToPlayer approx)
     if (fellow) {
@@ -1432,8 +1463,9 @@ async function main() {
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
       else if (moving && playerWalk[d]?.length) {
-        // Phase 29: sequential 0..3 (Wine-like even gait; ping-pong hung on wide frames)
-        const fi = Math.floor(animT) % playerWalk[d].length
+        // Phase 32: 4-frame sequential; distance-locked animT (no moonwalk when blocked)
+        const n = playerWalk[d].length
+        const fi = ((Math.floor(animT) % n) + n) % n
         spr = playerWalk[d][fi]
       } else if (playerIdle[d]) spr = playerIdle[d]
     }
@@ -1515,9 +1547,10 @@ async function main() {
         ctx.beginPath(); ctx.arc(x, y - 10, 8 + pulse * 2, 0, Math.PI * 2); ctx.stroke()
       }})
     }
-    // Quest / jiguan / nearby exit markers
+    // Phase 32: sparse quest markers — hide after acquire; exits only when close
     {
       const pwx = pos.x + origin.x, pwy = pos.y + origin.y
+      const seenGo = new Set<string>()
       for (const tr of curTriggers) {
         let key = (tr.script || '').trim().toLowerCase().split(/\s+/).filter(Boolean)[0] || ''
         if (!key && curScene === '1-11s' && Math.hypot(tr.x - 197, tr.y - 157) < 3) key = 'jiguan1'
@@ -1527,21 +1560,29 @@ async function main() {
         if (!prop && !isJig && !isGo) continue
         if (prop && ((dlg.flags[prop.flag] ?? 0) >= 1 || inv.qty(prop.id) > 0)) continue
         if (isJig && (dlg.bldStatus[key] ?? 0) >= 1) continue
-        if (isGo && Math.hypot(tr.x - pwx, tr.y - pwy) > 22) continue
+        const dist = Math.hypot(tr.x - pwx, tr.y - pwy)
+        // props/jiguan: within 16; exits: within 9, one marker per dest
+        if (prop || isJig) { if (dist > 16) continue }
+        else {
+          if (dist > 9) continue
+          const dest = (tr.script.match(/go\s+(\S+)/i)?.[1] || '').toLowerCase()
+          if (!dest || seenGo.has(dest)) continue
+          seenGo.add(dest)
+        }
         const lx = tr.x - origin.x, ly = tr.y - origin.y
         const sp = iso(lx, ly)
         const goDest = tr.script.match(/go\s+(\S+)/i)?.[1]
-        const label = prop?.name || (isJig ? key : (goDest ?? '出口'))
-        const rgb = prop ? '126,200,255' : isJig ? '255,176,96' : '160,224,128'
+        const locked = isGo && goDest ? dlg.exitLock(goDest) : 0
+        const label = prop?.name || (isJig ? key : (locked ? `${goDest}·锁` : (goDest ?? '出口')))
+        const rgb = prop ? '126,200,255' : isJig ? '255,176,96' : (locked ? '180,120,120' : '160,224,128')
         draws.push({ z: lx + ly + 0.08, fn: () => {
           const x = sp.x + cam.x, y = sp.y + cam.y
-          const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 250 + tr.x)
-          ctx.fillStyle = `rgba(${rgb},${pulse})`
+          const pulse = 0.5 + 0.4 * Math.sin(performance.now() / 280 + tr.x)
+          ctx.fillStyle = `rgba(${rgb},${pulse * (locked ? 0.55 : 0.9)})`
           ctx.beginPath()
-          ctx.moveTo(x, y - 22 - pulse * 4); ctx.lineTo(x + 6, y - 14); ctx.lineTo(x, y - 6); ctx.lineTo(x - 6, y - 14)
+          ctx.moveTo(x, y - 20 - pulse * 3); ctx.lineTo(x + 5, y - 13); ctx.lineTo(x, y - 6); ctx.lineTo(x - 5, y - 13)
           ctx.closePath(); ctx.fill()
-          ctx.strokeStyle = `rgba(255,255,255,${pulse})`; ctx.lineWidth = 1; ctx.stroke()
-          drawNameplate(ctx, label, x, y - 28 - pulse * 3, 'npc')
+          drawNameplate(ctx, label, x, y - 26 - pulse * 2, 'npc')
         }})
       }
     }
@@ -1632,7 +1673,7 @@ async function main() {
     const wx = (pos.x + origin.x).toFixed(1), wy = (pos.y + origin.y).toFixed(1)
     const bgmState = muted ? 'BGM:mute' : 'BGM:on'
     ctx.fillText(
-      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | E谈 Space砍 G地 S存 L读 M静音`,
+      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | WASD Shift跑 E谈 Space砍 I囊 S存 L读 M静音`,
       12, 20,
     )
     requestAnimationFrame(frame)

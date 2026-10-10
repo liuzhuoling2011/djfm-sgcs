@@ -22,7 +22,7 @@
     "graph": 619,
     "spr": 1611,
     "file": "npc_619.png",
-    "w": 55,
+    "w": 31,
     "h": 88,
     "ox": 17,
     "oy": 77,
@@ -35,7 +35,8 @@
       "cds_5.png",
       "cds_6.png",
       "cds_7.png"
-    ]
+    ],
+    "source": "ResExNpc1:1508"
   },
   "cjg": {
     "graph": 621,
@@ -193,8 +194,8 @@
     "graph": 661,
     "spr": 1785,
     "file": "npc_661.png",
-    "w": 41,
-    "h": 45,
+    "w": 94,
+    "h": 117,
     "ox": 57,
     "oy": 99,
     "dirs": [
@@ -206,6 +207,7 @@
       "xn_5.png",
       "xn_6.png",
       "xn_7.png"
-    ]
+    ],
+    "source": "ResExNpc1:2178"
   }
 }

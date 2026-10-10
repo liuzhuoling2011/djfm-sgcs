@@ -843,6 +843,50 @@ Skipped (schema still broken).
 
 
 
+## Phase 32 — act-1 QA (story locks / markers / walk)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Changes
+1. **Town warps:** reachable remake pads only (N/E/W/S = original BNT `go 1-1s/1-4s/1-7as/1-9s`). Off-chunk BNT coords removed. **Story locks forced on enter:** north until `sy1≥1` (沈云), east `bq1≥10`, west `bq1≥30`, south `bq2≥1` (scene/1-0s.txt).
+2. **Markers:** props/jiguan ≤16 cells; exits ≤9 + one-per-dest; locked exits show `·锁`; hide after acquire/activate.
+3. **Walk:** stride `×1.05`, walk 4.2 / run 6.8 for Wine-like foot cadence.
+4. QA screenshots + honesty note on playtest readiness.
+
+### Deploy
+- (hashes after push)
+
+### Samples
+- `assets/samples/phase32/`
+
+---
+
+## Phase 32 — act-1 QA + user bugs
+
+**Date:** 2026-10-10 (UTC+8)
+
+### Story / QA
+1. Town pads only for original BNT exits; **north locked until 沈云 sy1≥1**; E/W/S locked by bq1/bq2 (scene/1-0s.txt).
+2. Sparse markers (props≤16, exits≤9, hide after acquire; locked exits show ·锁).
+3. Walk: paper-doll re-export (pool≤12, frac cycle); **distance-locked stride** (no moonwalk when blocked).
+
+### User bugs
+1. **Walk** — re-composited SprRole parts; stride∝displacement; Wine compare `11_wine_vs_web_walk.png`.
+2. **Dialog** — centered + viewport clamp (`clampDialog`); shot `09_dialog_centered.png`.
+3. **cds / xn sprites** — remapped from **ResExNpc1** SprRole TK (cds←1508 蔡大婶+篮; xn←2178 驮箱驴). Was wrong ResNpc3/warrior/legs.
+4. **Run** — Shift sprints (stamina). **原版无跳跃** — no jump wired; documented in README + combat.help.
+
+### Deploy
+- (hashes after push)
+
+### Samples
+- `assets/samples/phase32/`
+
+### Playtest readiness (honest)
+Act-1 is **playable without debug keys** for the opening loop: talk 沈云 → north unlock → field maps → props/quests with markers → S/L save. Combat uses scene-tier caps (not soft-DF). Full clear to bq2=100 is possible but still rough (dialog trees need correct choices; some late trash/boss telegraphs; walk closer to Wine but not pixel-identical; xn donkey is single-facing). **Recommend user playtest of act-1 town→蜀水 chain now**; do not treat as finished remake.
+
+---
+
 ## Phase 31 — act-1 residual (warps / markers / save / smoke)
 
 **Date:** 2026-10-10 (UTC+8)

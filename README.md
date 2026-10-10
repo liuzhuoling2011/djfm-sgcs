@@ -7,7 +7,7 @@ Working tree: `/workspace/djfm-sgcs`. Pages: `https://liuzhuoling2011.github.io/
 
 | Key | Action |
 |-----|--------|
-| **W A S D** / arrows | Move (iso). **Shift** sprint (stamina) |
+| **W A S D** / arrows | Move (iso). **Shift** sprint (stamina). **No jump** (原版无跳跃) |
 | **E** / Enter | Talk / advance dialog / interact |
 | **Space** | Melee attack |
 | **F1 / F2** | Skills (扫叶 / 疾电) |
@@ -25,7 +25,7 @@ Query flags: `?softdf=1` soft DF; `?sfx=0` disable SFX; `?tint=0` / `?rain=0` di
 
 ## Act-1 quest outline (瓦当镇 → bq2=100)
 
-1. **瓦当镇 (`ren` / 1-0s)** — Talk **沈云 (sy)** until `sy1=100`. Shop via **铁匠 (tj)** ShowJM. Leave north when exit unlocks.
+1. **瓦当镇 (`ren` / 1-0s)** — Talk **沈云 (sy)** first (`sy1≥1` unlocks **北门→1-1s**). Other town pads: 东→1-4s (`bq1≥10`), 西→1-7as (`bq1≥30`), 南→1-9s (`bq2≥1`) — original scene locks; pads are remake-reachable at chunk edges. Shop via **铁匠 (tj)**.
 2. **郊外 1-1s → 1-2s** — Clear trash; boss **魔豕兽** on 1-2s path.
 3. **1-3s / 1-4s** — Meet **水英雄 / 号角** chain; continue toward冰池.
 4. **1-5s → 1-6s** — Pick **蜀水** (trigger `shushui`) for blacksmith quench / embed.
