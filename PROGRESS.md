@@ -859,7 +859,7 @@ Screen oct from `atan2(sdy,sdx)` (0=E…6=N). **`facing=(oct+6)%8`** so D→**6*
 - `05_east_walk_proof.png`, `05_east_run_proof.png`, `01_wasd_fixed.png`, `walk_right_crop.png`
 
 ### Deploy
-- (pending)
+- Source `3f46feb` · Pages `7ede74f` (main)
 
 ---
 
