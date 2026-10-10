@@ -870,7 +870,7 @@ Skipped (schema still broken).
 - `web_npc_names_town.png`
 
 ### Deploy
-- Pages + NAS after this commit (see deploy hashes below).
+- Source `0ea512a` (master); Pages `4c1b1a4` (main); NAS `/volume4/web/djfm/` (player+index+ren names).
 
 ---
 
