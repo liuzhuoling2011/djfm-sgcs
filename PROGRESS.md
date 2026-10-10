@@ -876,8 +876,9 @@ Skipped (schema still broken).
 - Act-2 deferred.
 
 ### Deploy
-- Pages: (pending)
-- NAS: (pending)
+- Source `c12f826` (master)
+- Pages `main` `9bdef5f`
+- NAS_OK `/volume4/web/djfm/` (+ ice/fox/horn map props)
 
 
 ## Phase 26 — Act-1 polish (playable town → bq2=100 without soft-DF / killFlag)
