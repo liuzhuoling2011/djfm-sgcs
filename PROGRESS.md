@@ -1,6 +1,6 @@
 ## Phase 43 — HD redraw of the original JM UI (2026-10-10)
 
-**Direction (重温老游戏):** This is a higher-resolution redraw of the original JM chrome, not a new skin. Dialog / 行囊 / 买卖 / 镶嵌 are DOM so the hit targets are readable and at least 40px, drawn on the real boards: `dialog_board.png`, `panel_625.png`, `panel_1550.png`, `panel_591.png` (native 326×226 aspect, scaled up evenly). The bottom bar stays the canvas stone strip `jm_1478` (orbs, pots, weapon, Q, stamina, menu icons, ready glow). No HTML status bar. **Facing unchanged:** `facing = (oct + 6) % 8` (east = art6). Phase 42 buy / sell / embed money and stacks stay.
+**Direction (重温老游戏):** HD redraw of the original JM UI via modern DOM, not a new modern skin. Dialog / 行囊 / 买卖 / 镶嵌 stay DOM for hit targets, drawn on the real boards `dialog_board.png`, `panel_625.png`, `panel_1550.png`, `panel_591.png` (native 326×226, scaled evenly). Bag names sit in the five painted grooves; 金钱 and 购入/卖出/关闭 sit in the bottom pocket above the rail, not on a separate parchment bar. The bottom HUD stays the canvas stone strip `jm_1478` (orbs, pots, weapon, Q, stamina, menu icons, ready glow). No HTML status bar. **Facing unchanged:** `facing = (oct + 6) % 8` (east = art6). Phase 42 buy / sell / embed money and stacks stay.
 
 ### Samples
 `assets/samples/phase43/dialog.png`, `bag.png`, `shop.png`, `hud.png`.

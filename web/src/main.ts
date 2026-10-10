@@ -353,10 +353,15 @@ async function main() {
     const show = inv.open || inv.shopOpen || inv.embedOpen
     invEl.classList.toggle('hidden', !show)
     if (!show) { placeChrome(); return }
-    const rows = inv.items.map((it) => {
+    // panel_625 paints five grooves (y 32–154). Keep one name per groove when the bag is that short.
+    const bagSlots: ({ id: number; qty: number } | null)[] = [...inv.items]
+    if (bagSlots.length <= 5) while (bagSlots.length < 5) bagSlots.push(null)
+    const rows = bagSlots.map((it) => {
+      if (!it) return '<li class="groove empty"></li>'
       const d = inv.props[String(it.id)]
-      return `<li><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
-    }).join('') || '<li class="empty">（空）</li>'
+      return `<li class="groove"><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
+    }).join('')
+    const bagScroll = inv.items.length > 5 ? ' scroll' : ''
     const head = (title: string, closeAttr: string) =>
       `<header class="desk-head"><h3>${title}</h3><button type="button" class="desk-x" ${closeAttr} aria-label="关闭">×</button></header>`
     if (inv.shopOpen) {
@@ -380,7 +385,6 @@ async function main() {
       invEl.innerHTML = `<div class="desk shop">
         ${head('买卖', 'data-close-shop')}
         <div class="desk-list">${slots}</div>
-        <p class="desk-note">${buyMode ? '点商品购入 · 金钱不足会提示' : '点持有的药品 / 飞蝗石卖出（售价四折）'}</p>
         <footer class="desk-foot">
           <div class="money">金钱 ${inv.money}</div>
           <div class="desk-actions">
@@ -412,7 +416,7 @@ async function main() {
     } else {
       invEl.innerHTML = `<div class="desk bag">
         ${head('行囊', 'data-close-inv')}
-        <ul class="desk-list">${rows}</ul>
+        <ul class="desk-list${bagScroll}">${rows}</ul>
         <footer class="desk-foot">
           <div class="equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
           <div class="money">金钱 ${inv.money}</div>

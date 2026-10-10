@@ -145,30 +145,36 @@ img { max-width:100%; }
   outline: none;
 }
 .dlg-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
-  margin-top: 6px;
-  padding: 6px 16px;
-  background: rgba(28, 16, 6, .55);
-  border: 1px solid #c4a15a;
-  border-radius: 2px;
+  min-width: 72px;
+  margin-top: 2px;
+  padding: 4px 10px;
+  float: right;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   color: #ffe7a8;
   font: inherit;
   font-size: 16px;
+  letter-spacing: .12em;
   cursor: pointer;
-  text-shadow: 0 1px 1px #000;
+  text-shadow: 0 1px 2px #000;
 }
 .dlg-next:hover,
-.dlg-next:focus-visible { background: rgba(80, 50, 12, .75); outline: 1px solid #ffe7a8; }
+.dlg-next:focus-visible { color: #fff6d0; outline: none; text-decoration: underline; }
 
 /* 行囊 / 买卖 / 镶嵌 — original JM panels, uniform scale (native 326×226), HTML in the wells. */
 .desk-wrap {
   position: absolute;
   z-index: 42;
   left: 50%;
-  top: 8px;
+  top: 4px;
   bottom: calc(var(--hud-space, 132px) + 4px);
   transform: translateX(-50%);
-  width: min(540px, calc(100% - 12px));
+  width: min(560px, calc(100% - 8px));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,7 +184,7 @@ img { max-width:100%; }
 .desk {
   pointer-events: auto;
   position: relative;
-  width: min(520px, 100%);
+  width: min(560px, 100%);
   max-height: 100%;
   aspect-ratio: 326 / 226;
   box-sizing: border-box;
@@ -201,47 +207,61 @@ img { max-width:100%; }
 .desk-head { margin: 0; pointer-events: none; }
 .desk-head h3 {
   position: absolute;
-  left: 18%;
-  right: 18%;
-  top: 4%;
+  left: 16%;
+  right: 16%;
+  top: 6.4%;
+  height: 6.6%;
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #ffe7a8;
-  font-size: 18px;
-  letter-spacing: .42em;
+  font-size: 17px;
+  letter-spacing: .28em;
   font-weight: 700;
   text-shadow: 0 1px 2px #000;
 }
 .desk-x {
   position: absolute;
-  right: 3%;
-  top: 2.5%;
+  right: 1.5%;
+  top: 0.4%;
   width: 40px;
   height: 40px;
   pointer-events: auto;
-  border-radius: 2px;
-  border: 1px solid #c4a15a;
-  background: rgba(24, 12, 4, .72);
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: #ffe7a8;
-  font-size: 22px;
+  font-size: 26px;
   line-height: 1;
   cursor: pointer;
-  text-shadow: 0 1px 1px #000;
+  text-shadow: 0 1px 2px #000, 0 0 4px #000;
   z-index: 2;
 }
-.desk-x:hover, .desk-x:focus-visible { background: rgba(90, 48, 10, .85); outline: 1px solid #ffe7a8; }
+.desk-x:hover, .desk-x:focus-visible { color: #fff6d0; outline: none; }
+/* Wells measured on the 326×226 boards: list y32–154, money pocket y164–196, rail from y198. */
 .desk-list {
   position: absolute;
-  left: 9%;
-  right: 9%;
-  top: 17%;
-  bottom: 34%;
+  left: 12%;
+  right: 11%;
+  top: 14.16%;
+  bottom: 31.86%;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
+  overflow: auto;
+}
+.desk.bag .desk-list {
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  overflow: hidden;
+}
+.desk.bag .desk-list.scroll {
+  display: flex;
   overflow: auto;
 }
 .desk-list li,
@@ -250,18 +270,21 @@ img { max-width:100%; }
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 40px;
-  padding: 4px 8px;
-  border-radius: 2px;
-  border: 1px solid rgba(196, 154, 74, .45);
-  background: rgba(8, 6, 2, .42);
+  min-height: 0;
+  margin: 0;
+  padding: 0 6px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: #f7edd8;
   font: inherit;
   font-size: 16px;
   text-align: left;
-  text-shadow: 0 1px 1px #000;
+  text-shadow: 0 1px 2px #000;
   box-sizing: border-box;
 }
+.desk.shop .desk-list .row { flex: 1 0 40px; min-height: 40px; }
+.desk.bag .desk-list.scroll li { flex: 0 0 40px; min-height: 40px; }
 button.row { width: 100%; cursor: pointer; }
 button.row:hover, button.row:focus-visible {
   border-color: #ffe7a8;
@@ -271,59 +294,60 @@ button.row:hover, button.row:focus-visible {
 .row-name { flex: 1; }
 .row-price, .qty { color: #ffd56a; font-weight: 700; white-space: nowrap; }
 .have { color: #e7d3a6; font-style: normal; margin-left: 6px; font-weight: 700; }
-.desk-note, .equip, .embed-stats { color: #e7d3a6; font-size: 13px; line-height: 1.45; text-shadow: 0 1px 2px #000; }
-.desk.shop .desk-note { position: absolute; left: 10%; right: 10%; bottom: 27%; margin: 0; }
-.desk-empty { color: #cbb892; text-align: center; padding: 10px; }
+.desk-note, .equip, .embed-stats { color: #e7d3a6; font-size: 13px; line-height: 1.35; text-shadow: 0 1px 2px #000; }
+.desk-empty { color: #cbb892; text-align: center; padding: 10px; flex: 1; }
 .desk-foot {
   position: absolute;
-  left: 8%;
-  right: 7%;
-  bottom: 6%;
-  height: 18%;
+  left: 12%;
+  right: 11%;
+  top: 72.6%;
+  bottom: 12.8%;
+  height: auto;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.desk.bag .equip { position: absolute; left: 10%; right: 12%; bottom: 20%; margin: 0; pointer-events: none; }
-.desk.bag .desk-foot { height: auto; bottom: 8%; justify-content: flex-start; }
+.desk.bag .desk-foot { flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px; }
+.desk.bag .equip { margin: 0; pointer-events: none; font-size: 12px; }
 .desk .money { color: #ffd56a; font-weight: 700; font-size: 18px; letter-spacing: .06em; text-shadow: 0 1px 2px #000; }
-.desk-actions, .embed-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.desk-actions, .embed-actions { display: flex; flex-wrap: nowrap; gap: 2px; }
 .desk-actions button, .embed-actions button {
   min-height: 40px;
-  min-width: 64px;
-  padding: 4px 10px;
-  border-radius: 2px;
-  border: 1px solid #8a6a3a;
-  background: rgba(16, 10, 4, .72);
+  min-width: 56px;
+  padding: 2px 8px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   color: #f0e0c0;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
+  letter-spacing: .08em;
   cursor: pointer;
-  text-shadow: 0 1px 1px #000;
+  text-shadow: 0 1px 2px #000;
 }
 .desk-actions button.on,
 .embed-actions button.primary {
-  border-color: #ffe7a8;
   color: #ffe7a8;
-  background: rgba(88, 56, 12, .8);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .desk-actions button:hover,
 .embed-actions button:hover,
 .desk-actions button:focus-visible,
-.embed-actions button:focus-visible { border-color: #ffe7a8; outline: 1px solid #ffe7a8; }
-.desk.embed .embed-stats { position: absolute; left: 10%; right: 40%; top: 17%; }
+.embed-actions button:focus-visible { color: #fff6d0; outline: none; }
+.desk.embed .embed-stats { position: absolute; left: 12%; right: 42%; top: 16%; }
 .desk.embed .embed-stats p { margin: 0 0 3px; }
 .desk.embed .gems {
   position: absolute;
-  left: 11%;
-  top: 46%;
-  width: 40%;
+  left: 13%;
+  top: 50%;
+  width: 34%;
   margin: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10% 12%;
+  gap: 8% 10%;
 }
 .desk.embed .gem {
   width: 100%;
@@ -339,7 +363,7 @@ button.row:hover, button.row:focus-visible {
   border-color: #ffe7a8;
   box-shadow: inset 0 0 6px #ffb020;
 }
-.desk.embed .desk-foot { left: auto; right: 6%; width: auto; bottom: 7%; height: auto; }
+.desk.embed .desk-foot { justify-content: flex-end; }
 
 @media (max-width: 720px) {
   .dlg-board, .dlg-body { font-size: 16px; }
