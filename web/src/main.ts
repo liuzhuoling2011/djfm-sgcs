@@ -1096,11 +1096,15 @@ async function main() {
     if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
   } catch { /* */ }
   const playerWalk: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
+  const playerRun: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerIdle: HTMLImageElement[] = []
   const playerAttackSpr: HTMLImageElement[] = []
+  // Phase41: ping-pong gait 0,1,2,3,2,1 (Spr code-6 / Wine half-cycle)
+  const GAIT_PP = [0, 1, 2, 3, 2, 1]
   await Promise.all(Array.from({ length: 8 }, async (_, d) => {
     for (let f = 0; f < 4; f++) {
       try { playerWalk[d].push(await loadImage(`game/player/walk/${d}_${f}.png`)) } catch { /* */ }
+      try { playerRun[d].push(await loadImage(`game/player/run/${d}_${f}.png`)) } catch { /* */ }
     }
     try { playerIdle[d] = await loadImage(`game/player/idle/${d}_0.png`) } catch { /* */ }
     try { playerAttackSpr[d] = await loadImage(`game/player/attack/${d}_0.png`) } catch { /* */ }
@@ -1339,7 +1343,7 @@ async function main() {
     if (moved > 1e-5) {
       const prev = animT
       // Phase41: ~2.2 cells/cycle walk (slower footwork vs slide); run same scale via moved
-      animT += moved * 2.2
+      animT += moved * 2.4
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 
@@ -1568,11 +1572,19 @@ async function main() {
         else if (playerIdle[d]) spr = playerIdle[d]
         else if (playerWalk[d]?.[1]) spr = playerWalk[d][1]
       }
-      else if (moving && playerWalk[d]?.length) {
-        // Phase 35: sequential 0..3 loop (Wine walk strips); distance-locked animT
-        const n = playerWalk[d].length
-        const fi = ((Math.floor(animT) % n) + n) % n
-        spr = playerWalk[d][fi]
+      else if (moving) {
+        // Phase41: ping-pong 0,1,2,3,2,1; run uses dedicated Spr loco group atlas
+        const sheet = (running && playerRun[d]?.length) ? playerRun[d] : playerWalk[d]
+        if (sheet?.length) {
+          const n = sheet.length
+          let fi: number
+          if (n === 4) {
+            fi = GAIT_PP[((Math.floor(animT) % 6) + 6) % 6]
+          } else {
+            fi = ((Math.floor(animT) % n) + n) % n
+          }
+          spr = sheet[fi]
+        } else if (playerIdle[d]) spr = playerIdle[d]
       } else if (playerIdle[d]) spr = playerIdle[d]
     }
     const pp = iso(pos.x, pos.y)

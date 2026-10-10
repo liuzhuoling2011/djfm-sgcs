@@ -1,3 +1,21 @@
+## Phase 41 deploy (hold-key facing audit) — 2026-10-10 20:50 Asia/Shanghai
+
+**Source commit:** (pending) · **Pages/NAS:** pending this push
+
+### Confirmed
+- `tools/phase41_player_sprites.py` exports walk+run; RH_002; RH under `{0..5}`; ping-pong pad.
+- `web/src/main.ts`: `GAIT_PP=[0,1,2,3,2,1]`, Shift→`player/run/`, `facing=(oct+6)%8` **unchanged**.
+- Playwright continuous-hold WASD/Shift+WASD: E→6 W→2 N→4 S→0 NE→5 NW→3 SE→7 SW→1. GIFs `assets/samples/phase41/web_hold_{walk,run}_*.gif`.
+
+### Wine hold re-record
+- Parent note: prior Wine “hold” GIFs/`wine_walk/` frames were **not** continuous-direction holds (all dirs look SE).
+- This session: Wine menu input flaky (multi-desktop residue / DirectInput); could reach char-create once but not stable in-game hold capture. **Facing not changed** — web mapping verified; Wine live SBS still blocked.
+- `wine_vs_web_*_8dir.png` rebuilt; Wine row unreliable until true hold re-record.
+
+### Panels
+- 行囊/镶嵌/买卖 already functional (buy/sell/embed); Phase42-style placeChrome pin kept.
+
+
 ## Phase 42 — 行囊 / 买卖 / 镶嵌 layout + usable desk (2026-10-10)
 
 **Goal:** Act-1 only. Pin ResJM panels on the canvas above the HUD, and make 铁匠 buy / sell / embed change money and stacks. **Phase39 facing kept:** `facing = (oct + 6) % 8` (east = art6). Walk export, gait, and run speed were not touched.
