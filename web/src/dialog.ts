@@ -15,6 +15,8 @@ export type GoHook = (scene: string) => void
 export type CombatHook = (battleId: number, eventId: string) => void
 export type FellowHook = (eventId: string, enable: boolean) => void
 export type FxHook = (kind: string, arg?: string) => void
+export type ActHook = (act: number) => void
+export type ForewordHook = (textId: number, jmId: number, act: number) => void
 export type RemHook = (eventId: string, mode: 'rem' | 'reset' | 'table', slot?: number, val?: number) => void
 export type BldHook = (name: string, status: number) => void
 export type LockHook = (name: string, textId: number) => void
@@ -71,6 +73,9 @@ export class DialogSys {
   onCombat?: CombatHook
   onFellow?: FellowHook
   onFx?: FxHook
+  onAct?: ActHook
+  onForeword?: ForewordHook
+  currentAct = 0
   onRem?: RemHook
   onBld?: BldHook
   onLock?: LockHook
@@ -123,6 +128,11 @@ export class DialogSys {
       } else if (op === 'setflagtable' && p.length >= 4) {
         // SetFlagTable sws 111 0|1 — slot 111 gates world visibility
         this.onRem?.(p[1].toLowerCase(), 'table', Number(p[2]), Number(p[3]))
+      }
+      else if (op === 'changeact' && p.length >= 2) {
+        this.currentAct = Number(p[1]); this.onAct?.(this.currentAct)
+      } else if (op === 'showactforeword' && p.length >= 2) {
+        this.onForeword?.(Number(p[1]), Number(p[2] ?? 0), Number(p[3] ?? this.currentAct))
       }
       // Atb / TransToPlayer still stubbed
     }

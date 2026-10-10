@@ -1,0 +1,17 @@
+[ren] scene=1-0s npcs=11 foes=0 name=0 flags_act=0
+  overlay 第 2 章
+  talk bq → {"sy1": 100, "bq1": 100, "bq2": 100, "bq": 3, "zhs1": 100, "cjg1": 100, "act1": 1, "act2": 1} scene=2-0s
+ARRIVE 2-0s act 1 act2flag 1
+  talk 2bq → {"sy1": 100, "bq1": 100, "bq2": 100, "bq": 3, "zhs1": 100, "cjg1": 100, "act1": 1, "act2": 1, "2bq1": 1} scene=2-0s
+  talk 2sws → {"sy1": 100, "bq1": 100, "bq2": 100, "bq": 3, "zhs1": 100, "cjg1": 100, "act1": 1, "act2": 1, "2bq1": 1, "2sws": 1} scene=2-0s
+  talk 2sy → {"sy1": 100, "bq1": 100, "bq2": 100, "bq": 3, "zhs1": 100, "cjg1": 100, "act1": 1, "act2": 1, "2bq1": 1, "2sws": 1, "2sy": 1} scene=2-0s
+[2-1s] scene=2-1s npcs=3 foes=0 name=0 flags_act=1
+[2-2s] scene=2-2s npcs=23 foes=0 name=0 flags_act=1
+[2-7s] scene=2-7s npcs=9 foes=0 name=0 flags_act=1
+[2-3s] scene=2-3s npcs=56 foes=0 name=0 flags_act=1
+[2-5s] scene=2-5s npcs=124 foes=0 name=0 flags_act=1
+[2-8s] scene=2-8s npcs=13 foes=0 name=0 flags_act=1
+[2-13s] scene=2-13s npcs=89 foes=2 name=0 flags_act=1
+[2-13as] scene=2-13as npcs=2 foes=0 name=0 flags_act=1
+page errors []
+done

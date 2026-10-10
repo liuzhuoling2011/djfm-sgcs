@@ -147,7 +147,9 @@ async function main() {
       showShop: () => { inv.shopOpen = true; inv.open = true; renderInv() },
       showEmbed: () => { inv.embedOpen = true; inv.open = true; renderInv() },
     }
-    dlg.onGo = (scene) => {
+    dlg.onAct = (act) => { dlg.currentAct = act; inv.flash(`切换至第 ${act + 1} 章`) }
+    dlg.onForeword = (textId, jm, act) => { showActForeword(textId, jm, act) }
+        dlg.onGo = (scene) => {
       const id = packOf(scene === 'sws' ? 'sws' : scene)
       if (packIndex?.packs.some((p) => p.id === id)) {
         inv.flash(`前往 ${dlg.names[scene] ?? scene}…`)
@@ -413,6 +415,24 @@ async function main() {
   const packOf = (scene: string) => (scene === '1-0s' ? 'ren' : scene)
 
 
+
+  // Phase 26: ShowActForeword — dialog text overlay, click/Esc skips
+  function showActForeword(textId: number, _jm: number, act: number) {
+    const wrap = document.createElement('div'); wrap.className = 'cutscene foreword'
+    const box = document.createElement('div'); box.className = 'fore-box'
+    const title = document.createElement('div'); title.className = 'fore-title'; title.textContent = `第 ${act + 1} 章`
+    const body = document.createElement('div'); body.className = 'fore-body'
+    const pack = act <= 0 ? 'public1' : act === 1 ? 'public2' : 'public3'
+    const raw = dlg.dialogs[pack]?.[String(textId)] ?? dlg.dialogs.public1?.[String(textId)] ?? dlg.text(textId)
+    body.textContent = (raw || '').replace(/\/\/\/\//g, '\n\n').replace(/%\d+%/g, '……')
+    const tip = document.createElement('div'); tip.className = 'cut-tip'; tip.textContent = '点击 / Esc 继续'
+    box.append(title, body); wrap.append(box, tip); document.body.append(wrap)
+    const done = () => { window.removeEventListener('keydown', key, true); wrap.remove() }
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); done() } }
+    window.addEventListener('keydown', key, true)
+    wrap.addEventListener('click', done)
+  }
+
   // Phase 24: DHP (MPEG-1) → mp4 cutscenes; click/Esc/Space skips
   const playedAvi = new Set<string>()
   function playAvi(name: string, once = false) {
@@ -665,6 +685,21 @@ async function main() {
       if ((dlg.flags.bq1 ?? 0) < 10 && dlg.exitText['1-4s'] !== -1) dlg.exitText['1-4s'] = dlg.exitText['1-4s'] ?? 303
       if ((dlg.flags.bq1 ?? 0) < 30 && dlg.exitText['1-7as'] !== -1) dlg.exitText['1-7as'] = dlg.exitText['1-7as'] ?? 303
       if ((dlg.flags.bq2 ?? 0) < 1 && dlg.exitText['1-9s'] !== -1) dlg.exitText['1-9s'] = dlg.exitText['1-9s'] ?? 303
+    }
+    if (scene === '2-0s') {
+      // scene/2-0s.txt: ChangeAct 1; ShowActForeword 114 1447 1 once; SetFlagTable 2sws 111 1
+      dlg.currentAct = 1
+      dlg.onAct?.(1)
+      if ((dlg.flags.act2 ?? 0) < 1) {
+        dlg.flags.act2 = 1
+        showActForeword(114, 1447, 1)
+      }
+      dlg.onRem?.('2sws', 'table', 111, 1)
+      // exit locks from scene script
+      if ((dlg.flags.sq1 ?? 0) < 1 && dlg.exitText['2-1s'] !== -1) dlg.exitText['2-1s'] = dlg.exitText['2-1s'] ?? 303
+      if ((dlg.flags['2bq1'] ?? 0) < 1 && dlg.exitText['2-2s'] !== -1) dlg.exitText['2-2s'] = dlg.exitText['2-2s'] ?? 303
+      if ((dlg.flags['2bq2'] ?? 0) < 1 && dlg.exitText['2-7s'] !== -1) dlg.exitText['2-7s'] = dlg.exitText['2-7s'] ?? 303
+      inv.flash('芭蕉村 — 第二幕')
     }
     if (scene === '1-3s') {
       if ((dlg.flags.sy1 ?? 0) < 10) playAvi('1-3s', true)

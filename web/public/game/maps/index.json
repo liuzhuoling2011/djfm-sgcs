@@ -162,6 +162,150 @@
     {
       "id": "sws",
       "label": "sws 沈万山遇袭"
+    },
+    {
+      "id": "2-0s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        96,
+        96
+      ],
+      "label": "2-0s 芭蕉村"
+    },
+    {
+      "id": "2-1s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-1s 伐木场"
+    },
+    {
+      "id": "2-2s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "2-2s 明光寺"
+    },
+    {
+      "id": "2-3s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-3s 日落河"
+    },
+    {
+      "id": "2-4as",
+      "file": "map_nanfang.lib",
+      "dims": [
+        128,
+        128
+      ],
+      "label": "2-4as"
+    },
+    {
+      "id": "2-4s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-4s 火妖洞穴"
+    },
+    {
+      "id": "2-5s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-5s 风火林"
+    },
+    {
+      "id": "2-6s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "2-6s 大石窟"
+    },
+    {
+      "id": "2-7s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-7s 芭蕉园"
+    },
+    {
+      "id": "2-8s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        256,
+        256
+      ],
+      "label": "2-8s 平顶坡"
+    },
+    {
+      "id": "2-9s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-9s 平顶山"
+    },
+    {
+      "id": "2-10s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-10s 玉女溪"
+    },
+    {
+      "id": "2-11s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-11s 硷路"
+    },
+    {
+      "id": "2-12s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-12s 莫名林"
+    },
+    {
+      "id": "2-13s",
+      "file": "map_nanfang.lib",
+      "dims": [
+        192,
+        192
+      ],
+      "label": "2-13s 出水洞"
+    },
+    {
+      "id": "2-13as",
+      "file": "map_nanfang.lib",
+      "dims": [
+        64,
+        64
+      ],
+      "label": "2-13as"
     }
   ]
 }

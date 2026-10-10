@@ -843,6 +843,31 @@ Skipped (schema still broken).
 
 
 
+## Phase 26: act-2 map export + enter 芭蕉村 (2026-10-10)
+
+### Done
+1. **Exported 16 act-2 maps** reachable by BNT `go` from 2-0s (BFS):  
+   `2-0s` 芭蕉村 → 2-1s 伐木场, 2-2s 明光寺, 2-7s 芭蕉园 → … → 2-13s/2-13as 出水洞.  
+   Via `tools/scene_export.py`; libs Map_Nanfang / Map_Diyu. Added to `maps/index.json` with Chinese names from `trigger/flag.txt`.
+2. **`go 2-0s` after bq2=100** loads 芭蕉村 (bq.txt lines 13/24).  
+3. **ChangeAct / ShowActForeword**: dialog hooks + fullscreen foreword (public2 text 114 for act 2). Scene enter on 2-0s runs ChangeAct 1 and one-shot Act2 foreword (`act2` flag).
+4. **Warps**: existing trigger/`go` pipeline; 2-0s exit locks for 2-1s/2-2s/2-7s when quest flags unset (from scene script).
+5. Soft-DF unchanged and still labeled `·软DF`.
+
+### Playthrough
+Harness: act-1 clear flags → talk 泊祁 → **2-0s** with chapter foreword → talk 2bq/2sws/2sy → load 2-1s, 2-2s, 2-7s, 2-3s, 2-5s, 2-8s, 2-13s, 2-13as. Log: `assets/samples/phase26/playthrough_log.txt`.
+
+### How far act-2 goes / first blockers
+- **All 16 maps load** (buildings + named NPCs + warps).
+- **Almost no combat packs**: ONT Autos stay as NPCs (not remapped to monster_sets); only 2-13s has 2 RolePrivate monsters. Late act-2 fights (天璇/天枢 etc.) need SprRole paper-doll / phase23-style remaps.
+- **Act-2 quest chain not scripted beyond exported talks**: 2bq1 starts on talk; sq1/2bq2 exit locks present but full 消灭摇光/天璇 chain, SetPropToObj, IsDead bosses, jiguan — not wired scene-by-scene yet (no invented quests).
+- Nanfang **overlay tiles** often miss in compose (ok=0 on overlay pass) — ground+buildings still show.
+- 2-4as / 2-13as lack flag.txt display names (kept id).
+- Minimap / BGM per act-2 scene not specialized.
+
+### Samples
+- `assets/samples/phase26/act2_grid.png`, `pt_*.png`, `2-0s.png`…
+
 ## Phase 25: act-1 main quest after sy1=100 (2026-10-10)
 
 ### Done (from real talk/scene scripts only)

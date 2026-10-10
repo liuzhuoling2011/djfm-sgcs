@@ -70,3 +70,7 @@ img { max-width:100%; image-rendering: pixelated; }
 .cutscene{position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .cutscene video{max-width:100%;max-height:100%}
 .cut-tip{position:absolute;right:16px;bottom:12px;color:#ccc;font:12px sans-serif;opacity:.7}
+
+.foreword .fore-box{max-width:640px;max-height:70vh;overflow:auto;background:rgba(8,10,18,.92);border:1px solid #6a5a3a;padding:28px 32px;color:#e8dcc0;font:16px/1.7 "Noto Serif CJK SC",serif;white-space:pre-wrap}
+.fore-title{font-size:22px;color:#f0c860;margin-bottom:16px;text-align:center}
+.fore-body{text-indent:2em}
