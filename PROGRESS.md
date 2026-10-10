@@ -854,7 +854,7 @@ Skipped (schema still broken).
 3. Screenshots under `assets/samples/phase33/`.
 
 ### Deploy
-- (pending)
+- Source `1b3de6d` · Pages `21dc898` (main) · NAS FAILED again (ssh SOCKS)
 
 ### Note
 Walk closer to Wine but still may look off to users; xn mirrors are remake convenience (original single/few facings).
