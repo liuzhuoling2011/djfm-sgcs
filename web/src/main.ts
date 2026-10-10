@@ -2,6 +2,7 @@ import './style.css'
 import { DialogSys } from './dialog'
 import { Hud, stepFoes, playerAttack, type Foe, type Stats } from './hud'
 import { Inventory } from './inventory'
+import { spawnFx, tickFx, drawFx, type SkillFx } from './fx'
 
 type Vec = { x: number; y: number }
 type MapObj = {
@@ -128,6 +129,7 @@ async function main() {
   let dialogIdx = 0
   let dialogNpc = ''
   let attackT = 0
+  let skillFx: SkillFx | null = null
   const hud = new Hud()
   const inv = new Inventory()
   const dlg = new DialogSys()
@@ -162,33 +164,56 @@ async function main() {
   }
   
   function renderInv() {
-    invEl.classList.toggle('hidden', !inv.open && !inv.shopOpen && !inv.embedOpen)
-    if (!inv.open && !inv.shopOpen && !inv.embedOpen) return
+    const show = inv.open || inv.shopOpen || inv.embedOpen
+    invEl.classList.toggle('hidden', !show)
+    invEl.classList.toggle('jm-mode', inv.shopOpen || inv.embedOpen)
+    if (!show) return
     const rows = inv.items.map((it) => {
       const d = inv.props[String(it.id)]
       return `<li><span>${d?.name ?? '#'+it.id}</span><span>×${it.qty}</span></li>`
     }).join('') || '<li>（空）</li>'
-    let shop = ''
     if (inv.shopOpen) {
-      shop = `<div class="shop"><b>铁匠铺 · 买卖</b><br/>` + inv.shopCatalog().map((r,i) => {
+      // ShowJM 20|86 → JM_DEAL layout; panel_1550 = ResJM size-matched deal/list frame
+      const slots = inv.shopCatalog().map((r, i) => {
         const n = inv.props[String(r.id)]?.name ?? r.id
-        return `<button data-buy="${r.id}">${i+1}. ${n} ${r.price}金</button>`
-      }).join('') + `<br/><button data-close-shop>关闭店铺</button></div>`
+        return `<button data-buy="${r.id}">${i + 1}. ${n}<br/><small>${r.price} 金</small></button>`
+      }).join('')
+      invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
+        <div class="jm-title">铁匠铺 · 买卖</div>
+        <div class="jm-body"><div class="jm-slots">${slots}</div></div>
+        <div class="jm-foot">金钱 ${inv.money} · 蜀水×${inv.qty(120)}</div>
+        <button class="jm-close" data-close-shop title="关闭">×</button>
+      </div></div>`
+    } else if (inv.embedOpen) {
+      // ShowJM 20|62|92 → JM_Enchase; panel_591 = equip/embed stone frame
+      invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
+        <div class="jm-title">镶嵌 · ${inv.weaponName()}</div>
+        <div class="jm-embed-info">经蜀水淬火的兵器可镶嵌更多宝石。<br/>
+          当前槽位 ×${inv.weaponSlots}　金钱 ${inv.money}<br/>
+          花费 200 金强化兵器（AT+${2 * inv.weaponSlots}）</div>
+        <div class="jm-embed-actions">
+          <button data-embed>确认镶嵌</button>
+          <button data-close-embed>取消</button>
+        </div>
+        <button class="jm-close" data-close-embed>×</button>
+      </div></div>`
+    } else {
+      invEl.innerHTML = `<div class="box"><div class="jm-frame bag">
+        <div class="jm-title">行囊 · ${inv.money} 金</div>
+        <div class="jm-body"><ul>${rows}</ul>
+          <p style="margin-top:8px;color:#c9a86a">装备：${inv.weaponName()}　F1 ${inv.skill('left')?.name ?? ''}　F2 ${inv.skill('right')?.name ?? ''}<br/>
+          <small>I 开关 · 1/3 药 · 5 飞蝗石 · 6 指南珠 · Esc</small></p>
+        </div>
+        <button class="jm-close" data-close-inv>×</button>
+      </div></div>`
     }
-    if (inv.embedOpen) {
-      shop += `<div class="shop"><b>镶嵌</b><p>花费 200 金强化当前兵器（槽×${inv.weaponSlots}）</p>
-        <button data-embed>确认镶嵌</button> <button data-close-embed>取消</button></div>`
-    }
-    invEl.innerHTML = `<div class="box"><h3>行囊 · ${inv.money} 金</h3>
-      <div class="eq">装备：${inv.weaponName()}　F1 ${inv.skill('left')?.name ?? ''}　F2 ${inv.skill('right')?.name ?? ''}<br/>
-      <small>I 开关 · 1/3 用药 · 5 飞蝗石 · 6 指南珠 · Esc 关</small></div>
-      <ul>${rows}</ul>${shop}</div>`
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
-      inv.buy(Number((b as HTMLElement).dataset.buy)); const ps=inv.potSlots(); hud.pots=[...ps]; renderInv()
+      inv.buy(Number((b as HTMLElement).dataset.buy)); const ps = inv.potSlots(); hud.pots = [...ps]; renderInv()
     }))
-    invEl.querySelector('[data-close-shop]')?.addEventListener('click', () => { inv.shopOpen=false; renderInv() })
-    invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); inv.embedOpen=false; renderInv() })
-    invEl.querySelector('[data-close-embed]')?.addEventListener('click', () => { inv.embedOpen=false; renderInv() })
+    invEl.querySelector('[data-close-shop]')?.addEventListener('click', () => { inv.shopOpen = false; renderInv() })
+    invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); inv.embedOpen = false; renderInv() })
+    invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => { inv.embedOpen = false; renderInv() }))
+    invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
   }
   function renderToast() {
     toastEl.classList.toggle('hidden', inv.toastT <= 0)
@@ -289,7 +314,7 @@ async function main() {
     pos.y = meta.spawn?.[1] ?? mapH / 2
     curScene = (meta.scene ?? id).toLowerCase()
     curTriggers = ((meta as { triggers?: { x: number; y: number; script?: string }[] }).triggers ?? [])
-      .filter((g) => g.x < 4096 && g.y < 4096 && /^go\s/.test(g.script ?? '')).map((g) => ({ x: g.x, y: g.y, script: g.script! }))
+      .filter((g) => g.x < 4096 && g.y < 4096 && (/^go\s/.test(g.script ?? '') || /^(shushui)$/i.test((g.script ?? '').trim()))).map((g) => ({ x: g.x, y: g.y, script: g.script! }))
     if (arriveFrom) {
       // real exit pairing: arrive next to this map's own 'go <previous scene>' trigger, stepped toward the map centre
       const back = curTriggers.filter((g) => g.script.split(/\s+/)[1]?.toLowerCase() === arriveFrom)
@@ -388,9 +413,21 @@ async function main() {
         if (d <= range && (!best || d < best.d)) best = { d, o }
       }
       if (best?.o.EventID) { dlg.state = 0; dlg.start(String(best.o.EventID)); dialogOpen = dlg.open; renderDialog() }
+      // Scene props: 1-6s shushui (蜀水) — scene/1-6s.txt SetPropToObj when xss<1
+      else {
+        for (const tr of curTriggers) {
+          if ((tr.script || '').trim().toLowerCase() !== 'shushui') continue
+          const d = Math.hypot(tr.x - origin.x - pos.x, tr.y - origin.y - pos.y)
+          if (d > range + 0.5) continue
+          if (inv.qty(120) > 0 || (dlg.flags.xss ?? 0) >= 1) { inv.flash('此处的蜀水已被取走'); break }
+          inv.add(120, 1); dlg.flags.xss = 1
+          inv.flash('获得 蜀水 — 可交予铁匠强化兵器（需 sy1≥99 才触发任务台词）')
+          break
+        }
+      }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
-      attackT = 0.28
+      attackT = 0.28; skillFx = spawnFx('slash', (facing % 8) * (Math.PI / 4) - Math.PI, 0.28)
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats)
     }
@@ -438,6 +475,7 @@ async function main() {
         const at0 = stats.at ?? 40; stats.at = at0 * (mult > 0 && mult < 5 ? Math.max(mult, 1) : 1.2)
         for (let a = 0; a < 8; a++) playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.2)
         stats.at = at0
+        skillFx = spawnFx('saoye', 0, 0.5)
         inv.flash(`${sk?.name ?? '扫叶'}！`)
       } else inv.flash('真气不足')
     }
@@ -451,6 +489,7 @@ async function main() {
         const at0 = stats.at ?? 40; stats.at = at0 * mult
         playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats, 3.2)
         stats.at = at0
+        skillFx = spawnFx('jidian', (facing % 8) * (Math.PI / 4) - Math.PI, 0.4)
         inv.flash(`${sk?.name ?? '疾电'}！`)
       } else inv.flash('真气不足')
     }
@@ -463,10 +502,17 @@ async function main() {
         }
         WG = { g: walkGrid, ox: origin.x, oy: origin.y }
       }
-      hint.textContent = 'DEBUG: 北门已开 (sy1=1, exit 1-1s unlocked) — 同与沈云对话'
+      // Shift+F9: grant 蜀水 for blacksmith chain testing (real pickup is shushui on 1-6s)
+      if (e.shiftKey) {
+        inv.add(120, 1); dlg.flags.xss = 1; inv.flash('DEBUG: 获得蜀水')
+        hint.textContent = 'DEBUG: 蜀水×1 + xss=1（正式获取：1-6s 堰兵冢 shushui）'
+      } else {
+        hint.textContent = 'DEBUG: 北门已开 (sy1=1) — Shift+F9 给蜀水'
+      }
     }
     if (k === 'q' && !dialogOpen && attackCd <= 0 && stats.mp >= 10) {
       stats.mp -= 10; attackT = 0.4; attackCd = 0.8
+      skillFx = spawnFx('q', 0, 0.45)
       for (let a = 0; a < 8; a++) playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.5)
     }
   })
@@ -488,6 +534,7 @@ async function main() {
     last = now
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
+    skillFx = tickFx(skillFx, dt)
     inv.tick(dt); if (inv.toastT > 0) renderToast()
 
     let dx = 0, dy = 0
@@ -641,13 +688,13 @@ async function main() {
       z: pos.x + pos.y + 0.25,
       fn: () => {
         ctx.drawImage(spr, pp.x + cam.x - spr.width / 2, pp.y + cam.y - spr.height + 10)
-        if (attackT > 0) {
+        if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
+        else if (attackT > 0) {
           const ang = (facing % 8) * (Math.PI / 4) - Math.PI
-          const reach = 28
           ctx.strokeStyle = `rgba(255,220,120,${Math.min(1, attackT * 4)})`
           ctx.lineWidth = 3
           ctx.beginPath()
-          ctx.arc(pp.x + cam.x, pp.y + cam.y - 12, reach, ang - 0.7, ang + 0.7)
+          ctx.arc(pp.x + cam.x, pp.y + cam.y - 12, 28, ang - 0.7, ang + 0.7)
           ctx.stroke()
         }
       },
@@ -680,6 +727,19 @@ async function main() {
           ctx.fillStyle = '#ffd9a0'; ctx.font = '10px ui-sans-serif,system-ui'; ctx.fillText(f.name ?? '', fx - 18, top - 3)
         }
       } })
+    }
+        // Phase 20: 蜀水 prop marker on 1-6s
+    if (curScene === '1-6s' && inv.qty(120) <= 0 && (dlg.flags.xss ?? 0) < 1) {
+      for (const tr of curTriggers) {
+        if ((tr.script || '').trim().toLowerCase() !== 'shushui') continue
+        const sp = iso(tr.x - origin.x, tr.y - origin.y)
+        draws.push({ z: tr.x + tr.y, fn: () => {
+          const x = sp.x + cam.x, y = sp.y + cam.y
+          ctx.fillStyle = 'rgba(80,180,255,0.85)'
+          ctx.beginPath(); ctx.arc(x, y - 18, 7, 0, Math.PI * 2); ctx.fill()
+          ctx.fillStyle = '#cfefff'; ctx.font = '10px ui-sans-serif'; ctx.fillText('蜀水', x - 10, y - 28)
+        }})
+      }
     }
     draws.sort((a, b) => a.z - b.z)
     for (const d of draws) d.fn()

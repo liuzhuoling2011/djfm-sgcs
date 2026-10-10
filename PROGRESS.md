@@ -742,3 +742,52 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 
 ### Blocked / deferred
 - Full JM shop/embed UI art (ShowJM panels); gem socket rules; Skill.ini frame VFX; act-1 maps beyond dialog; damage formula REA.
+
+## Phase 20 — JM panels, skill VFX, 蜀水 chain, contiguous maps (2026-10-10)
+
+### 1. ShowJM shop / embed panel art
+- JMMDL: `JM_DEAL` id86 anim **834**, `JM_Enchase` id62 anim **814**, `JM_DAOJU` id20 anim `9*900`, `JM_Attribute` id92 anim **877**.
+- **Blocker:** ResJM entries 813/814/834/835/836/877/900 are tiny empty LEPs (w≈4–6, no opaque pixels) — not usable panel art. Close/button anims 10–12 are ~20×23 glyphs only.
+- **Fallback (size-matched):** scanned ResJM for 180–420px stone UI frames:
+  - `panel_1550` → shop/DEAL list frame
+  - `panel_591` → equip/embed (crossed swords + armor)
+  - `panel_625` → bag/grid
+- Wired in client: `ShowJM 20|86` → shop frame, `ShowJM 20|62|92` → embed frame, `I` → bag frame (`web/src/style.css` `.jm-frame`, `renderInv` in `main.ts`). Assets: `web/public/game/hud/panels/`.
+
+### 2. Skill attack VFX (F1/F2/Q)
+- Skill.ini / Skill.gop: 扫叶 chain `77→46→71` (base 33), 疾电 `482` (base 265). These are **behavior action IDs**, not ResJM/ResEx sprite indices (those IDs decode as map props / paper-doll fragments).
+- New `web/src/fx.ts`: canvas overlays — leaf whirl (扫叶), lightning bolts (疾电), cyclone (Q), slash arc (Space). Spawned from F1/F2/Q/Space handlers.
+- **Blocker:** true particle/effect lib map for skill overlays not cracked yet.
+
+### 3. Act-1 dialog / 蜀水 past 沈云 (scripts only)
+- After `sy1=1` (沈云 / F9): town menus already expose 铁匠 choices including「关于蜀水」(public1 58/59), 蔡大婶→铁蛋 (cds/td), 翠娟/泊祁/沈万山 further flags.
+- **蜀水 item (prop 120):** scene `1-6s.txt` `SetPropToObj shushui` when `xss<1` and no prop 120. BNT trigger at **(100,32)** script `shushui`.
+- Client: E near `shushui` acquires 蜀水 + sets `xss=1`; blue marker on map until taken. Hand-in to 铁匠 still requires real flag `sy1≥99` (`tj` talk id2/3) — not invented.
+- Debug: **Shift+F9** grants 蜀水 for UI testing only.
+
+### 4. Contiguous go-trigger maps exported
+New under `web/public/game/maps/` (also in `index.json`):
+| scene | name | notes |
+|-------|------|-------|
+| 1-4s | 隐峰山 | go↔1-0s, 2 NPCs |
+| 1-5s | 宣风林地 | →1-7s |
+| 1-6s | 堰兵冢 | 蜀水, →1-7s |
+| 1-7s | 冰火沼 | |
+| 1-7as | | ↔1-0s,1-7s |
+| 1-8s | 九天池 | 74 NPCs |
+| 1-9s | 炎炀关 | ↔1-0s,1-10s, 25 NPCs |
+
+Still not exported: 1-10s / 1-10a* / 1-11s (next after 炎炀关).
+
+### 5. Damage formula REA
+- `user-rea` `search_strings` still fails MCP output schema (`result`/`evidence_id` required). Placeholder remains: `AT − DF/2 ±10%` in `hud.ts`.
+
+### Samples
+- `assets/samples/phase20/jm_panels.png` — raw ResJM frames
+- `assets/samples/phase20/web_jm_ui.png` — wired shop/embed/bag UI
+- `assets/samples/phase20/web_town.png` — ren with new map buttons
+- `assets/samples/phase20/web_1-4s.png`, `web_1-6s.png`, `maps_new.png`
+
+### Deploy
+- Pages + NAS this milestone; source commit + PROGRESS.
+
