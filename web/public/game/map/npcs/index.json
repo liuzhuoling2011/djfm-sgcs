@@ -1,0 +1,172 @@
+{
+  "sy": {
+    "used": 1008,
+    "file": "npc_623.png",
+    "w": 31,
+    "h": 81,
+    "dirs": [
+      "sy_0.png",
+      "sy_1.png",
+      "sy_2.png",
+      "sy_3.png",
+      "sy_4.png",
+      "sy_5.png",
+      "sy_6.png",
+      "sy_7.png"
+    ],
+    "nframes": 80
+  },
+  "zs": {
+    "used": 1014,
+    "file": "npc_629.png",
+    "w": 37,
+    "h": 76,
+    "dirs": [
+      "zs_0.png",
+      "zs_1.png",
+      "zs_2.png",
+      "zs_3.png",
+      "zs_4.png",
+      "zs_5.png",
+      "zs_6.png",
+      "zs_7.png"
+    ],
+    "nframes": 80
+  },
+  "cjg": {
+    "used": 1007,
+    "file": "npc_621.png",
+    "w": 27,
+    "h": 83,
+    "dirs": [
+      "cjg_0.png",
+      "cjg_1.png",
+      "cjg_2.png",
+      "cjg_3.png",
+      "cjg_4.png",
+      "cjg_5.png",
+      "cjg_6.png",
+      "cjg_7.png"
+    ],
+    "nframes": 32
+  },
+  "sws": {
+    "used": 624,
+    "file": "npc_624.png",
+    "w": 20,
+    "h": 78,
+    "dirs": [
+      "sws_0.png",
+      "sws_1.png",
+      "sws_2.png",
+      "sws_3.png",
+      "sws_4.png",
+      "sws_5.png",
+      "sws_6.png",
+      "sws_7.png"
+    ],
+    "nframes": 32
+  },
+  "tj": {
+    "used": 630,
+    "file": "npc_627.png",
+    "w": 28,
+    "h": 82,
+    "dirs": [
+      "tj_0.png",
+      "tj_1.png",
+      "tj_2.png",
+      "tj_3.png",
+      "tj_4.png",
+      "tj_5.png",
+      "tj_6.png",
+      "tj_7.png"
+    ],
+    "nframes": 64
+  },
+  "gbw": {
+    "used": 625,
+    "file": "npc_630.png",
+    "w": 42,
+    "h": 72,
+    "dirs": [
+      "gbw_0.png",
+      "gbw_1.png",
+      "gbw_2.png",
+      "gbw_3.png",
+      "gbw_4.png",
+      "gbw_5.png",
+      "gbw_6.png",
+      "gbw_7.png"
+    ],
+    "nframes": 80
+  },
+  "td": {
+    "used": 618,
+    "file": "npc_618.png",
+    "w": 24,
+    "h": 94,
+    "dirs": [
+      "td_0.png",
+      "td_1.png",
+      "td_2.png",
+      "td_3.png",
+      "td_4.png",
+      "td_5.png",
+      "td_6.png",
+      "td_7.png"
+    ],
+    "nframes": 32
+  },
+  "cds": {
+    "used": 1115,
+    "file": "npc_619.png",
+    "w": 112,
+    "h": 68,
+    "dirs": [
+      "cds_0.png",
+      "cds_1.png",
+      "cds_2.png",
+      "cds_3.png",
+      "cds_4.png",
+      "cds_5.png",
+      "cds_6.png",
+      "cds_7.png"
+    ],
+    "nframes": 56
+  },
+  "bq": {
+    "used": 620,
+    "file": "npc_622.png",
+    "w": 24,
+    "h": 94,
+    "dirs": [
+      "bq_0.png",
+      "bq_1.png",
+      "bq_2.png",
+      "bq_3.png",
+      "bq_4.png",
+      "bq_5.png",
+      "bq_6.png",
+      "bq_7.png"
+    ],
+    "nframes": 56
+  },
+  "zhs": {
+    "used": 620,
+    "file": "npc_628.png",
+    "w": 24,
+    "h": 94,
+    "dirs": [
+      "zhs_0.png",
+      "zhs_1.png",
+      "zhs_2.png",
+      "zhs_3.png",
+      "zhs_4.png",
+      "zhs_5.png",
+      "zhs_6.png",
+      "zhs_7.png"
+    ],
+    "nframes": 56
+  }
+}

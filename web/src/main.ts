@@ -5,7 +5,7 @@ import { Hud, stepFoes, playerAttack, type Foe, type Stats } from './hud'
 type Vec = { x: number; y: number }
 type MapObj = {
   lx?: number; ly?: number; x?: number; y?: number; MapX?: number; MapY?: number
-  ModelID?: number; Type?: number; EventID?: string; file?: string; sw?: number; sh?: number; graph?: number
+  ModelID?: number; Type?: number; EventID?: string; file?: string; sw?: number; sh?: number; npc_dirs?: string[]; graph?: number
 }
 type BldPart = { file: string; ox: number; oy: number; w: number; h: number }
 type Building = { x: number; y: number; bid: number; name: string; parts: BldPart[]; fw?: number; fh?: number }
@@ -219,6 +219,9 @@ async function main() {
       ...[...new Set(objects.filter((n) => n.file).map((n) => n.file!))].map(async (f) => {
         try { npcImgs.set(f, await loadImage(`${base}/props/${f}`)) } catch { /* */ }
       }),
+      ...objects.flatMap((n) => (n.npc_dirs ?? []).map(async (f, i) => {
+        try { npcImgs.set(`${n.EventID}_${i}`, await loadImage(`${base}/npcs/${f}`)) } catch { /* */ }
+      })),
     ])
     ground = null
     groundMeta = meta.ground_full ?? null
@@ -292,16 +295,20 @@ async function main() {
     if (t.tagName === 'BUTTON' && t.dataset.pack) applyPack(t.dataset.pack).catch(console.error)
   })
 
-  let walkFrames: HTMLImageElement[] = []
-  try {
-    const wm = await (await fetch('game/walk/meta.json')).json() as { count: number }
-    for (let i = 0; i < wm.count; i++) {
-      try { walkFrames.push(await loadImage(`game/walk/${String(i).padStart(2, '0')}.png`)) } catch { /* */ }
+  // Phase 19: paper-doll composite sheets (8 dirs × 4 walk / 1 idle / 1 attack)
+  const playerWalk: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
+  const playerIdle: HTMLImageElement[] = []
+  const playerAttackSpr: HTMLImageElement[] = []
+  await Promise.all(Array.from({ length: 8 }, async (_, d) => {
+    for (let f = 0; f < 4; f++) {
+      try { playerWalk[d].push(await loadImage(`game/player/walk/${d}_${f}.png`)) } catch { /* */ }
     }
-  } catch { /* */ }
+    try { playerIdle[d] = await loadImage(`game/player/idle/${d}_0.png`) } catch { /* */ }
+    try { playerAttackSpr[d] = await loadImage(`game/player/attack/${d}_0.png`) } catch { /* */ }
+  }))
   let player: HTMLImageElement
-  try { player = await loadImage('game/player.png') } catch { player = await loadImage('game/player_fallback.png') }
-  if (!walkFrames.length) walkFrames = [player]
+  try { player = playerIdle[0] ?? await loadImage('game/player.png') } catch { player = await loadImage('game/player_fallback.png') }
+  const walkFrames: HTMLImageElement[] = playerWalk.flat()
 
   const gridEl = document.querySelector<HTMLDivElement>('#grid')!
   for (const src of ['game/map/props/bld_225.png', 'game/map/props/npc_618.png', 'game/map/props/npc_661.png', 'game/map/chunks/c_32_32.png']) {
@@ -498,12 +505,15 @@ async function main() {
       const oy = o.ly ?? (o.y != null ? o.y - origin.y : o.MapY != null ? o.MapY - origin.y : null)
       if (ox == null || oy == null) continue
       const op = iso(ox, oy)
-      const img = o.file ? npcImgs.get(o.file) : undefined
+      const sx = op.x + cam.x, sy = op.y + cam.y
+      const dirKey = o.EventID != null ? `${o.EventID}_${Math.round((Math.atan2(pos.y - oy, pos.x - ox) + Math.PI) / (Math.PI / 4)) % 8}` : ''
+      const img = (dirKey && npcImgs.get(dirKey)) || (o.file ? npcImgs.get(o.file) : undefined)
+      if (!inView(sx, sy, 200)) continue
       draws.push({
-        z: ox + oy + 0.15,
+        z: ox + oy + 0.2,
         fn: () => {
-          const sx = op.x + cam.x, sy = op.y + cam.y
           if (img) ctx.drawImage(img, sx - img.width / 2, sy - img.height + 8)
+
           else { ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill() }
           ctx.fillStyle = '#ffe9a0'; ctx.font = '10px ui-sans-serif,system-ui'
           ctx.fillText(String(o.EventID ?? o.ModelID ?? '?'), sx + 6, sy - 4)
@@ -512,12 +522,11 @@ async function main() {
     }
 
     let spr = player
-    if (walkFrames.length >= 8) {
-      const fpd = Math.max(1, Math.floor(walkFrames.length / 8))
-      const fi = moving ? Math.floor(animT) % fpd : 0
-      spr = walkFrames[Math.min(walkFrames.length - 1, (facing % 8) * fpd + fi)] ?? player
-    } else if (walkFrames.length > 1) {
-      spr = walkFrames[moving ? Math.floor(animT) % walkFrames.length : 0] ?? player
+    {
+      const d = ((facing % 8) + 8) % 8
+      if (attackT > 0 && playerAttackSpr[d]) spr = playerAttackSpr[d]
+      else if (moving && playerWalk[d]?.length) spr = playerWalk[d][Math.floor(animT) % playerWalk[d].length]
+      else if (playerIdle[d]) spr = playerIdle[d]
     }
     const pp = iso(pos.x, pos.y)
     draws.push({
