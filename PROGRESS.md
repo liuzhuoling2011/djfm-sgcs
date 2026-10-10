@@ -1,6 +1,30 @@
+## Phase 42c — Wine hold close walk/run gaps (2026-10-10 ~21:30 Asia/Shanghai)
+
+**Goal:** Use real `wine_hold/` + `wine_vs_web_*_8dir` to close remaining walk/run visual gaps. Fix 魔猿/狐精/雪地巨人 if quick. Deploy Pages. No act-2. No jump.
+
+### Facing
+`facing_column_check.png` confirms KEY_TO_ART columns match Wine hold mids for all 8 keys. Kept Phase39: `facing=(oct+6)%8`, art6=E. No column remap.
+
+### RH layer
+Phase41 had wrongly expanded `RH_UNDER_BODY` to `[0..5]` (RH under on S/SW/W — Wine S needs sword in front). Restored Phase39 **`[3,4,5]`** (NW/N/NE only). Re-ran `tools/phase39_player_sprites.py`; fixed `tools/phase41_player_sprites.py`. Audits: `audit_S_rh_after.png`, `audit_D_rh_after.png`.
+
+### Gait
+`animT += moved * (running ? 1.65 : 2.0)` — walk weightier vs Phase41 2.4; run longer stride. Kept `GAIT_PP=[0,1,2,3,2,1]` + E/SE CA ping-pong `[1,2,3,2]`.
+
+### Compare boards
+Rebuilt synthetic `web_hold/` from re-exported arts; refreshed `wine_vs_web_{walk,run}_8dir.{png,gif}` and `key_*_wine_vs_web.gif`.
+
+### Monsters
+魔猿(46)/狐精(12)/雪地巨人(55) already SprRole full-body `pd008`/`pd003`/`pd113`. Probed ResNpc3/ResEx/ResBoss candidates — none match ape/fox-archer/giant. **No remap** this pass.
+
+### Deploy
+(see footer after push)
+
+---
+
 ## Phase 41 deploy (hold-key facing audit) — 2026-10-10 20:50 Asia/Shanghai
 
-**Source commit:** (pending) · **Pages/NAS:** pending this push
+**Source:** `35a203e` (+follow-ups) · **Pages:** `c6cd74f`/`aedf5b1` · **NAS_OK** `/volume4/web/djfm/`
 
 ### Confirmed
 - `tools/phase41_player_sprites.py` exports walk+run; RH_002; RH under `{0..5}`; ping-pong pad.
@@ -42,6 +66,8 @@ Playwright on the production build: panel 392×272 sits inside the canvas with ~
 Unchanged: `web/src/main.ts` `facing = (oct + 6) % 8`.
 
 ---
+
+**Deploy (PR#2 merge):** Source `5fb8f7f` · Pages `818d4ba` · NAS_OK `/volume4/web/djfm/` (shopMode+RH_002+facing oct+6). Wine town hold-key GIFs: in progress under `assets/samples/phase42/wine_hold/` (prior char-create batch rejected).
 
 ## Phase 40 — Act-1 polish: monsters + dialog/item/melee UX (2026-10-10)
 
@@ -1522,3 +1548,16 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 ### Verified in Playwright
 - Buy 小血瓶 400→360; sell +16→376; embed money 500→300 gems=1 AT 40→42.
 **Deploy:** Source `033f20a` · Pages `1fe9ad0` · NAS_OK `/volume4/web/djfm/` (shopMode+RH_002).
+
+## Phase 42b — Wine town hold GIFs + combat polish (2026-10-10)
+
+### Wine hold (game_share)
+- ComeOn from `/home/box/vms/game_share/DJFM` with `WINEPREFIX=~/.wine-holdrec`, `dinput` disabled.
+- Entered 瓦当镇 via Load UI → 载入 → skip intro (not extract blank path).
+- Recorded 16 continuous-hold GIFs under `assets/samples/phase42/wine_hold/` (cropMAD≥2.6; camera-lock center-crop validation).
+- Boards: `wine_vs_web_walk_8dir.png`, `wine_vs_web_run_8dir.png`.
+- Facing kept: `(oct+6)%8` / RH_002 / art6=east.
+
+### Combat
+- Hit connect window 0.18→0.20; hitStop 0.045→0.055; melee cone 0.95→0.92; KB 1.6→1.75.
+**Deploy:** Source `ed80fd9` · Pages `a8bbe11` · NAS light (index-DE_Q-XBu.js).
