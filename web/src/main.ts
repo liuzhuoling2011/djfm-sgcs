@@ -125,8 +125,8 @@ async function main() {
   let dialogNpc = ''
   let attackT = 0
   const hud = new Hud(); void hud.load()
-  // RolePrivate.txt 男主角 (role 4) lv1: HP70 AT40 DF30
-  const stats: Stats = { hp: 70, maxHp: 70, mp: 40, maxMp: 40, exp: 0, lvl: 1, at: 40, df: 30 }
+  // mb/player/Init.txt 男主角: AT40(+4/lv) DF30(+4) HP800(+80) regen1.4 MP36 Stamina80 regen3/s use10/s
+  const stats: Stats = { hp: 800, maxHp: 800, mp: 36, maxMp: 36, exp: 0, lvl: 1, at: 40, df: 30, sp: 1 }
   let monSets: NonNullable<MapMeta['monster_sets']> = {}
   const monImgs = new Map<string, HTMLImageElement>()
   let foes: Foe[] = []
@@ -312,7 +312,7 @@ async function main() {
     // Potions 1–4 (red = HP, blue = MP) and Q skill (whirl: 10 MP, all foes within 2.5 cells)
     if (['1', '2', '3', '4'].includes(k) && !dialogOpen) {
       const i = Number(k) - 1
-      if (hud.pots[i] > 0) { hud.pots[i]--; if (i < 2) stats.hp = Math.min(stats.maxHp, stats.hp + 40); else stats.mp = Math.min(stats.maxMp, stats.mp + 30) }
+      if (hud.pots[i] > 0) { hud.pots[i]--; if (i < 2) stats.hp = Math.min(stats.maxHp, stats.hp + 400); else stats.mp = Math.min(stats.maxMp, stats.mp + 18) }
     }
     if (k === 'q' && !dialogOpen && attackCd <= 0 && stats.mp >= 10) {
       stats.mp -= 10; attackT = 0.4; attackCd = 0.8
@@ -352,7 +352,7 @@ async function main() {
       animT += dt * 8
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
-    stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -0.25 : 0.12) * dt))
+    stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -10 / 80 : 3 / 80) * dt))
     const speed = running ? 8 : 5
     const nx = pos.x + (dx / len) * speed * dt
     const ny = pos.y + (dy / len) * speed * dt
@@ -371,8 +371,8 @@ async function main() {
         if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) { warpCd = 99; void applyPack(packOf(dest), curScene); break }
       }
     }
-    stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.5)
-    stats.hp = Math.min(stats.maxHp, stats.hp + dt * 0.8)
+    stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.2)
+    stats.hp = Math.min(stats.maxHp, stats.hp + dt * 1.4)
     if (stats.hp <= 0) { stats.hp = stats.maxHp; pos.x = spawnPos.x; pos.y = spawnPos.y }
     const focus = iso(pos.x, pos.y)
     cam.x += (canvas.width / 2 - focus.x - cam.x) * Math.min(1, 6 * dt)

@@ -5,15 +5,16 @@ export type Foe = {
   hx?: number; hy?: number; act?: 'idle' | 'walk' | 'attack' | 'hurt' | 'death'; actT?: number; dir?: number
 }
 export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
-// Placeholder damage model (original formula not decoded): AT scaled by 100/(100+DF), ±10%.
-export const dmg = (at: number, df: number) => Math.max(1, at * 100 / (100 + df) * (0.9 + Math.random() * 0.2) / 4)
+// Damage: the original formula is not in any data table (searched mb/*.txt|ini, player/*); it lives in the exe.
+// Working model: AT − DF/2, ±10%, min 1 (assumption, see PROGRESS Phase 17c).
+export const dmg = (at: number, df: number) => Math.max(1, (at - df / 2) * (0.9 + Math.random() * 0.2))
 
 const L = (s: string) => new Promise<HTMLImageElement>((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = s })
 
 export class Hud {
   bar?: HTMLImageElement; hpOrb?: HTMLImageElement; mpOrb?: HTMLImageElement; weapon?: HTMLImageElement
   q?: HTMLImageElement; potR?: HTMLImageElement; potB?: HTMLImageElement; mapFrame?: HTMLImageElement; stam?: HTMLImageElement
-  pots = [5, 5, 3, 3]
+  pots = [2, 2, 2, 2]  // PropMdl: 小血瓶 (id4) Atb HP 400, 小气瓶 (id8) Atb MP 18; Init gives 2 of each
   async load(base = 'game/hud') {
     try {
       ;[this.bar, this.hpOrb, this.mpOrb, this.weapon] = await Promise.all(
@@ -111,7 +112,7 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     if (d < 0.7 || diff < 1.2) {
       f.hp -= dmg(st.at ?? 40, f.df ?? 10); f.hitT = 0.25; hits++
-      if (f.hp <= 0) { f.dead = 12; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 20; st.hp = st.maxHp } }
+      if (f.hp <= 0) { f.dead = 12; f.actT = 0; st.exp += f.exp ?? 25; if (st.exp >= st.lvl * 100) { st.lvl++; st.maxHp += 80; st.hp = st.maxHp; st.at = (st.at ?? 40) + 4; st.df = (st.df ?? 30) + 4 } }
     }
   }
   return hits
