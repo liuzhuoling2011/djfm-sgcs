@@ -1,3 +1,31 @@
+
+## Phase 38 — 8-dir walk/run facing remap (CRITICAL)
+
+**Date:** 2026-10-10 (UTC+8)
+
+### User steering
+Only holding **D (right)** looked OK; other 7 directions wrong. Hold arrow keys continuously (Shift+arrows for run); fix facing/gait/parts vs Wine; deploy + 8-dir proof grids. Priority over dialog polish.
+
+### Root cause
+1. **Facing map wrong:** Phase34 `(oct+6)%8` mapped screen-E → art **6**, but ResPlayer CA dirs are **CCW from East**: art0=E, 1=NE, 2=N, 3=NW, 4=W, 5=SW, 6=S, 7=SE. So E was showing **south-front** art; W showed an east-leaning art (moonwalk feel).
+2. **Walk frame sampling:** dirs with 64 nests were sampled at `[0,n/4,n/2,3n/4]` mixing actions. Walk now uses **first 4 nests** per dir.
+3. **RH layering:** weapon under body for back views (NE/N/NW = art 1/2/3).
+
+### Fix
+- `facing = (8 - oct) % 8` (E→0 … SE→7); `facingWorldAng` inverse updated.
+- Re-export `web/public/game/player/{walk,idle,attack}` + meta.
+- Arrow keys already shared WASD iso mapping; continuous-hold proofs under `assets/samples/phase38/`.
+
+### Samples
+- `map_NEW_hold_to_art.png` — screen dir → art after remap
+- `walk_8dir_grid.png` / `run_8dir_grid.png` — 8×4 frame proofs
+- `wine_vs_web_east.png` — Wine in-game vs web art0
+- Wine WASD captures: `assets/samples/phase37/wine_walk/` (ComeOn in town; arrows do not bind in original — WASD used)
+
+### Deploy
+- Source + GitHub Pages after this section.
+
+
 # 刀剑封魔录外传：上古传说 — Phase 1 Progress
 
 **Working dir:** `/workspace/djfm-sgcs/`  
