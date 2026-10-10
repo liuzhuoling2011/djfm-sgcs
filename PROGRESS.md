@@ -864,7 +864,7 @@ Skipped (schema still broken).
 - `assets/samples/phase28/` (shop, embed, bag, ice, walk, HUD AT)
 
 ### Deploy
-- Source + Pages + NAS (hashes filled after push)
+- Source `46265f3` (+CSS url fix); Pages `62b9546`+; NAS `/volume4/web/djfm/`
 
 ---
 
