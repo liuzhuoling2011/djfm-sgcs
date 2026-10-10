@@ -9,7 +9,9 @@
 - HUD is a flex bar: 气血/真气 numbers, potion keys 1–4 (tap or 1–4), Space/Q ready glow (就绪 / 挥砍 / 冷却), 金钱, F1/F2. Canvas still draws the world and the minimap. `Hud.draw` no longer scales `jm_1478` across the playfield. Orb and weapon art are small `<img>` accents.
 
 ### Samples
-`assets/samples/phase43/dialog.png`, `bag.png`, `shop.png`, `hud.png`
+`assets/samples/phase43/dialog.png` (E 沈云), `bag.png`, `shop.png` (购入后 金钱 360、小血瓶 ×3), `hud.png` (Space 槽显示就绪).
+
+Browser QA on the production build: east hold stays art 6; Esc closes only the open panel; sell skips 指南珠; poor buy/embed leave the desk open; embed 400→200 金, AT 40→42. On a narrow viewport the bar sits under the 16:9 canvas so it does not cover the town.
 
 ### Build
 `cd web && npm run build` → `web/dist` (gitignored). GitHub Pages serves that directory from `main`. This branch does not publish Pages.

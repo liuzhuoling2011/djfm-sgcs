@@ -405,8 +405,22 @@ button.row:hover, button.row:focus-visible {
 
 @media (max-width: 720px) {
   .dlg-board, .dlg-body { font-size: 16px; }
-  .hud-pots { flex: 1 1 100%; }
-  .game-hud { gap: 8px; }
+  /* The 16:9 canvas is a short strip on a phone. Keep the bar under it so it does not cover the town. */
+  #stage { overflow: visible; }
+  .game-hud { position: relative; left: auto; right: auto; bottom: auto; gap: 4px 8px; padding: 6px 8px; }
+  .hud-vitals { flex: 1 1 160px; min-width: 0; }
+  .hud-info { flex: 1 1 140px; min-width: 0; }
+  .hud-hints { display: none; }
+  .hud-pots { flex: 1 1 auto; }
+  .hud-combat { flex: 0 0 auto; }
+  .orb-art { width: 24px; height: 24px; }
+  .meter { height: 7px; }
+  .hud-side { width: 52px; }
+  .vital-top, .pot-name, .pot-key { font-size: 11px; }
+  .pot { min-width: 44px; min-height: 44px; padding: 2px; }
+  .slot { min-width: 52px; min-height: 44px; }
+  .slot img { width: 18px; height: 18px; }
+  .mini { min-height: 40px; padding: 2px 6px; font-size: 12px; }
 }
 
 .cutscene{position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;cursor:pointer}
