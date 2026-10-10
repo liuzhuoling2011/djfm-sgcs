@@ -170,8 +170,8 @@ async function main() {
       acquire: (id, n) => { inv.add(id, n); inv.flash(`获得 ${inv.props[String(id)]?.name ?? id}×${n}`) },
       miss: (id, n) => { inv.miss(id, n) },
       addWeaponNum: () => { inv.weaponSlots++; inv.flash('兵器强化槽 +1') },
-      showShop: () => { inv.shopOpen = true; inv.open = true; renderInv() },
-      showEmbed: () => { inv.embedOpen = true; inv.open = true; renderInv() },
+      showShop: () => { inv.embedOpen = false; inv.shopMode = 'buy'; inv.shopOpen = true; inv.open = false; renderInv() },
+      showEmbed: () => { inv.shopOpen = false; inv.embedOpen = true; inv.open = false; renderInv() },
     }
     dlg.onAct = (act) => { dlg.currentAct = act; inv.flash(`切换至第 ${act + 1} 章`) }
     dlg.onForeword = (textId, jm, act) => { showActForeword(textId, jm, act) }
@@ -360,34 +360,41 @@ async function main() {
       if (buyMode) {
         slots = inv.shopCatalog().map((r, i) => {
           const n = inv.props[String(r.id)]?.name ?? r.id
-          return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}</span><span class="pr">${r.price} 金</span></button>`
+          const have = inv.qty(r.id)
+          return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${have}</i></span><span class="pr">${r.price} 金</span></button>`
         }).join('')
       } else {
-        const sellable = inv.items.filter((it) => it.qty > 0)
-        slots = sellable.map((it, i) => {
-          const n = inv.props[String(it.id)]?.name ?? it.id
-          const pr = inv.sellPrice(it.id)
-          return `<button type="button" data-sell="${it.id}"><span class="nm">${i + 1}. ${n}×${it.qty}</span><span class="pr">售 ${pr} 金</span></button>`
-        }).join('') || '<div class="jm-empty">（无可卖物品）</div>'
+        // Only goods the blacksmith stocks (potions / 飞蝗石). Quest props stay in the bag.
+        const sellable = inv.shopCatalog().filter((r) => inv.qty(r.id) > 0)
+        slots = sellable.map((r, i) => {
+          const n = inv.props[String(r.id)]?.name ?? r.id
+          const pr = inv.sellPrice(r.id)
+          return `<button type="button" data-sell="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${inv.qty(r.id)}</i></span><span class="pr">售 ${pr} 金</span></button>`
+        }).join('') || '<div class="jm-empty">行囊里没有铁匠收购的药品或飞蝗石</div>'
       }
       invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
         <div class="jm-title">买卖</div>
+        <button type="button" class="jm-close" data-close-shop aria-label="关闭">×</button>
         <div class="jm-body"><div class="jm-slots">${slots}</div>
-          <p class="jm-shop-hint">${buyMode ? '点商品购入' : '点物品卖出（四折）'}</p></div>
-        <div class="jm-money">金钱 ${inv.money}</div>
-        <div class="jm-deal-btns">
-          <button type="button" class="jm-deal buy${buyMode ? ' on' : ''}" data-shop-mode="buy">购入</button>
-          <button type="button" class="jm-deal sell${!buyMode ? ' on' : ''}" data-shop-mode="sell">卖出</button>
-          <button type="button" class="jm-deal close" data-close-shop>关闭</button>
+          <p class="jm-shop-hint">${buyMode ? '点商品购入 · 金钱不足会提示' : '点持有的药品 / 飞蝗石卖出（售价四折）'}</p></div>
+        <div class="jm-footbar">
+          <div class="jm-money">金钱 ${inv.money}</div>
+          <div class="jm-deal-btns">
+            <button type="button" class="jm-deal buy${buyMode ? ' on' : ''}" data-shop-mode="buy">购入</button>
+            <button type="button" class="jm-deal sell${!buyMode ? ' on' : ''}" data-shop-mode="sell">卖出</button>
+            <button type="button" class="jm-deal close" data-close-shop>关闭</button>
+          </div>
         </div>
       </div></div>`
     } else if (inv.embedOpen) {
-      // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226; gem rects 25×25
-      const slots = Math.max(1, inv.weaponSlots) * 2
+      // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226
+      const gain = 2 * Math.max(1, inv.weaponSlots)
       invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
         <div class="jm-title">镶嵌</div>
-        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}<br/>
-          金钱 ${inv.money}　蜀水 ×${inv.qty(120)}　花费 200 金或 1 蜀水（AT+${2 * Math.max(1, inv.weaponSlots)}）</div>
+        <button type="button" class="jm-close" data-close-embed aria-label="关闭">×</button>
+        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}　已嵌 ${inv.embedGems}<br/>
+          攻击 ${stats.at ?? 40}　金钱 ${inv.money}　蜀水 ×${inv.qty(120)}<br/>
+          花费 200 金或 1 蜀水（AT+${gain}）</div>
         <div class="jm-gem-grid" aria-hidden="true">
           ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.embedGems ? ' on' : ''}"></div>`).join('')}
         </div>
@@ -405,19 +412,27 @@ async function main() {
         <div class="jm-money">金钱 ${inv.money}</div>
       </div></div>`
     }
+    const syncPots = () => { hud.pots = [...inv.potSlots()] }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
-      inv.buy(Number((b as HTMLElement).dataset.buy)); const ps = inv.potSlots(); hud.pots = [...ps]; renderInv()
+      inv.buy(Number((b as HTMLElement).dataset.buy)); syncPots(); renderInv()
     }))
     invEl.querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', () => {
-      inv.sell(Number((b as HTMLElement).dataset.sell)); const ps = inv.potSlots(); hud.pots = [...ps]; renderInv()
+      inv.sell(Number((b as HTMLElement).dataset.sell)); syncPots(); renderInv()
     }))
     invEl.querySelectorAll('[data-shop-mode]').forEach((b) => b.addEventListener('click', () => {
       inv.shopMode = ((b as HTMLElement).dataset.shopMode === 'sell' ? 'sell' : 'buy')
       renderInv()
     }))
-    invEl.querySelector('[data-close-shop]')?.addEventListener('click', () => { inv.shopOpen = false; inv.open = false; renderInv() })
-    invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); renderInv() })
-    invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => { inv.embedOpen = false; inv.open = false; renderInv() }))
+    invEl.querySelectorAll('[data-close-shop]').forEach((b) => b.addEventListener('click', () => {
+      inv.shopOpen = false; renderInv()
+    }))
+    invEl.querySelector('[data-embed]')?.addEventListener('click', () => {
+      if (inv.embedUpgrade(stats)) { inv.embedOpen = false }
+      renderInv()
+    })
+    invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => {
+      inv.embedOpen = false; renderInv()
+    }))
     invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
     placeChrome()
   }
@@ -439,19 +454,31 @@ async function main() {
       dialogEl.style.transform = 'none'
     }
     if (!invEl.classList.contains('hidden')) {
-      const bw = Math.round(326 * scale)
-      const bh = Math.round(226 * scale)
+      // Wine: 326×226 centered in the 800×490 playfield above the 110px bar.
+      const playTop = r.top
+      const playBottom = r.bottom - barDisplay
+      const playH = Math.max(0, playBottom - playTop)
+      let bw = Math.round(326 * scale)
+      let bh = Math.round(226 * scale)
+      const maxH = Math.max(140, playH - 10)
+      if (bh > maxH) { bh = Math.round(maxH); bw = Math.round(bh * 326 / 226) }
+      const maxW = Math.max(200, r.width - 8)
+      if (bw > maxW) { bw = Math.round(maxW); bh = Math.round(bw * 226 / 326) }
+      let left = r.left + (r.width - bw) / 2
+      let top = playTop + (playH - bh) / 2
+      const minTop = playTop + 4
+      const maxTop = playBottom - bh - 4
+      if (maxTop >= minTop) top = Math.min(maxTop, Math.max(minTop, top))
       invEl.style.setProperty('--jm-w', `${bw}px`)
       invEl.style.setProperty('--jm-h', `${bh}px`)
       invEl.style.width = `${bw}px`
       invEl.style.height = `${bh}px`
-      invEl.style.left = `${Math.round(r.left + r.width / 2)}px`
-      // Vertical: center of playfield above HUD (Wine ~ mid-screen)
-      const playH = r.height - barDisplay
-      invEl.style.top = `${Math.round(r.top + playH * 0.42)}px`
+      invEl.style.left = `${Math.round(left)}px`
+      invEl.style.top = `${Math.round(top)}px`
       invEl.style.right = 'auto'
       invEl.style.bottom = 'auto'
-      invEl.style.transform = 'translate(-50%, -50%)'
+      invEl.style.transform = 'none'
+      invEl.style.maxHeight = 'none'
     }
   }
   window.addEventListener('resize', () => placeChrome())
@@ -860,7 +887,7 @@ async function main() {
       lockText: { ...dlg.lockText },
       bldStatus: { ...dlg.bldStatus },
       hidden: [...hiddenEvents],
-      inv: { money: inv.money, items: inv.items.map((i) => ({ ...i })), weaponSlots: inv.weaponSlots },
+      inv: { money: inv.money, items: inv.items.map((i) => ({ ...i })), weaponSlots: inv.weaponSlots, embedGems: inv.embedGems },
       stats: { ...stats },
       looted: [...lootedScenes],
       t: Date.now(),
@@ -878,7 +905,7 @@ async function main() {
         pack: string; scene: string; pos: { x: number; y: number }
         flags: Record<string, number>; exitText: Record<string, number>; lockText: Record<string, number>
         bldStatus: Record<string, number>; hidden: string[]
-        inv: { money: number; items: { id: number; qty: number }[]; weaponSlots: number }
+        inv: { money: number; items: { id: number; qty: number }[]; weaponSlots: number; embedGems?: number }
         stats: typeof stats; looted: string[]
       }
       Object.assign(dlg.flags, data.flags || {})
@@ -890,6 +917,7 @@ async function main() {
       inv.money = data.inv?.money ?? inv.money
       inv.items = (data.inv?.items || []).map((i) => ({ ...i }))
       inv.weaponSlots = data.inv?.weaponSlots ?? inv.weaponSlots
+      inv.embedGems = data.inv?.embedGems ?? inv.embedGems
       Object.assign(stats, data.stats || {})
       await applyPack(data.pack || packOf(data.scene), undefined)
       pos.x = data.pos?.x ?? pos.x; pos.y = data.pos?.y ?? pos.y
@@ -1128,12 +1156,17 @@ async function main() {
     if (k === 'escape' && dlg.open) { dlg.close(); dialogOpen = false; renderDialog(); return }
     // Inventory toggle
     // Phase 40: Wine-style B bag + I (same toggle)
-    if ((k === 'i' || k === 'b') && !dialogOpen) { inv.open = !inv.open; if (!inv.open) { inv.shopOpen = false; inv.embedOpen = false }; playSfx('ui'); renderInv(); return }
+    if ((k === 'i' || k === 'b') && !dialogOpen) {
+      // I/B is 行囊. If the blacksmith desk is up, dismiss it and show the bag.
+      if (inv.shopOpen || inv.embedOpen) { inv.shopOpen = false; inv.embedOpen = false; inv.open = true }
+      else inv.open = !inv.open
+      playSfx('ui'); renderInv(); return
+    }
     if (k === 'escape' && (inv.open || inv.shopOpen || inv.embedOpen)) {
       inv.open = inv.shopOpen = inv.embedOpen = false; renderInv(); return
     }
     // Potions from Init stacks: key1 = 小血瓶, key3 = 小气瓶 (slots 0 & 2)
-    if (['1', '2', '3', '4'].includes(k) && !dialogOpen && !inv.shopOpen) {
+    if (['1', '2', '3', '4'].includes(k) && !dialogOpen && !inv.shopOpen && !inv.embedOpen) {
       const i = Number(k) - 1
       if (inv.usePotionSlot(i, stats)) { playSfx('potion'); hud.pots = [...inv.potSlots()]; renderInv() }
     }
@@ -1358,7 +1391,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.open = true; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }

@@ -1,3 +1,28 @@
+## Phase 42 — 行囊 / 买卖 / 镶嵌 layout + usable desk (2026-10-10)
+
+**Goal:** Act-1 only. Pin ResJM panels on the canvas above the HUD, and make 铁匠 buy / sell / embed change money and stacks. **Phase39 facing kept:** `facing = (oct + 6) % 8` (east = art6). Walk export, gait, and run speed were not touched.
+
+### What was still wrong after Phase 41
+- `.inv-panel.jm-mode` was still `top:42%; left:50%; transform:translate(-50%,-50%)` (viewport). `placeChrome` aimed the panel center at 42% of the playfield, so the frame sat high and could meet the HUD on a short canvas.
+- Shop/embed set `open = true` (the bag flag). Closing the desk either popped the bag or, with I, toggled the wrong flag. 购入/卖出 were modes, but 关闭 was bound with `querySelector` (first match only) — a corner × would steal the handler.
+- Embed **确认** left `embedOpen` true (multi-click). Failure and success looked the same except for the toast. Gem sockets were fixed 25px, so they drifted when the 326×226 frame was scaled with the canvas.
+- Sell listed every stack, including 指南珠 at a flat 5 金.
+
+### Fix
+- `placeChrome()` sizes the frame to `326/800` of the canvas and centers that box in the playfield **above** the 110px HUD, clamped so it stays on the canvas.
+- Flags are exclusive: `open` = 行囊, `shopOpen` = 买卖, `embedOpen` = 镶嵌. 关闭 / × / Esc clear only the panel that is up. I/B from a desk opens the bag.
+- 购入: deducts catalog price, stack +1, HUD potion counts refresh, toast `金钱不足` and the desk stays open.
+- 卖出: potions and 飞蝗石 the smith stocks, refund `floor(price×0.4)`, stacks and HUD update. 购入/卖出 do not close the desk.
+- 镶嵌: 200 金 or 1×蜀水, `AT += 2×weaponSlots`, gem +1, toast, then the panel closes. Not enough money/蜀水 or a full socket leaves it open.
+
+### Samples
+`assets/samples/phase42/bag.png`, `shop.png`, `shop_sell.png`, `embed.png`
+
+### Facing
+Unchanged: `web/src/main.ts` `facing = (oct + 6) % 8`.
+
+---
+
 ## Phase 40 — Act-1 polish: monsters + dialog/item/melee UX (2026-10-10)
 
 **Goal:** Replace remaining placeholder/wrong paper-doll trash with full-body ResNpc art; tighten dialog/item UX vs Wine; melee hit feel. Keep Phase39 facing/RH_002. No jump. No act-2.
