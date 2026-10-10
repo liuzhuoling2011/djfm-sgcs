@@ -1,3 +1,20 @@
+## Phase 43 — Wine hold re-record (gait) — BLOCKED 2026-10-10 ~21:45 Asia/Shanghai
+
+**Ask:** Phase42 Wine hold GIFs look idle; re-record continuous WASD/Shift+WASD in 瓦当镇; require player-crop MAD/uniq gait; save under `assets/samples/phase43/wine_hold/`; refresh boards; deploy if walk changes.
+
+### Finding
+Player-crop audit of phase42 `wine_hold/*.gif`: **MAD≈0 / uniq≈1** (standing). Prior pass scores were rain/noise. Proof: `assets/samples/phase43/PHASE42_IDLE_REJECT.md`, `reject_hold_D_idle_crops.png`.
+
+### Blocker
+ComeOn DirectDraw Present froze after display restart (CPU ~170%, identical frames). Menu hover works; click/Enter do not activate 载入. Cannot re-enter 瓦当镇 this session.
+
+### Delivered
+- `tools/phase43_validate_wine_hold.py` (accept mad≥4, uniq≥3)
+- `assets/samples/phase43/wine_hold/CAPTURE_NOTES.md` + spec
+- **No** new Wine GIFs, **no** web walk code change, **no** Pages deploy
+
+---
+
 ## Phase 42c — Wine hold close walk/run gaps (2026-10-10 ~21:30 Asia/Shanghai)
 
 **Goal:** Use real `wine_hold/` + `wine_vs_web_*_8dir` to close remaining walk/run visual gaps. Fix 魔猿/狐精/雪地巨人 if quick. Deploy Pages. No act-2. No jump.
