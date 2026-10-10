@@ -861,6 +861,9 @@ Skipped (schema still broken).
 - `assets/samples/phase23/web_1-2s.png`, `web_1-9s.png`, `web_1-10s.png`
 - `assets/samples/phase23/dhp_1-3s_f0.png`
 
+### Deploy
+- Source `c6e96bf`, Pages `e5bd92d`, NAS check below.
+
 ### Remaining gaps → playable act-1 E2E
 - Exact **魔豕/野猪王** graph-006 and **战象** graph-009 Spr/PLI paper-doll composites (interim sets are wrong species for 战象).
 - **魔猿 (46)** graph 008 Autos still NPC placeholders on 1-10s.
