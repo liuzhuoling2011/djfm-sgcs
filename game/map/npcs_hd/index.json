@@ -1,0 +1,213 @@
+{
+  "td": {
+    "graph": 618,
+    "spr": 1610,
+    "file": "npc_618.png",
+    "w": 43,
+    "h": 86,
+    "ox": 10,
+    "oy": 48,
+    "dirs": [
+      "td_0.png",
+      "td_1.png",
+      "td_2.png",
+      "td_3.png",
+      "td_4.png",
+      "td_5.png",
+      "td_6.png",
+      "td_7.png"
+    ]
+  },
+  "cds": {
+    "graph": 619,
+    "spr": 1611,
+    "file": "npc_619.png",
+    "w": 31,
+    "h": 88,
+    "ox": 17,
+    "oy": 77,
+    "dirs": [
+      "cds_0.png",
+      "cds_1.png",
+      "cds_2.png",
+      "cds_3.png",
+      "cds_4.png",
+      "cds_5.png",
+      "cds_6.png",
+      "cds_7.png"
+    ],
+    "source": "ResExNpc1:1508"
+  },
+  "cjg": {
+    "graph": 621,
+    "spr": 1615,
+    "file": "npc_621.png",
+    "w": 27,
+    "h": 83,
+    "ox": 10,
+    "oy": 82,
+    "dirs": [
+      "cjg_0.png",
+      "cjg_1.png",
+      "cjg_2.png",
+      "cjg_3.png",
+      "cjg_4.png",
+      "cjg_5.png",
+      "cjg_6.png",
+      "cjg_7.png"
+    ]
+  },
+  "bq": {
+    "graph": 622,
+    "spr": 1617,
+    "file": "npc_622.png",
+    "w": 24,
+    "h": 94,
+    "ox": 12,
+    "oy": 65,
+    "dirs": [
+      "bq_0.png",
+      "bq_1.png",
+      "bq_2.png",
+      "bq_3.png",
+      "bq_4.png",
+      "bq_5.png",
+      "bq_6.png",
+      "bq_7.png"
+    ]
+  },
+  "sy": {
+    "graph": 623,
+    "spr": 1619,
+    "file": "npc_623.png",
+    "w": 31,
+    "h": 81,
+    "ox": 7,
+    "oy": 57,
+    "dirs": [
+      "sy_0.png",
+      "sy_1.png",
+      "sy_2.png",
+      "sy_3.png",
+      "sy_4.png",
+      "sy_5.png",
+      "sy_6.png",
+      "sy_7.png"
+    ]
+  },
+  "sws": {
+    "graph": 624,
+    "spr": 1622,
+    "file": "npc_624.png",
+    "w": 49,
+    "h": 80,
+    "ox": 20,
+    "oy": 72,
+    "dirs": [
+      "sws_0.png",
+      "sws_1.png",
+      "sws_2.png",
+      "sws_3.png",
+      "sws_4.png",
+      "sws_5.png",
+      "sws_6.png",
+      "sws_7.png"
+    ]
+  },
+  "tj": {
+    "graph": 627,
+    "spr": 1626,
+    "file": "npc_627.png",
+    "w": 25,
+    "h": 83,
+    "ox": 12,
+    "oy": 82,
+    "dirs": [
+      "tj_0.png",
+      "tj_1.png",
+      "tj_2.png",
+      "tj_3.png",
+      "tj_4.png",
+      "tj_5.png",
+      "tj_6.png",
+      "tj_7.png"
+    ]
+  },
+  "zhs": {
+    "graph": 628,
+    "spr": 1627,
+    "file": "npc_628.png",
+    "w": 29,
+    "h": 70,
+    "ox": 10,
+    "oy": 66,
+    "dirs": [
+      "zhs_0.png",
+      "zhs_1.png",
+      "zhs_2.png",
+      "zhs_3.png",
+      "zhs_4.png",
+      "zhs_5.png",
+      "zhs_6.png",
+      "zhs_7.png"
+    ]
+  },
+  "zs": {
+    "graph": 629,
+    "spr": 1629,
+    "file": "npc_629.png",
+    "w": 37,
+    "h": 76,
+    "ox": 12,
+    "oy": 75,
+    "dirs": [
+      "zs_0.png",
+      "zs_1.png",
+      "zs_2.png",
+      "zs_3.png",
+      "zs_4.png",
+      "zs_5.png",
+      "zs_6.png",
+      "zs_7.png"
+    ]
+  },
+  "gbw": {
+    "graph": 630,
+    "spr": 1632,
+    "file": "npc_630.png",
+    "w": 26,
+    "h": 71,
+    "ox": 13,
+    "oy": 64,
+    "dirs": [
+      "gbw_0.png",
+      "gbw_1.png",
+      "gbw_2.png",
+      "gbw_3.png",
+      "gbw_4.png",
+      "gbw_5.png",
+      "gbw_6.png",
+      "gbw_7.png"
+    ]
+  },
+  "xn": {
+    "graph": 661,
+    "spr": 1785,
+    "file": "npc_661.png",
+    "w": 94,
+    "h": 117,
+    "ox": 57,
+    "oy": 99,
+    "dirs": [
+      "xn_0.png",
+      "xn_1.png",
+      "xn_2.png",
+      "xn_3.png",
+      "xn_4.png",
+      "xn_5.png",
+      "xn_6.png",
+      "xn_7.png"
+    ],
+    "source": "ResExNpc1:2178(back)+2179(side)+mirror — SprRole has no other res"
+  }
+}

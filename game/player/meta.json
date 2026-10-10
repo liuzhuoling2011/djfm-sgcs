@@ -125,6 +125,9 @@
   ],
   "rh_index": "(body+3)%8",
   "rh_under_dirs": [
+    0,
+    1,
+    2,
     3,
     4,
     5
@@ -283,5 +286,40 @@
       ]
     ]
   },
-  "phase39_note": "facing/RH_002 unchanged; gait+run+RH_under superseded by phase41"
+  "phase39_note": "facing/RH_002 unchanged; gait+run+RH_under superseded by phase41",
+  "rh_grip_nudges": {
+    "0": {
+      "dx": 10,
+      "dy": 10
+    },
+    "1": {
+      "dx": 3,
+      "dy": 2
+    },
+    "2": {
+      "dx": 10,
+      "dy": 10
+    },
+    "3": {
+      "dx": 5,
+      "dy": -10
+    },
+    "4": {
+      "dx": 3,
+      "dy": 11
+    },
+    "5": {
+      "dx": 8,
+      "dy": 8
+    },
+    "6": {
+      "dx": 0,
+      "dy": 2
+    },
+    "7": {
+      "dx": -11,
+      "dy": 1
+    }
+  },
+  "rh_grip_note": "Phase50: per-dir RH dx/dy seats sword hilt in hand (original layout)"
 }

@@ -1,3 +1,47 @@
+
+## Phase 50 — Original-style HD + RH grip (2026-10-10)
+
+User: keep **original JM layout**; sharper HD only (not new modern UI). Canvas `Hud.draw` bottom bar restored. Dialog/bag/shop use **upscaled JM panels** (`panels_hd`). RH grip per-dir nudge + re-export `player`/`player_hd`. Facing `(oct+6)%8` unchanged. No act-2.
+
+Samples: `assets/samples/phase50/` (`grip_before_after_strip.png`, `grip_E_sd_hd.png`, `live_*.png`).
+
+## Phase 43 — UI direction: modern HTML/CSS chrome (2026-10-10)
+
+**Direction change (coordinator 重温老游戏):** Stop pixel-matching Wine and stop stretching ResJM panel PNGs as the primary dialog / 行囊 / 买卖 / 镶嵌 / HUD chrome. Act-1 only. **Facing unchanged:** `facing = (oct + 6) % 8` (east = art6). Walk export, gait, and run speed were not touched. Phase 42 buy / sell / embed money and stacks stay.
+
+### Chrome
+- Dialog, 行囊, 买卖, 镶嵌, and the status bar are HTML/CSS over the canvas (`#stage`). Palette is dark parchment, gold rules, cream text. Choice rows, shop rows, close, and 确认镶嵌 are at least 44px.
+- Dialog sits above the bar. 继续 / click / E / Enter advance. Esc closes the dialog only.
+- Desks are centered modals. × / Esc closes that panel only. I/B from a desk still opens the bag. Sell list is still the smith's catalog (no 指南珠).
+- HUD is a flex bar: 气血/真气 numbers, potion keys 1–4 (tap or 1–4), Space/Q ready glow (就绪 / 挥砍 / 冷却), 金钱, F1/F2. Canvas still draws the world and the minimap. `Hud.draw` no longer scales `jm_1478` across the playfield. Orb and weapon art are small `<img>` accents.
+
+### Samples
+`assets/samples/phase43/dialog.png` (E 沈云), `bag.png`, `shop.png` (购入后 金钱 360、小血瓶 ×3), `hud.png` (Space 槽显示就绪).
+
+Browser QA on the production build: east hold stays art 6; Esc closes only the open panel; sell skips 指南珠; poor buy/embed leave the desk open; embed 400→200 金, AT 40→42. On a narrow viewport the bar sits under the 16:9 canvas so it does not cover the town.
+
+### Build
+`cd web && npm run build` → `web/dist` (gitignored). GitHub Pages serves that directory from `main`. This branch does not publish Pages.
+
+---
+
+## Phase 43 — Wine hold re-record (gait) — BLOCKED 2026-10-10 ~21:45 Asia/Shanghai
+
+**Ask:** Phase42 Wine hold GIFs look idle; re-record continuous WASD/Shift+WASD in 瓦当镇; require player-crop MAD/uniq gait; save under `assets/samples/phase43/wine_hold/`; refresh boards; deploy if walk changes.
+
+### Finding
+Player-crop audit of phase42 `wine_hold/*.gif`: **MAD≈0 / uniq≈1** (standing). Prior pass scores were rain/noise. Proof: `assets/samples/phase43/PHASE42_IDLE_REJECT.md`, `reject_hold_D_idle_crops.png`.
+
+### Blocker
+ComeOn DirectDraw Present froze after display restart (CPU ~170%, identical frames). Menu hover works; click/Enter do not activate 载入. Cannot re-enter 瓦当镇 this session.
+
+### Delivered
+- `tools/phase43_validate_wine_hold.py` (accept mad≥4, uniq≥3)
+- `assets/samples/phase43/wine_hold/CAPTURE_NOTES.md` + spec
+- **No** new Wine GIFs, **no** web walk code change, **no** Pages deploy
+
+---
+
 ## Phase 42c — Wine hold close walk/run gaps (2026-10-10 ~21:30 Asia/Shanghai)
 
 **Goal:** Use real `wine_hold/` + `wine_vs_web_*_8dir` to close remaining walk/run visual gaps. Fix 魔猿/狐精/雪地巨人 if quick. Deploy Pages. No act-2. No jump.
