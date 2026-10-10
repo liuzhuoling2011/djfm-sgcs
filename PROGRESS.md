@@ -616,3 +616,17 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 - `tools/phase17_minimap.py`: for each map, draws ground_full plus every BLD part at half pitch, in depth order, then halves the result (16×8 px per cell). Output is `minimap.png` and `meta.minimap`. Sizes: 1-0s 2080×1056, 1-1s/1-2s 4128×2080.
 - The HUD minimap now samples this image at 0.75 (about 1/5.3 world scale, eyeballed to match Wine's zoom), with dots for the player, monsters and NPCs.
 - **Compare:** `assets/samples/phase17/wine_vs_web_minimap.png` (left Wine, right web).
+
+## Phase 17c — real player stats, quest gate, walking town→1-1s, Wine attempt (2026-10-10 14:55 UTC+8)
+
+- **Damage formula:** not present in any data table. I searched every mb/*.txt and *.ini file plus mb/player/* for 伤害/公式/攻击/防御/命中. define.ini only defines poison/fire DoT (MaxHp/90 per second and MaxMp/80 per second). The formula is compiled into ComeOn.exe and is **not decoded**. The client now uses AT − DF/2 ±10% (an assumption, labelled in hud.ts).
+- **Real data now used:**
+  - mb/player/Init.txt 男主角: AT40 (+4/lv), DF30 (+4), HP800 (+80), HP regen 1.4/s, MP36, MP regen 1.2/s, Stamina 80 (regen 3/s, drain 10/s while running).
+  - Starting items 4×2, 8×2, 63×5, 62×2. PropMdl: 小血瓶 id4 "Atb HP 400", 小气瓶 id8 "Atb MP 18". The potion slots now use these values.
+  - Init.txt also has DF4..DF0 = 100/100/80/70/60, meaning not yet known.
+- **Quest gate:** 瓦当镇's walk flags block all of row y=24 between the town and the north exit (71,6). A `Quest` trigger sits at (71,24), so in the original the gate opens through story progress. The web build opens x70–72 of that row (`meta.quest_gate`). A headless keyboard walk following a BFS path now goes from the act spawn (71,62) to 1-1s, arriving at (128,241): `assets/samples/phase17/walk_town_to_1-1s.png`. 1-1s→1-2s is connected in the walk grid (BFS verified).
+- **Wine 1-2s capture: blocked.**
+  - Save edits don't work: loading 剑客/大刀客 always replays the act-1 intro and respawns at (71,62). Patching the save's scene/position u32s at +264/+268 had no effect (the game autosaves back to 0/(71,62)).
+  - Walking to the exit in Wine is also impossible, because the north gate is still story-locked (`wine_north_blocked.png`). Reaching 1-2s needs the act-1 quest chain played in Wine.
+  - Original saves were restored from `assets/samples/phase17/save_backup_*.001`.
+- **Save format notes:** `.001` holds the player paper-doll string `CA_001_001_031*HD_…*TK_…` (layers CA/HD/JQ/LA/LE/RA/RE/RH/TK), float stats AT/DF/HP/MP/Stamina at +188.., and position i32 at +268.
