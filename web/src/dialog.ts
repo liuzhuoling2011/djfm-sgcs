@@ -13,6 +13,8 @@ const load = async <T>(url: string, fallback: T): Promise<T> => {
 export type InvHook = { hasProp: (id: number) => boolean; acquire: (id: number, n: number) => void; miss: (id: number, n: number) => void; addWeaponNum: () => void; showShop: () => void; showEmbed: () => void }
 export type GoHook = (scene: string) => void
 export type CombatHook = (battleId: number, eventId: string) => void
+export type FellowHook = (eventId: string, enable: boolean) => void
+export type FxHook = (kind: string, arg?: string) => void
 
 export function evalCond(cond: string, flags: Flags, inv?: InvHook): boolean {
   if (!cond.trim()) return true
@@ -48,6 +50,8 @@ export class DialogSys {
   inv?: InvHook
   onGo?: GoHook
   onCombat?: CombatHook
+  onFellow?: FellowHook
+  onFx?: FxHook
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([
@@ -80,8 +84,16 @@ export class DialogSys {
       } else if (op === 'go' && p.length >= 2) {
         // talk/sws.txt: go sws → scene warp (SWS.txt then sets sy1 19 → 1-3s)
         this.onGo?.(p[1].toLowerCase())
+      } else if (op === 'addfellow' && p.length >= 3) {
+        // AddFellow sws 1 | AddFellow sws 0
+        this.onFellow?.(p[1].toLowerCase(), Number(p[2]) !== 0)
+      } else if (op === 'screeneffect') {
+        this.onFx?.('screen', p[1])
+      } else if (op === 'playavi') {
+        // dhp clips exist under extract/.../dhp/ but decoder not wired — toast only
+        this.onFx?.('avi', p.slice(1).join(' '))
       }
-      // ScreenEffect / Atb / AddFellow still stubbed
+      // Atb / SetFlagTable / TransToPlayer still stubbed
     }
   }
 

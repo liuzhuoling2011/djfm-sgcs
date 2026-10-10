@@ -841,3 +841,39 @@ Skipped (schema still broken).
 ### Deploy
 - Source `7e5dc16`, Pages `a1316de`, NAS_OK.
 
+
+## Phase 22 — 玉衡 sprites, AddFellow, Type-12 NPCs, side quests (2026-10-10)
+
+### 1. 玉衡 boss art (ResNpc / ResExNpc)
+- Role 196 graph 608; **ResExNpc1.lib entries 196 (walk) / 197 (idle)** are full-body constellation-banner boss (confirmed visually).
+- Attack/death entries (200+) are small VFX-sized layers only → combat reuse walk/idle body frames.
+- Wired: `monster_sets["196"]` on 1-3as; `onCombat('bossyuheng')` spawns set 196 foe; NPC dirs from idle.
+- Samples: `assets/samples/phase22/yuheng_idle.png`, `yuheng_walk.png`, `boss_fellow_preview.png`.
+
+### 2. AddFellow (沈万山)
+- Dialog `AddFellow sws 1/0` → `onFellow`; companion follows player using `game/fellow/sws/{0–7}.png` (Role graph 624 / town sheets).
+- Scene hooks: 1-3as / 1-3s while `19 ≤ sy1 < 30` auto-enable fellow (matches ResetObj/AddFellow scene lines).
+- `TransToPlayer` / `SetFlagTable` still not simulated beyond follow AI.
+
+### 3. Type-12 NPC sprites
+- Backfill `npc_dirs` from ResNpc3/2 for maps missing art (~80 NPCs: sws, 1-10*, 1-9s, 1-3as, …).
+- Blocker: some graphs wrong (e.g. bossdaxiang 1712×1 strip); auto EventID=601 reused for unnamed autos.
+
+### 4. ScreenEffect / PlayAvi
+- `ScreenEffect` / `PlayAvi` → toast only. DHP files exist under `extract/.../dhp/` (incl. `swss.dhp`, `1-3s.dhp`) but **no dhp decoder** — skipped as too heavy.
+
+### 5. Side quests cds / td / cjg (scripts only)
+- **cds→td:** talk already sets `cds1`; td sets `cds1=100` + ScreenEffect toast; cds reward Acquire 28 when cds1≥100.
+- **cjg:** talk sets `cjg1=1` (needs `1-2s` flag still 0 = talk before visit); 1-2s places fight vs **bossyezhu** (ModelID 10); death → prop **54 猪心** + `cjg1≥10`; hand-in Miss 54 / Acquire 143.
+- 1-2s monster set `10` exported from ResNpc3 set0 (beast body — may not be exact 魔豕 art; better than ellipse).
+
+### Blockers
+- 玉衡 attack/death lep layers are VFX-only; no full-body attack sheet found in ResExNpc1.
+- Exact 魔豕兽 ResNpc set ID not verified (using set 0 placeholder beast).
+- DHP/AVI playback not implemented.
+- SetFlagTable / TransToPlayer / RemItem object visibility incomplete.
+- Some Type-12 auto NPCs share wrong graph 601.
+
+### Deploy
+- Pages + NAS; source commit + PROGRESS.
+

@@ -130,6 +130,9 @@ async function main() {
   let dialogNpc = ''
   let attackT = 0
   let skillFx: SkillFx | null = null
+  type Fellow = { id: string; x: number; y: number; dir: number; imgs: HTMLImageElement[] }
+  let fellow: Fellow | null = null
+  const fellowImgs = new Map<string, HTMLImageElement[]>()
   const hud = new Hud()
   const inv = new Inventory()
   const dlg = new DialogSys()
@@ -152,21 +155,62 @@ async function main() {
       } else inv.flash(`（地图 ${scene} 尚未导出）`)
     }
     dlg.onCombat = (battleId, eventId) => {
-      // bossyuheng: RolePrivate 196 HP5900 — spawn scaled foe; death drops 玉净甘露(118)
       if (eventId === 'bossyuheng') {
         const o = objects.find((x) => String(x.EventID).toLowerCase() === 'bossyuheng')
         const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
         const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
         foes = foes.filter((f) => f.name !== '玉衡')
+        const st = monSets['196']
         foes.push({
-          x: bx, y: by, hx: bx, hy: by, hp: 400, maxHp: 400, cd: 0.8, hitT: 0, dead: 0,
-          at: 55, df: 40, exp: 200, sight: 8, spd: 12, name: '玉衡', act: 'idle', actT: 0, dir: 0,
+          x: bx, y: by, hx: bx, hy: by, hp: 800, maxHp: 800, cd: 0.8, hitT: 0, dead: 0,
+          at: 55, df: 40, exp: 200, sight: 8, spd: 12, name: '玉衡', set: 196, act: 'idle', actT: 0, dir: 0,
         })
-        inv.flash('玉衡来袭！击败后可取得玉净甘露')
+        // ensure frames loaded
+        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+        }
+        inv.flash('玉衡来袭！')
         ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyuheng'
+      } else if (eventId === 'bossyezhu') {
+        const o = objects.find((x) => String(x.EventID).toLowerCase() === 'bossyezhu')
+        const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
+        const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+        foes = foes.filter((f) => f.name !== '魔豕兽')
+        foes.push({
+          x: bx, y: by, hx: bx, hy: by, hp: 500, maxHp: 500, cd: 1, hitT: 0, dead: 0,
+          at: 35, df: 20, exp: 80, sight: 7, spd: 10, name: '魔豕兽', set: 10, act: 'idle', actT: 0, dir: 0,
+        })
+        const st = monSets['10']
+        if (st) for (const a of Object.values(st)) for (const f of a.frames) {
+          if (f && !monImgs.has(f[0])) loadImage(`${base}/mon/${f[0]}`).then((im) => monImgs.set(f[0], im)).catch(() => {})
+        }
+        inv.flash('魔豕兽出现！')
+        ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyezhu'
       } else {
         inv.flash(`（战斗 ${battleId}/${eventId} 未接线）`)
       }
+    }
+    dlg.onFellow = (eventId, enable) => {
+      if (!enable) { fellow = null; inv.flash(`${eventId} 离开队伍`); return }
+      void (async () => {
+        let imgs = fellowImgs.get(eventId)
+        if (!imgs) {
+          imgs = []
+          for (let d = 0; d < 8; d++) {
+            try { imgs.push(await loadImage(`game/fellow/${eventId}/${d}.png`)) } catch {
+              try { imgs.push(await loadImage(`game/map/npcs/${eventId}_${d}.png`)) } catch { /* */ }
+            }
+          }
+          fellowImgs.set(eventId, imgs)
+        }
+        if (!imgs.length) { inv.flash(`（同伴 ${eventId} 无立绘）`); return }
+        fellow = { id: eventId, x: pos.x - 1.2, y: pos.y - 0.5, dir: facing, imgs }
+        inv.flash(`${dlg.names[eventId] ?? eventId} 加入同行`)
+      })()
+    }
+    dlg.onFx = (kind, arg) => {
+      if (kind === 'screen') inv.flash(`（ScreenEffect ${arg ?? ''}）`)
+      else if (kind === 'avi') inv.flash(`（PlayAvi ${arg ?? ''} — dhp 未解码）`)
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
@@ -310,9 +354,23 @@ async function main() {
       // IsProp 118 + sy1≥20 → SetFlag sy1 30
       if (inv.qty(118) > 0 && (dlg.flags.sy1 ?? 0) >= 20)
         dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
-      // SetPropToObj when sy1<30 & no 118: prop waits on bossyuheng — E/combat handles loot
+      // 1-3as.txt: fellow sws while sy1 in [19,30)
+      if ((dlg.flags.sy1 ?? 0) >= 19 && (dlg.flags.sy1 ?? 0) < 30)
+        dlg.onFellow?.('sws', true)
       if ((dlg.flags.sy1 ?? 0) < 30 && inv.qty(118) <= 0)
         inv.flash('洞中有妖气——玉衡看守着玉净甘露（E 对话开战）')
+    }
+    if (scene === '1-2s') {
+      // cjg quest: SetPropToObj bossyezhu when cjg1∈[0,10); RemItem when cjg1≥1 after clear
+      if ((dlg.flags.cjg1 ?? 0) >= 1 && (dlg.flags.cjg1 ?? 0) < 10 && inv.qty(54) <= 0)
+        inv.flash('魔豕兽就在附近（E 对话开战，取心脏交翠娟）')
+      if (inv.qty(54) > 0 && (dlg.flags.cjg1 ?? 0) < 10)
+        dlg.flags.cjg1 = Math.max(dlg.flags.cjg1 ?? 0, 10)
+    }
+    if (scene === '1-3s') {
+      // fellow while escorting before sy1 30
+      if ((dlg.flags.sy1 ?? 0) >= 19 && (dlg.flags.sy1 ?? 0) < 30)
+        dlg.onFellow?.('sws', true)
     }
     if (scene === '1-0s' || scene === 'ren') {
       // after sy1≥100 town restores sws merchant etc. — no client action needed
@@ -625,8 +683,19 @@ async function main() {
     pos.x = Math.max(0, Math.min(mapW - 1, pos.x))
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
 
+    // AddFellow companion follows player (TransToPlayer approx)
+    if (fellow) {
+      const dx = pos.x - fellow.x, dy = pos.y - fellow.y, d = Math.hypot(dx, dy)
+      if (d > 1.4) {
+        const sp = 4.2 * dt
+        fellow.x += (dx / d) * sp
+        fellow.y += (dy / d) * sp
+        fellow.dir = (Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) + 8) % 8
+      }
+    }
+
     stepFoes(foes, pos, stats, dt, walkable)
-    // Phase 21: bossyuheng death → Acquire 118 (玉净甘露); scene then allows sy1→30
+    // Boss death loot from scene scripts
     {
       const w = (window as unknown as { __djfmBoss?: string })
       if (w.__djfmBoss === 'bossyuheng') {
@@ -635,6 +704,15 @@ async function main() {
           inv.add(118, 1)
           inv.flash('获得 玉净甘露 — 交予泊祁可救沈云（sy1→100）')
           if ((dlg.flags.sy1 ?? 0) >= 20) dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
+          w.__djfmBoss = undefined
+        }
+      } else if (w.__djfmBoss === 'bossyezhu') {
+        const boss = foes.find((f) => f.name === '魔豕兽')
+        if (boss && boss.dead > 0 && inv.qty(54) <= 0) {
+          inv.add(54, 1)
+          // scene/1-2s: IsProp 54 → SetFlag cjg1 10
+          if ((dlg.flags.cjg1 ?? 0) < 10) dlg.flags.cjg1 = Math.max(dlg.flags.cjg1 ?? 0, 10)
+          inv.flash('获得 魔豕兽心脏 — 交予翠娟（cjg1≥9）')
           w.__djfmBoss = undefined
         }
       }
@@ -754,6 +832,15 @@ async function main() {
       })
     }
 
+    if (fellow && fellow.imgs.length) {
+      const fp = iso(fellow.x, fellow.y)
+      const fim = fellow.imgs[((fellow.dir % 8) + 8) % 8] ?? fellow.imgs[0]
+      if (fim) draws.push({ z: fellow.x + fellow.y + 0.2, fn: () => {
+        ctx.drawImage(fim, fp.x + cam.x - fim.width / 2, fp.y + cam.y - fim.height + 10)
+        ctx.fillStyle = '#9fdf9f'; ctx.font = '10px ui-sans-serif'
+        ctx.fillText(dlg.names[fellow!.id] ?? fellow!.id, fp.x + cam.x + 6, fp.y + cam.y - fim.height)
+      }})
+    }
     let spr = player
     {
       const d = ((facing % 8) + 8) % 8
