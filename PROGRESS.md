@@ -872,6 +872,9 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 - PLI order parser is heuristic (can over-read); some frames may still mis-layer.
 - Harness uses omniAttack + killFlag for boss deaths after engaging (not pure WASD play).
 
+### Deploy
+- source `b7ee77e`, Pages `583c803`, NAS sync attempted.
+
 ### Samples
 - `assets/samples/phase25/playthrough_grid.png`, `pt_*.png`, `console.txt`, `playthrough_log.txt`
 
@@ -970,3 +973,4 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 
 
 - Deploy: source `9faf5ea`, Pages `7af67d0`, NAS OK.
+
