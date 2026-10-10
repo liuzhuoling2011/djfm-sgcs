@@ -1,0 +1,90 @@
+[
+  {
+    "index": 6,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/00006_lep.bin",
+    "size": 572,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/00006_lep.png",
+    "png_size": [
+      221,
+      20
+    ]
+  },
+  {
+    "index": 500,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/00500_lep.bin",
+    "size": 2410,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/00500_lep.png",
+    "png_size": [
+      221,
+      20
+    ]
+  },
+  {
+    "index": 1000,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/01000_lep.bin",
+    "size": 310,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/01000_lep.png",
+    "png_size": [
+      437,
+      20
+    ]
+  },
+  {
+    "index": 9496,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/09496_lep.bin",
+    "size": 2514,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/09496_lep.png",
+    "png_size": [
+      154,
+      20
+    ]
+  },
+  {
+    "index": 9512,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/09512_lep.bin",
+    "size": 2464,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/09512_lep.png",
+    "png_size": [
+      154,
+      20
+    ]
+  },
+  {
+    "index": 15656,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/15656_lep.bin",
+    "size": 2410,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/15656_lep.png",
+    "png_size": [
+      667,
+      20
+    ]
+  },
+  {
+    "index": 15865,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/15865_lep.bin",
+    "size": 2410,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/15865_lep.png",
+    "png_size": [
+      667,
+      20
+    ]
+  },
+  {
+    "index": 15409,
+    "kind": "lep",
+    "raw": "/workspace/djfm-sgcs/assets/samples/map_ren/15409_lep.bin",
+    "size": 2410,
+    "png": "/workspace/djfm-sgcs/assets/samples/map_ren/15409_lep.png",
+    "png_size": [
+      667,
+      20
+    ]
+  }
+]

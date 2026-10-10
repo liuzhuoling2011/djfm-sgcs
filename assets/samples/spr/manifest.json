@@ -1,0 +1,32 @@
+[
+  {
+    "index": 0,
+    "kind": "bin:01000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/spr/00000_bin.bin",
+    "size": 240
+  },
+  {
+    "index": 1,
+    "kind": "bin:01000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/spr/00001_bin.bin",
+    "size": 520
+  },
+  {
+    "index": 2,
+    "kind": "bin:80000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/spr/00002_bin.bin",
+    "size": 25732
+  },
+  {
+    "index": 100,
+    "kind": "bin:80000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/spr/00100_bin.bin",
+    "size": 25060
+  },
+  {
+    "index": 200,
+    "kind": "bin:60000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/spr/00200_bin.bin",
+    "size": 24676
+  }
+]

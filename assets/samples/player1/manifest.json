@@ -1,0 +1,20 @@
+[
+  {
+    "index": 0,
+    "kind": "bin:20000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/player1/00000_bin.bin",
+    "size": 68392
+  },
+  {
+    "index": 1,
+    "kind": "bin:1c000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/player1/00001_bin.bin",
+    "size": 58474
+  },
+  {
+    "index": 2,
+    "kind": "bin:20000000",
+    "raw": "/workspace/djfm-sgcs/assets/samples/player1/00002_bin.bin",
+    "size": 67768
+  }
+]

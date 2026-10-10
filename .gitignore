@@ -1,0 +1,12 @@
+extract/
+*.exe
+node_modules/
+web/node_modules/
+web/dist/
+assets/samples/phase9/fol_extract/
+assets/raw/
+*.Lib
+*.lib
+*.fol
+web/public/game/map/t_*.png
+__pycache__/

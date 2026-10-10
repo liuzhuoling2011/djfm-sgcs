@@ -1,0 +1,16 @@
+buildings scrubbed: 112
+  npc 203 graph 618: (49, 90)
+  npc 2 graph 661: (99, 120)
+  npc 206 graph 627: (26, 17)
+  npc 201 graph 619: (46, 93)
+  npc 208 graph 629: (52, 22)
+  npc 207 graph 628: (37, 23)
+  npc 205 graph 622: (53, 25)
+  npc 209 graph 630: (47, 83)
+  npc 204 graph 621: (44, 21)
+  npc 211 graph 624: (36, 73)
+  npc 202 graph 623: (53, 25)
+props done bld=325 npc=11
+atlases: 30 chunks of 16
+game data: dialogs=11 skills=4 bgm=game/bgm/town.mp3
+Phase 11 export OK

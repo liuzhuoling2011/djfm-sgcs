@@ -1,0 +1,18 @@
+bld=998 place=352 ont=11 roles=247
+building sprites: 112
+npc sprites: 11
+MAP 128x128 rest=167970
+tile viewport origin=(15,19) size=96x80
+tiles unique=7680 fill=0.9182
+composing full ground...
+  compose canvas 4160x2112 scale=0.5 cells=128x128
+  row 0/128 ok=0 miss=0
+  row 16/128 ok=1191 miss=857
+  row 32/128 ok=3239 miss=857
+  row 48/128 ok=4917 miss=1227
+  row 64/128 ok=6965 miss=1227
+  row 80/128 ok=8664 miss=1576
+  row 96/128 ok=10674 miss=1614
+  row 112/128 ok=12209 miss=2127
+ground (4160, 2112) ok=13940 miss=2444 unique=16384 -> /workspace/djfm-sgcs/web/public/game/map/ground_full.png
+DONE buildings=325 npcs=11 blocked=160

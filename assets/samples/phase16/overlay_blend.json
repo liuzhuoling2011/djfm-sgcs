@@ -1,0 +1,40 @@
+[
+ {
+  "shot": "01_gate_rain.png",
+  "ground_offset": [
+   0,
+   0
+  ],
+  "ground_err": 18.76,
+  "overlay_px": 108982,
+  "median_abs_err": {
+   "ground only": 15.7,
+   "alpha over": 6.45,
+   "50% over": 11.6,
+   "additive": 52.82,
+   "multiply": 37.81,
+   "black-key over (drop <48)": 7.49,
+   "darken": 11.38,
+   "lighten": 10.45
+  }
+ },
+ {
+  "shot": "10_pavilion_tower.png",
+  "ground_offset": [
+   0,
+   0
+  ],
+  "ground_err": 21.97,
+  "overlay_px": 103031,
+  "median_abs_err": {
+   "ground only": 14.6,
+   "alpha over": 6.45,
+   "50% over": 10.59,
+   "additive": 61.78,
+   "multiply": 29.99,
+   "black-key over (drop <48)": 6.59,
+   "darken": 10.4,
+   "lighten": 12.51
+  }
+ }
+]

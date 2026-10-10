@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""leyiLib 2.0 + lep (RGB565 span) unpacker for 刀剑封魔录外传."""
+from __future__ import annotations
+
+import argparse
+import json
+import struct
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterator, List, Optional, Tuple
+
+try:
+    from PIL import Image
+except ImportError:  # pragma: no cover
+    Image = None  # type: ignore
+
+MAGIC = b"leyiLib2.0"
+LEP_MAGIC = b"lep\x00"
+COLOR_KEY = 0xF81F
+TOC_OFF = 0x100
+
+
+@dataclass
+class LeyiLib:
+    path: Path
+    data: bytes
+    count: int
+
+    @classmethod
+    def open(cls, path: Path) -> "LeyiLib":
+        data = path.read_bytes()
+        if not data.startswith(MAGIC):
+            raise ValueError(f"{path}: not leyiLib2.0")
+        count = struct.unpack_from("<I", data, 0x10)[0]
+        return cls(path=path, data=data, count=count)
+
+    def entry_meta(self, index: int) -> Tuple[int, int]:
+        if not 0 <= index < self.count:
+            raise IndexError(index)
+        return struct.unpack_from("<II", self.data, TOC_OFF + index * 8)
+
+    def entry_bytes(self, index: int) -> bytes:
+        off, size = self.entry_meta(index)
+        return self.data[off : off + size]
+
+    def iter_entries(self) -> Iterator[Tuple[int, int, int, bytes]]:
+        for i in range(self.count):
+            off, size = self.entry_meta(i)
+            yield i, off, size, self.data[off : off + size]
+
+
+def classify(blob: bytes) -> str:
+    if not blob:
+        return "empty"
+    if blob.startswith(LEP_MAGIC):
+        return "lep"
+    return f"bin:{blob[:4].hex()}"
+
+
+def _rgba(v: int) -> Tuple[int, int, int, int]:
+    if v == COLOR_KEY:
+        return (0, 0, 0, 0)
+    r = (v >> 11) & 0x1F
+    g = (v >> 5) & 0x3F
+    b = v & 0x1F
+    return ((r << 3) | (r >> 2), (g << 2) | (g >> 4), (b << 3) | (b >> 2), 255)
+
+
+def parse_lep_header(blob: bytes) -> dict:
+    if not blob.startswith(LEP_MAGIC) or len(blob) < 128:
+        raise ValueError("not lep")
+    u1, a, b, c, flags, z0, keyish, z1 = struct.unpack_from("<8I", blob, 4)
+    first = struct.unpack_from("<I", blob, 48)[0]
+    nslots = (first - 48) // 4 if first >= 48 and (first - 48) % 4 == 0 else 0
+    return {
+        "u1": u1,
+        "aux": (a >> 8) & 0xFFFF,
+        "width": (b >> 8) & 0xFFFF,
+        "height_field": (c >> 8) & 0xFFFF,
+        "flags": flags,
+        "keyish": keyish,
+        "b36": blob[36:40].hex(),
+        "first_off": first,
+        "nslots": nslots,
+    }
+
+
+def _skip_pool(blob: bytes, p: int, end: int) -> int:
+    while p + 2 <= end and struct.unpack_from("<H", blob, p)[0] in (0x0080, 0x0000, COLOR_KEY):
+        p += 2
+    return p
+
+
+def _parse_xn(blob: bytes, start: int, end: int, w: int) -> List[Tuple[int, List[int]]]:
+    """Row-local spans: (x:u16, nbytes:u16, nbytes bytes of RGB565)."""
+    p = _skip_pool(blob, start, end)
+    out: List[Tuple[int, List[int]]] = []
+    while p + 4 <= end:
+        x, nbytes = struct.unpack_from("<HH", blob, p)
+        if nbytes == 0 or nbytes % 2 or x >= w or nbytes > (w - x) * 2 or p + 4 + nbytes > end:
+            break
+        npix = nbytes // 2
+        pix = list(struct.unpack_from(f"<{npix}H", blob, p + 4))
+        out.append((x, pix))
+        p += 4 + nbytes
+    return out
+
+
+def _parse_yxn(blob: bytes, start: int, end: int, w: int, max_h: int) -> List[Tuple[int, int, List[int]]]:
+    """Global spans: (y*4:u16, x:u16, nbytes:u16, pixels)."""
+    p = _skip_pool(blob, start, end)
+    out: List[Tuple[int, int, List[int]]] = []
+    while p + 6 <= end:
+        y4, x, nbytes = struct.unpack_from("<HHH", blob, p)
+        if (
+            nbytes == 0
+            or nbytes % 2
+            or y4 % 4
+            or y4 // 4 >= max_h
+            or x >= w
+            or nbytes > (w - x) * 2
+            or p + 6 + nbytes > end
+        ):
+            break
+        y = y4 // 4
+        npix = nbytes // 2
+        pix = list(struct.unpack_from(f"<{npix}H", blob, p + 6))
+        out.append((y, x, pix))
+        p += 6 + nbytes
+    return out
+
+
+def decode_lep_png(blob: bytes) -> Optional["Image.Image"]:
+    """Decode lep → RGBA Image. Isometric tiles use y*4 span streams; nbytes is byte length."""
+    if Image is None:
+        raise RuntimeError("Pillow required")
+    if not blob.startswith(LEP_MAGIC) or len(blob) < 64:
+        return None
+    hdr = parse_lep_header(blob) if len(blob) >= 128 else None
+    if hdr is None:
+        return None
+    w = hdr["width"]
+    hf = hdr["height_field"]
+    nslots = hdr["nslots"]
+    first = hdr["first_off"]
+    if w == 0:
+        ww = hf if hf else 1
+        col = struct.unpack_from("<H", blob, min(0xB0, len(blob) - 2))[0] if len(blob) > 0xB0 else COLOR_KEY
+        return Image.new("RGBA", (ww, 1), _rgba(col))
+    if nslots <= 0:
+        return None
+    slots = [struct.unpack_from("<I", blob, 48 + i * 4)[0] for i in range(nslots)]
+
+    best: List[Tuple[int, int, List[int]]] = []
+    for s in range(first, min(len(blob) - 6, first + 500)):
+        stream = _parse_yxn(blob, s, len(blob), w, 512)
+        if len(stream) > len(best):
+            best = stream
+    for y in range(nslots):
+        start = slots[y]
+        end = slots[y + 1] if y + 1 < nslots else len(blob)
+        if end - start > 6:
+            stream = _parse_yxn(blob, start, end, w, 512)
+            if len(stream) > len(best):
+                best = stream
+
+    H = max(hf or 1, nslots, (max(y for y, _, _ in best) + 1 if best else 1))
+    img = Image.new("RGBA", (w, H), (0, 0, 0, 0))
+    px = img.load()
+
+    def paint(x: int, y: int, pix: List[int]) -> None:
+        if not (0 <= y < H):
+            return
+        for i, v in enumerate(pix):
+            if 0 <= x + i < w:
+                px[x + i, y] = _rgba(v)
+
+    for y in range(nslots):
+        start = slots[y]
+        end = slots[y + 1] if y + 1 < nslots else len(blob)
+        if end - start <= 2:
+            continue
+        for x, pix in _parse_xn(blob, start, end, w):
+            paint(x, y, pix)
+    for y, x, pix in best:
+        paint(x, y, pix)
+    return img
+
+
+def find_nested_leps(blob: bytes) -> List[Tuple[int, bytes]]:
+    """Split a ResPlayer-style container into lep records."""
+    out = []
+    pos = 0
+    while True:
+        i = blob.find(LEP_MAGIC, pos)
+        if i < 0:
+            break
+        j = blob.find(LEP_MAGIC, i + 4)
+        chunk = blob[i : j if j > 0 else len(blob)]
+        out.append((i, chunk))
+        pos = i + 4
+    return out
+
+
+def cmd_list(args: argparse.Namespace) -> None:
+    lib = LeyiLib.open(Path(args.lib))
+    rows = []
+    for i, off, size, blob in lib.iter_entries():
+        kind = classify(blob)
+        rec = {"index": i, "offset": off, "size": size, "kind": kind}
+        if kind == "lep" and size >= 128:
+            try:
+                rec.update(parse_lep_header(blob))
+            except Exception as e:  # noqa: BLE001
+                rec["lep_error"] = str(e)
+        rows.append(rec)
+    if args.json:
+        print(json.dumps({"path": str(lib.path), "count": lib.count, "entries": rows}, indent=2))
+    else:
+        print(f"{lib.path}: {lib.count} entries")
+        for r in rows[: args.limit]:
+            extra = ""
+            if r["kind"] == "lep":
+                extra = f" w={r.get('width')} hf={r.get('height_field')} slots={r.get('nslots')}"
+            print(f"  [{r['index']:5d}] off=0x{r['offset']:08x} size={r['size']:8d} {r['kind']}{extra}")
+
+
+def cmd_extract(args: argparse.Namespace) -> None:
+    lib = LeyiLib.open(Path(args.lib))
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    indices = range(lib.count) if args.all else [int(x) for x in args.index]
+    manifest = []
+    for i in indices:
+        blob = lib.entry_bytes(i)
+        kind = classify(blob)
+        raw_path = out / f"{i:05d}_{kind.split(':')[0]}.bin"
+        raw_path.write_bytes(blob)
+        item = {"index": i, "kind": kind, "raw": str(raw_path), "size": len(blob)}
+        if args.png and Image is not None:
+            if kind == "lep":
+                img = decode_lep_png(blob)
+                if img is not None:
+                    png = out / f"{i:05d}_lep.png"
+                    img.save(png)
+                    item["png"] = str(png)
+                    item["png_size"] = list(img.size)
+            elif args.nested:
+                for ni, lep in find_nested_leps(blob):
+                    img = decode_lep_png(lep)
+                    if img is None:
+                        continue
+                    png = out / f"{i:05d}_nest{ni:04d}.png"
+                    img.save(png)
+                    item.setdefault("nested_pngs", []).append(str(png))
+        manifest.append(item)
+        print(f"wrote {raw_path}")
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    sp = ap.add_subparsers(dest="cmd", required=True)
+    p_list = sp.add_parser("list")
+    p_list.add_argument("lib")
+    p_list.add_argument("--json", action="store_true")
+    p_list.add_argument("--limit", type=int, default=40)
+    p_list.set_defaults(func=cmd_list)
+    p_ex = sp.add_parser("extract")
+    p_ex.add_argument("lib")
+    p_ex.add_argument("-o", "--out", required=True)
+    p_ex.add_argument("--index", nargs="*", default=[])
+    p_ex.add_argument("--all", action="store_true")
+    p_ex.add_argument("--png", action="store_true")
+    p_ex.add_argument("--nested", action="store_true", help="Also decode nested lep in bin entries")
+    p_ex.set_defaults(func=cmd_extract)
+    args = ap.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
