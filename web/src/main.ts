@@ -144,6 +144,30 @@ async function main() {
       showShop: () => { inv.shopOpen = true; inv.open = true; renderInv() },
       showEmbed: () => { inv.embedOpen = true; inv.open = true; renderInv() },
     }
+    dlg.onGo = (scene) => {
+      const id = packOf(scene === 'sws' ? 'sws' : scene)
+      if (packIndex?.packs.some((p) => p.id === id)) {
+        inv.flash(`前往 ${dlg.names[scene] ?? scene}…`)
+        void applyPack(id, curScene)
+      } else inv.flash(`（地图 ${scene} 尚未导出）`)
+    }
+    dlg.onCombat = (battleId, eventId) => {
+      // bossyuheng: RolePrivate 196 HP5900 — spawn scaled foe; death drops 玉净甘露(118)
+      if (eventId === 'bossyuheng') {
+        const o = objects.find((x) => String(x.EventID).toLowerCase() === 'bossyuheng')
+        const bx = o ? ((o.lx ?? (o.x != null ? o.x - origin.x : pos.x))) : pos.x + 2
+        const by = o ? ((o.ly ?? (o.y != null ? o.y - origin.y : pos.y))) : pos.y
+        foes = foes.filter((f) => f.name !== '玉衡')
+        foes.push({
+          x: bx, y: by, hx: bx, hy: by, hp: 400, maxHp: 400, cd: 0.8, hitT: 0, dead: 0,
+          at: 55, df: 40, exp: 200, sight: 8, spd: 12, name: '玉衡', act: 'idle', actT: 0, dir: 0,
+        })
+        inv.flash('玉衡来袭！击败后可取得玉净甘露')
+        ;(window as unknown as { __djfmBoss?: string }).__djfmBoss = 'bossyuheng'
+      } else {
+        inv.flash(`（战斗 ${battleId}/${eventId} 未接线）`)
+      }
+    }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
   // mb/player/Init.txt 男主角: AT40(+4/lv) DF30(+4) HP800(+80) regen1.4 MP36 Stamina80 regen3/s use10/s
@@ -261,6 +285,40 @@ async function main() {
 
   let warpArmed = true, curScene = '1-0s', curTriggers: { x: number; y: number; script: string }[] = [], warpCd = 0, firstLoad = true
   const packOf = (scene: string) => (scene === '1-0s' ? 'ren' : scene)
+
+  /** Scene script hooks from mb/trigger/scene/*.txt (only sy1/蜀水-related subset). */
+  let swsTimer: number | null = null
+  function runSceneEnter(scene: string) {
+    if (swsTimer != null) { window.clearTimeout(swsTimer); swsTimer = null }
+    if (scene === 'sws') {
+      // SWS.txt: IsScnIn*IsFlag sy1 18 2 → go 1-3s; else SetTimer 90 → go 1-3s*SetFlag sy1 19
+      const sy = dlg.flags.sy1 ?? 0
+      if (sy >= 18) {
+        inv.flash('赶往落马坡…')
+        swsTimer = window.setTimeout(() => { void applyPack('1-3s', 'sws') }, 900)
+      } else {
+        inv.flash('沈万山遇袭！（计时后赶往落马坡）')
+        swsTimer = window.setTimeout(() => {
+          dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 19)
+          inv.flash('sy1→19 · 前往 1-3s 落马坡')
+          void applyPack('1-3s', 'sws')
+        }, 2500)
+      }
+      return
+    }
+    if (scene === '1-3as') {
+      // IsProp 118 + sy1≥20 → SetFlag sy1 30
+      if (inv.qty(118) > 0 && (dlg.flags.sy1 ?? 0) >= 20)
+        dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
+      // SetPropToObj when sy1<30 & no 118: prop waits on bossyuheng — E/combat handles loot
+      if ((dlg.flags.sy1 ?? 0) < 30 && inv.qty(118) <= 0)
+        inv.flash('洞中有妖气——玉衡看守着玉净甘露（E 对话开战）')
+    }
+    if (scene === '1-0s' || scene === 'ren') {
+      // after sy1≥100 town restores sws merchant etc. — no client action needed
+    }
+  }
+
   async function applyPack(id: string, arriveFrom?: string) {
     packId = id
     for (const b of packsEl.querySelectorAll('button')) {
@@ -363,6 +421,7 @@ async function main() {
       if (walkableNow(fx, fy, mapW, mapH, blocked)) foes.push({ x: fx, y: fy, hp: 60, maxHp: 60, cd: 1, hitT: 0, dead: 0 })
     }
     hint.textContent = packIndex?.begin_scn_mapping ?? mapLabel
+    runSceneEnter(curScene)
   }
 
   await applyPack(packId)
@@ -503,11 +562,17 @@ async function main() {
         WG = { g: walkGrid, ox: origin.x, oy: origin.y }
       }
       // Shift+F9: grant 蜀水 for blacksmith chain testing (real pickup is shushui on 1-6s)
-      if (e.shiftKey) {
+      if (e.shiftKey && e.altKey) {
+        // DEBUG only: jump to pre-蜀水 hand-in state (bq sets sy1=100 in real scripts)
+        dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 100)
+        inv.add(120, 1); dlg.flags.xss = 1
+        inv.flash('DEBUG: sy1=100 + 蜀水 — 可与铁匠交蜀水')
+        hint.textContent = 'DEBUG: 蜀水手交条件已满足（正式链：沈云→sws→玉衡→泊祁）'
+      } else if (e.shiftKey) {
         inv.add(120, 1); dlg.flags.xss = 1; inv.flash('DEBUG: 获得蜀水')
-        hint.textContent = 'DEBUG: 蜀水×1 + xss=1（正式获取：1-6s 堰兵冢 shushui）'
+        hint.textContent = 'DEBUG: 蜀水×1 — Alt+Shift+F9 亦置 sy1=100'
       } else {
-        hint.textContent = 'DEBUG: 北门已开 (sy1=1) — Shift+F9 给蜀水'
+        hint.textContent = 'DEBUG: 北门已开 (sy1=1) — Shift+F9 蜀水 / Alt+Shift+F9 手交就绪'
       }
     }
     if (k === 'q' && !dialogOpen && attackCd <= 0 && stats.mp >= 10) {
@@ -561,6 +626,19 @@ async function main() {
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
 
     stepFoes(foes, pos, stats, dt, walkable)
+    // Phase 21: bossyuheng death → Acquire 118 (玉净甘露); scene then allows sy1→30
+    {
+      const w = (window as unknown as { __djfmBoss?: string })
+      if (w.__djfmBoss === 'bossyuheng') {
+        const boss = foes.find((f) => f.name === '玉衡')
+        if (boss && boss.dead > 0 && inv.qty(118) <= 0) {
+          inv.add(118, 1)
+          inv.flash('获得 玉净甘露 — 交予泊祁可救沈云（sy1→100）')
+          if ((dlg.flags.sy1 ?? 0) >= 20) dlg.flags.sy1 = Math.max(dlg.flags.sy1 ?? 0, 30)
+          w.__djfmBoss = undefined
+        }
+      }
+    }
     warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true

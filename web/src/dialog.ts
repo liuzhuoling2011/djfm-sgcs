@@ -11,6 +11,8 @@ const load = async <T>(url: string, fallback: T): Promise<T> => {
 
 /** IsFlag name value [op]; op 1 = flag < value (not yet), op 2 = flag >= value. Bare IsFlag name value = flag >= value. */
 export type InvHook = { hasProp: (id: number) => boolean; acquire: (id: number, n: number) => void; miss: (id: number, n: number) => void; addWeaponNum: () => void; showShop: () => void; showEmbed: () => void }
+export type GoHook = (scene: string) => void
+export type CombatHook = (battleId: number, eventId: string) => void
 
 export function evalCond(cond: string, flags: Flags, inv?: InvHook): boolean {
   if (!cond.trim()) return true
@@ -44,6 +46,8 @@ export class DialogSys {
   state = 0 // talk "当前号"
   onChange: () => void = () => {}
   inv?: InvHook
+  onGo?: GoHook
+  onCombat?: CombatHook
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([
@@ -62,18 +66,22 @@ export class DialogSys {
     for (const cmd of result.split('*')) {
       const p = cmd.trim().split(/\s+/)
       if (!p[0]) continue
-      if (p[0] === 'SetFlag' && p.length >= 3) this.flags[p[1].toLowerCase()] = Number(p[2])
-      else if (p[0] === 'SetExitTextID' && p.length >= 3) this.exitText[p[1].toLowerCase()] = Number(p[2])
-      else if (p[0] === 'Acquire' && p.length >= 2) this.inv?.acquire(Number(p[1]), Number(p[2] ?? 1))
-      else if (p[0] === 'Miss' && p.length >= 2) this.inv?.miss(Number(p[1]), Number(p[2] ?? 1))
-      else if (p[0] === 'AddWeaponNum') this.inv?.addWeaponNum()
-      else if (p[0] === 'ShowJM') {
+      const op = p[0].toLowerCase()
+      if (op === 'setflag' && p.length >= 3) this.flags[p[1].toLowerCase()] = Number(p[2])
+      else if (op === 'setexittextid' && p.length >= 3) this.exitText[p[1].toLowerCase()] = Number(p[2])
+      else if (op === 'acquire' && p.length >= 2) this.inv?.acquire(Number(p[1]), Number(p[2] ?? 1))
+      else if (op === 'miss' && p.length >= 2) this.inv?.miss(Number(p[1]), Number(p[2] ?? 1))
+      else if (op === 'addweaponnum') this.inv?.addWeaponNum()
+      else if (op === 'showjm') {
         // ShowJM 20|86 = shop, 20|62|92 = embed (from tj.txt)
         const arg = p.slice(1).join(' ')
         if (arg.includes('86')) this.inv?.showShop()
         else if (arg.includes('62')) this.inv?.showEmbed()
+      } else if (op === 'go' && p.length >= 2) {
+        // talk/sws.txt: go sws → scene warp (SWS.txt then sets sy1 19 → 1-3s)
+        this.onGo?.(p[1].toLowerCase())
       }
-      // go / ScreenEffect / Atb still deferred
+      // ScreenEffect / Atb / AddFellow still stubbed
     }
   }
 
@@ -95,6 +103,14 @@ export class DialogSys {
           this.npc = this.names[key] ?? eventId
           this.lines = this.text(e.jump_data).split('\n').filter(Boolean)
           this.idx = 0; this.choices = []; this.open = true; this.onChange(); return true
+        }
+        if (e.jump_type === 4) {
+          // battle / special: bossyuheng.txt jump_data 126
+          this.npc = this.names[key] ?? eventId
+          this.lines = [`（${this.npc}拦住了去路！）`]
+          this.idx = 0; this.choices = []; this.open = true; this.onChange()
+          this.onCombat?.(e.jump_data, key)
+          return true
         }
       }
     }
