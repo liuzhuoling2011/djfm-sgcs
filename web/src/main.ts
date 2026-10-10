@@ -32,6 +32,11 @@ type GameData = {
 }
 type PackIndex = { begin_scn_mapping: string; default: string; packs: { id: string }[] }
 
+/** Prefer HD path, fall back to SD. */
+async function loadImageHd(hd: string, sd: string): Promise<HTMLImageElement> {
+  try { return await loadImage(hd) } catch { return await loadImage(sd) }
+}
+
 async function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const im = new Image()
@@ -61,8 +66,8 @@ async function main() {
   const app = document.querySelector<HTMLDivElement>('#app')!
   app.innerHTML = `
     <header>
-      <h1>刀剑封魔录外传 · Phase 12</h1>
-      <p>瓦当镇 · 地面钻石修复 + 图集 · BGM · E对话 / Space攻击 / I·B行囊 · WASD</p>
+      <h1>刀剑封魔录外传 · Phase 50 HD</h1>
+      <p>瓦当镇 · 原版 JM 底栏 · 现代对话/行囊 · Real-ESRGAN 高清 · WASD</p>
     </header>
     <div class="toolbar" id="packs"></div>
     <div id="stage">
@@ -70,55 +75,6 @@ async function main() {
       <div id="toast" class="toast hidden"></div>
       <div id="dialog" class="dialog hidden"></div>
       <div id="inv" class="desk-wrap hidden"></div>
-      <div id="hud" class="game-hud" aria-label="状态栏">
-        <div class="hud-vitals">
-          <div class="vital">
-            <img class="orb-art" src="game/hud/jm_417.png" alt="">
-            <div class="vital-copy">
-              <div class="vital-top"><span>气血</span><b id="hud-hp">—</b></div>
-              <div class="meter hp"><i id="hud-hp-fill"></i></div>
-            </div>
-          </div>
-          <div class="vital">
-            <img class="orb-art" src="game/hud/jm_415.png" alt="">
-            <div class="vital-copy">
-              <div class="vital-top"><span>真气</span><b id="hud-mp">—</b></div>
-              <div class="meter mp"><i id="hud-mp-fill"></i></div>
-            </div>
-          </div>
-          <div class="hud-side">
-            <div class="meter thin stam" title="体力"><i id="hud-sp-fill"></i></div>
-            <div class="meter thin exp" title="经验"><i id="hud-exp-fill"></i></div>
-            <div class="lvl" id="hud-lvl">Lv 1</div>
-          </div>
-        </div>
-        <div class="hud-pots">
-          <button type="button" class="pot" data-pot="0"><span class="pot-key">1</span><span class="pot-name">小血瓶</span><span class="pot-qty" data-pot-qty="0">×0</span><i class="pot-cd" data-pot-cd="0"></i></button>
-          <button type="button" class="pot" data-pot="1"><span class="pot-key">2</span><span class="pot-name">小血瓶</span><span class="pot-qty" data-pot-qty="1">×0</span><i class="pot-cd" data-pot-cd="1"></i></button>
-          <button type="button" class="pot" data-pot="2"><span class="pot-key">3</span><span class="pot-name">小气瓶</span><span class="pot-qty" data-pot-qty="2">×0</span><i class="pot-cd" data-pot-cd="2"></i></button>
-          <button type="button" class="pot" data-pot="3"><span class="pot-key">4</span><span class="pot-name">小气瓶</span><span class="pot-qty" data-pot-qty="3">×0</span><i class="pot-cd" data-pot-cd="3"></i></button>
-        </div>
-        <div class="hud-combat">
-          <button type="button" class="slot" id="hud-weapon" title="Space 攻击">
-            <img src="game/hud/jm_1910.png" alt="">
-            <span class="slot-key">Space</span>
-            <span class="slot-state" id="hud-weapon-state">就绪</span>
-          </button>
-          <button type="button" class="slot" id="hud-q" title="Q">
-            <img src="game/hud/jm_63.png" alt="">
-            <span class="slot-key">Q</span>
-            <span class="slot-state" id="hud-q-state">就绪</span>
-          </button>
-        </div>
-        <div class="hud-info">
-          <div class="hud-money" id="hud-money">金钱 0</div>
-          <div class="hud-hints">E 对话 · I 行囊 · 1/3 药</div>
-          <div class="hud-skill-row">
-            <button type="button" class="mini" id="hud-f1">F1 扫叶</button>
-            <button type="button" class="mini" id="hud-f2">F2 疾电</button>
-          </div>
-        </div>
-      </div>
     </div>
     <p class="hint" id="hint">Loading…</p>
     <section class="panel"><h2>样本</h2><div class="grid" id="grid"></div></section>
@@ -130,7 +86,6 @@ async function main() {
   const invEl = document.querySelector<HTMLDivElement>('#inv')!
   const toastEl = document.querySelector<HTMLDivElement>('#toast')!
   const dialogEl = document.querySelector<HTMLDivElement>('#dialog')!
-  const hudEl = document.querySelector<HTMLDivElement>('#hud')!
   if (packIndex) hint.textContent = (packIndex.begin_scn_mapping ?? '') + ' · WASD移动 · Shift奔跑 · E对话 · Space攻击 · I行囊 · 1/3药'
   for (const id of packIds) {
     const btn = document.createElement('button')
@@ -402,21 +357,21 @@ async function main() {
   function renderInv() {
     const show = inv.open || inv.shopOpen || inv.embedOpen
     invEl.classList.toggle('hidden', !show)
-    if (!show) { placeChrome(); return }
+    invEl.classList.add('jm-mode') // original JM panels (HD-upscaled assets)
+    if (!show) return
     const rows = inv.items.map((it) => {
       const d = inv.props[String(it.id)]
       return `<li><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
     }).join('') || '<li class="empty">（空）</li>'
-    const head = (title: string, closeAttr: string) =>
-      `<header class="desk-head"><h3>${title}</h3><button type="button" class="desk-x" ${closeAttr} aria-label="关闭">×</button></header>`
     if (inv.shopOpen) {
+      // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226
       const buyMode = inv.shopMode === 'buy'
       let slots = ''
       if (buyMode) {
         slots = inv.shopCatalog().map((r, i) => {
           const n = inv.props[String(r.id)]?.name ?? r.id
           const have = inv.qty(r.id)
-          return `<button type="button" class="row" data-buy="${r.id}"><span class="row-name">${i + 1}. ${n}<i class="have">×${have}</i></span><span class="row-price">${r.price} 金</span></button>`
+          return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${have}</i></span><span class="pr">${r.price} 金</span></button>`
         }).join('')
       } else {
         // Only goods the blacksmith stocks (potions / 飞蝗石). Quest props stay in the bag.
@@ -424,50 +379,48 @@ async function main() {
         slots = sellable.map((r, i) => {
           const n = inv.props[String(r.id)]?.name ?? r.id
           const pr = inv.sellPrice(r.id)
-          return `<button type="button" class="row" data-sell="${r.id}"><span class="row-name">${i + 1}. ${n}<i class="have">×${inv.qty(r.id)}</i></span><span class="row-price">售 ${pr} 金</span></button>`
-        }).join('') || '<div class="desk-empty">行囊里没有铁匠收购的药品或飞蝗石</div>'
+          return `<button type="button" data-sell="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${inv.qty(r.id)}</i></span><span class="pr">售 ${pr} 金</span></button>`
+        }).join('') || '<div class="jm-empty">行囊里没有铁匠收购的药品或飞蝗石</div>'
       }
-      invEl.innerHTML = `<div class="desk shop">
-        ${head('买卖', 'data-close-shop')}
-        <div class="desk-list">${slots}</div>
-        <p class="desk-note">${buyMode ? '点商品购入 · 金钱不足会提示' : '点持有的药品 / 飞蝗石卖出（售价四折）'}</p>
-        <footer class="desk-foot">
-          <div class="money">金钱 ${inv.money}</div>
-          <div class="desk-actions">
-            <button type="button" class="${buyMode ? 'on' : ''}" data-shop-mode="buy">购入</button>
-            <button type="button" class="${buyMode ? '' : 'on'}" data-shop-mode="sell">卖出</button>
-            <button type="button" data-close-shop>关闭</button>
+      invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
+        <div class="jm-title">买卖</div>
+        <button type="button" class="jm-close" data-close-shop aria-label="关闭">×</button>
+        <div class="jm-body"><div class="jm-slots">${slots}</div>
+          <p class="jm-shop-hint">${buyMode ? '点商品购入 · 金钱不足会提示' : '点持有的药品 / 飞蝗石卖出（售价四折）'}</p></div>
+        <div class="jm-footbar">
+          <div class="jm-money">金钱 ${inv.money}</div>
+          <div class="jm-deal-btns">
+            <button type="button" class="jm-deal buy${buyMode ? ' on' : ''}" data-shop-mode="buy">购入</button>
+            <button type="button" class="jm-deal sell${!buyMode ? ' on' : ''}" data-shop-mode="sell">卖出</button>
+            <button type="button" class="jm-deal close" data-close-shop>关闭</button>
           </div>
-        </footer>
-      </div>`
+        </div>
+      </div></div>`
     } else if (inv.embedOpen) {
+      // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226
       const gain = 2 * Math.max(1, inv.weaponSlots)
-      invEl.innerHTML = `<div class="desk embed">
-        ${head('镶嵌', 'data-close-embed')}
-        <div class="embed-stats">
-          <p>兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}　已嵌 ${inv.embedGems}</p>
-          <p>攻击 ${stats.at ?? 40}　金钱 ${inv.money}　蜀水 ×${inv.qty(120)}</p>
-          <p>花费 200 金或 1 蜀水（AT+${gain}）</p>
+      invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
+        <div class="jm-title">镶嵌</div>
+        <button type="button" class="jm-close" data-close-embed aria-label="关闭">×</button>
+        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}　已嵌 ${inv.embedGems}<br/>
+          攻击 ${stats.at ?? 40}　金钱 ${inv.money}　蜀水 ×${inv.qty(120)}<br/>
+          花费 200 金或 1 蜀水（AT+${gain}）</div>
+        <div class="jm-gem-grid" aria-hidden="true">
+          ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.embedGems ? ' on' : ''}"></div>`).join('')}
         </div>
-        <div class="gems" aria-hidden="true">
-          ${Array.from({ length: 6 }, (_, i) => `<div class="gem${i < inv.embedGems ? ' on' : ''}"></div>`).join('')}
+        <div class="jm-embed-actions">
+          <button type="button" data-embed>确认镶嵌</button>
+          <button type="button" data-close-embed>关闭</button>
         </div>
-        <footer class="desk-foot">
-          <div class="embed-actions">
-            <button type="button" class="primary" data-embed>确认镶嵌</button>
-            <button type="button" data-close-embed>关闭</button>
-          </div>
-        </footer>
-      </div>`
+      </div></div>`
     } else {
-      invEl.innerHTML = `<div class="desk bag">
-        ${head('行囊', 'data-close-inv')}
-        <ul class="desk-list">${rows}</ul>
-        <footer class="desk-foot">
-          <div class="equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
-          <div class="money">金钱 ${inv.money}</div>
-        </footer>
-      </div>`
+      invEl.innerHTML = `<div class="box"><div class="jm-frame bag">
+        <div class="jm-title">行囊</div>
+        <button type="button" class="jm-close" data-close-inv aria-label="关闭">×</button>
+        <div class="jm-body"><ul class="jm-bag-list">${rows}</ul></div>
+        <div class="jm-bag-equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
+        <div class="jm-money">金钱 ${inv.money}</div>
+      </div></div>`
     }
     const syncPots = () => { hud.pots = [...inv.potSlots()] }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
@@ -483,86 +436,50 @@ async function main() {
     invEl.querySelectorAll('[data-close-shop]').forEach((b) => b.addEventListener('click', () => {
       inv.shopOpen = false; renderInv()
     }))
-    invEl.querySelectorAll('[data-embed]').forEach((b) => b.addEventListener('click', () => {
+    invEl.querySelector('[data-embed]')?.addEventListener('click', () => {
       if (inv.embedUpgrade(stats)) { inv.embedOpen = false }
       renderInv()
-    }))
+    })
     invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => {
       inv.embedOpen = false; renderInv()
     }))
-    invEl.querySelectorAll('[data-close-inv]').forEach((b) => b.addEventListener('click', () => { inv.open = false; renderInv() }))
+    invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
     placeChrome()
   }
-  /** Stack dialog and desks above the CSS status bar. Sizes come from layout, not an 800px Wine grid. */
-  let hudSpace = 0
   function placeChrome() {
-    const hudH = hudEl.offsetHeight
-    if (!hudH || hudH === hudSpace) return
-    hudSpace = hudH
-    stageEl.style.setProperty('--hud-space', `${hudH + 8}px`)
+    /* Pin original JM dialog/panels above canvas JM HUD bar (layout matches original). */
+    const r = canvas.getBoundingClientRect()
+    const hudPx = Math.round(r.height * (110 / 720))
+    const aboveHud = Math.max(8, window.innerHeight - r.bottom + hudPx + 6)
+    if (dialogEl.style.display !== 'none' && !dialogEl.classList.contains('hidden')) {
+      const w = Math.min(760, Math.round(r.width * 0.92))
+      dialogEl.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`
+      dialogEl.style.width = `${w}px`
+      dialogEl.style.right = 'auto'
+      dialogEl.style.bottom = `${aboveHud}px`
+      dialogEl.style.top = 'auto'
+      dialogEl.style.transform = 'none'
+    }
+    if (!invEl.classList.contains('hidden')) {
+      // Original JM panels are 326×226 in 800-space
+      const sc = r.width / 800
+      const dw = Math.round(326 * sc), dh = Math.round(226 * sc)
+      invEl.style.width = `${dw}px`
+      invEl.style.height = `${dh}px`
+      invEl.style.setProperty('--jm-w', `${dw}px`)
+      invEl.style.left = `${Math.round(r.left + (r.width - dw) / 2)}px`
+      invEl.style.top = `${Math.round(r.top + Math.max(16, (r.height - hudPx - dh) / 2))}px`
+      invEl.style.right = 'auto'
+      invEl.style.bottom = 'auto'
+      invEl.style.transform = 'none'
+    }
   }
-  window.addEventListener('resize', () => { hudSpace = 0; placeChrome() })
+  window.addEventListener('resize', () => placeChrome())
+  window.addEventListener('scroll', () => placeChrome(), true)
   function renderToast() {
     toastEl.classList.toggle('hidden', inv.toastT <= 0)
     if (inv.toastT > 0) toastEl.textContent = inv.toast
   }
-  const hudHp = document.querySelector<HTMLElement>('#hud-hp')!
-  const hudHpFill = document.querySelector<HTMLElement>('#hud-hp-fill')!
-  const hudMp = document.querySelector<HTMLElement>('#hud-mp')!
-  const hudMpFill = document.querySelector<HTMLElement>('#hud-mp-fill')!
-  const hudSpFill = document.querySelector<HTMLElement>('#hud-sp-fill')!
-  const hudExpFill = document.querySelector<HTMLElement>('#hud-exp-fill')!
-  const hudLvl = document.querySelector<HTMLElement>('#hud-lvl')!
-  const hudMoney = document.querySelector<HTMLElement>('#hud-money')!
-  const hudWeapon = document.querySelector<HTMLElement>('#hud-weapon')!
-  const hudWeaponState = document.querySelector<HTMLElement>('#hud-weapon-state')!
-  const hudQ = document.querySelector<HTMLElement>('#hud-q')!
-  const hudQState = document.querySelector<HTMLElement>('#hud-q-state')!
-  const hudF1 = document.querySelector<HTMLButtonElement>('#hud-f1')!
-  const hudF2 = document.querySelector<HTMLButtonElement>('#hud-f2')!
-  const potQtyEls = [...hudEl.querySelectorAll<HTMLElement>('[data-pot-qty]')]
-  const potCdEls = [...hudEl.querySelectorAll<HTMLElement>('[data-pot-cd]')]
-  const potBtns = [...hudEl.querySelectorAll<HTMLElement>('.pot')]
-  function syncHud() {
-    const hpF = stats.maxHp > 0 ? Math.max(0, Math.min(1, stats.hp / stats.maxHp)) : 0
-    const mpF = stats.maxMp > 0 ? Math.max(0, Math.min(1, stats.mp / stats.maxMp)) : 0
-    hudHp.textContent = `${Math.round(stats.hp)} / ${Math.round(stats.maxHp)}`
-    hudMp.textContent = `${Math.round(stats.mp)} / ${Math.round(stats.maxMp)}`
-    hudHpFill.style.width = `${(hpF * 100).toFixed(1)}%`
-    hudMpFill.style.width = `${(mpF * 100).toFixed(1)}%`
-    hudSpFill.style.width = `${(Math.max(0, Math.min(1, stats.sp ?? 1)) * 100).toFixed(1)}%`
-    const expNeed = (INIT.exp_per_lv ?? 100) * Math.max(1, stats.lvl)
-    const expF = Math.max(0, Math.min(1, stats.exp / Math.max(1, expNeed)))
-    hudExpFill.style.width = `${(expF * 100).toFixed(1)}%`
-    hudLvl.textContent = `Lv ${stats.lvl}`
-    hudMoney.textContent = `金钱 ${inv.money}`
-    const pots = inv.potSlots()
-    const counts = [pots[0], pots[0], pots[2], pots[2]]
-    const cdFrac = inv.potCdMax > 0 ? Math.max(0, Math.min(1, inv.potCd / inv.potCdMax)) : 0
-    for (let i = 0; i < 4; i++) {
-      if (potQtyEls[i]) potQtyEls[i].textContent = `×${counts[i]}`
-      potBtns[i]?.classList.toggle('empty', counts[i] <= 0)
-      if (potCdEls[i]) potCdEls[i].style.height = cdFrac > 0 ? `${Math.round(cdFrac * 100)}%` : '0'
-    }
-    const swinging = attackT > 0.02
-    const cooling = attackCd > 0.02 && !swinging
-    const ready = !swinging && !cooling
-    hudWeapon.classList.toggle('ready', ready)
-    hudWeapon.classList.toggle('swing', swinging)
-    hudWeapon.classList.toggle('cool', cooling)
-    hudWeaponState.textContent = swinging ? '挥砍' : cooling ? '冷却' : '就绪'
-    const qPoor = stats.mp < 10 && ready
-    hudQ.classList.toggle('ready', ready && !qPoor)
-    hudQ.classList.toggle('swing', swinging)
-    hudQ.classList.toggle('cool', cooling || qPoor)
-    hudQState.textContent = swinging ? '挥砍' : qPoor ? '真气不足' : cooling ? '冷却' : '就绪'
-    const left = inv.skill('left')?.name
-    const right = inv.skill('right')?.name
-    if (left) hudF1.textContent = `F1 ${left}`
-    if (right) hudF2.textContent = `F2 ${right}`
-    placeChrome()
-  }
-
   function clampDialog() {
     requestAnimationFrame(() => placeChrome())
   }
@@ -1066,7 +983,7 @@ async function main() {
         try { npcImgs.set(f, await loadImage(`${base}/props/${f}`)) } catch { /* */ }
       }),
       ...objects.flatMap((n) => (n.npc_dirs ?? []).map(async (f, i) => {
-        try { npcImgs.set(`${n.EventID}_${i}`, await loadImage(`${base}/npcs/${f}`)) } catch { /* */ }
+        try { npcImgs.set(`${n.EventID}_${i}`, await loadImageHd(`${base}/npcs_hd/${f}`, `${base}/npcs/${f}`)) } catch { /* */ }
       })),
     ])
     ground = null
@@ -1170,12 +1087,26 @@ async function main() {
     if (t.tagName === 'BUTTON' && t.dataset.pack) applyPack(t.dataset.pack).catch(console.error)
   })
 
-  // Phase 19: paper-doll composite sheets (8 dirs × 4 walk / 1 idle / 1 attack)
+  // Phase 50: HD paper-doll (player_hd) with SD fallback; draw ~2× original size
   let playerHotspot = { x: 64, y: 100 }
+  let playerCanvas = { w: 128, h: 128 }
+  let playerHd = false
   try {
-    const pm = await (await fetch('game/player/meta.json')).json() as { hotspot?: number[] }
-    if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
-  } catch { /* */ }
+    const pm = await (await fetch('game/player_hd/meta.json')).json() as { hotspot?: number[]; canvas?: number[] }
+    playerHotspot = { x: pm.hotspot?.[0] ?? 256, y: pm.hotspot?.[1] ?? 400 }
+    playerCanvas = { w: pm.canvas?.[0] ?? 512, h: pm.canvas?.[1] ?? 512 }
+    playerHd = true
+  } catch {
+    try {
+      const pm = await (await fetch('game/player/meta.json')).json() as { hotspot?: number[]; canvas?: number[] }
+      if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
+      if (pm.canvas) playerCanvas = { w: pm.canvas[0], h: pm.canvas[1] }
+    } catch { /* */ }
+  }
+  const playerBase = playerHd ? 'game/player_hd' : 'game/player'
+  const hdDisplayMul = playerHd ? 2 : 1
+  const hdSrcScale = playerHd ? (playerCanvas.w / 128) : 1
+  const playerDrawScale = hdDisplayMul / Math.max(1, hdSrcScale)
   const playerWalk: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerRun: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerIdle: HTMLImageElement[] = []
@@ -1184,11 +1115,11 @@ async function main() {
   const GAIT_PP = [0, 1, 2, 3, 2, 1]
   await Promise.all(Array.from({ length: 8 }, async (_, d) => {
     for (let f = 0; f < 4; f++) {
-      try { playerWalk[d].push(await loadImage(`game/player/walk/${d}_${f}.png`)) } catch { /* */ }
-      try { playerRun[d].push(await loadImage(`game/player/run/${d}_${f}.png`)) } catch { /* */ }
+      try { playerWalk[d].push(await loadImageHd(`${playerBase}/walk/${d}_${f}.png`, `game/player/walk/${d}_${f}.png`)) } catch { /* */ }
+      try { playerRun[d].push(await loadImageHd(`${playerBase}/run/${d}_${f}.png`, `game/player/run/${d}_${f}.png`)) } catch { /* */ }
     }
-    try { playerIdle[d] = await loadImage(`game/player/idle/${d}_0.png`) } catch { /* */ }
-    try { playerAttackSpr[d] = await loadImage(`game/player/attack/${d}_0.png`) } catch { /* */ }
+    try { playerIdle[d] = await loadImageHd(`${playerBase}/idle/${d}_0.png`, `game/player/idle/${d}_0.png`) } catch { /* */ }
+    try { playerAttackSpr[d] = await loadImageHd(`${playerBase}/attack/${d}_0.png`, `game/player/attack/${d}_0.png`) } catch { /* */ }
   }))
   let player: HTMLImageElement
   try { player = playerIdle[0] ?? await loadImage('game/player.png') } catch { player = await loadImage('game/player_fallback.png') }
@@ -1247,13 +1178,6 @@ async function main() {
     if (dialogOpen || inv.shopOpen || inv.embedOpen) return
     if (inv.usePotionSlot(slot, stats)) { playSfx('potion'); hud.pots = [...inv.potSlots()]; renderInv() }
   }
-  hudEl.querySelectorAll<HTMLButtonElement>('[data-pot]').forEach((b) => {
-    b.addEventListener('click', () => doPotion(Number(b.dataset.pot)))
-  })
-  hudEl.querySelector('#hud-weapon')?.addEventListener('click', () => doMelee())
-  hudEl.querySelector('#hud-q')?.addEventListener('click', () => doQSkill())
-  hudEl.querySelector('#hud-f1')?.addEventListener('click', () => doSkillLeft())
-  hudEl.querySelector('#hud-f2')?.addEventListener('click', () => doSkillRight())
 
   const keys = new Set<string>()
   let facing = 0, animT = 0, moving = false, attackPending = false
@@ -1696,9 +1620,13 @@ async function main() {
     draws.push({
       z: pos.x + pos.y + 0.25,
       fn: () => {
-        // foot hotspot from meta (fixed 128 canvas → 64,100)
-        const hx = playerHotspot.x * (spr.width / 128), hy = playerHotspot.y * (spr.height / 128)
-        ctx.drawImage(spr, Math.round(pp.x + cam.x - hx), Math.round(pp.y + cam.y - hy))
+        // foot hotspot: meta in canvas space (SD 128 or HD 512); draw ~2× original when HD
+        const hx = playerHotspot.x * (spr.width / playerCanvas.w) * playerDrawScale
+        const hy = playerHotspot.y * (spr.height / playerCanvas.h) * playerDrawScale
+        const dw = spr.width * playerDrawScale, dh = spr.height * playerDrawScale
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(spr, Math.round(pp.x + cam.x - hx), Math.round(pp.y + cam.y - hy), dw, dh)
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
           const ang = facingWorldAng(facing)
@@ -1887,7 +1815,7 @@ async function main() {
       ctx.fillText('正在返回落脚处…', canvas.width / 2, canvas.height / 2 + 22)
       ctx.textAlign = 'left'
     }
-    syncHud()
+    hud.draw(ctx, stats, { skillL: inv.skill('left')?.name, skillR: inv.skill('right')?.name, money: inv.money, weapon: inv.weaponName(), potCd: inv.potCd, potCdMax: inv.potCdMax, attackCd, attackReady: attackCd <= 0 && attackT <= 0 })
     if (ground && groundMeta) {
       const tw = groundMeta.tile_w, th = groundMeta.tile_h
       const g = (x: number, y: number) => ({ x: (x + origin.x - y - origin.y) * (tw / 2) - groundMeta!.min_sx, y: (x + origin.x + y + origin.y) * (th / 2) - groundMeta!.min_sy })

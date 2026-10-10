@@ -1,3 +1,4 @@
+/* Phase50: bottom HUD is canvas Hud.draw (jm_1478). Modern HTML only for dialog/bag/shop. */
 :root { color-scheme: dark; font-family: "WenQuanYi Micro Hei", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif; background:#070b14; color:#e8eefc; }
 body { margin:0; }
 #app { max-width: 1000px; margin:0 auto; padding:20px; }
@@ -46,7 +47,7 @@ img { max-width:100%; }
   background: #0a1220;
   border: none;
   border-radius: 0;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 .toast {
@@ -88,22 +89,26 @@ img { max-width:100%; }
 }
 #dialog.dialog.hidden { display: none; }
 .dlg-board {
+  /* Original JM dialog_board (HD upscaled) — not a new modern card */
   pointer-events: auto;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   box-sizing: border-box;
-  padding: 14px 16px 12px;
-  color: #f7f0dc;
+  padding: 4px 10px 2px;
+  color: #f4ead2;
   font-size: 18px;
-  line-height: 1.55;
-  border: 1px solid #c9a15a;
-  border-radius: 12px;
-  background:
-    radial-gradient(ellipse at 18% 0%, rgba(255, 220, 160, .12), transparent 52%),
-    linear-gradient(180deg, rgba(58, 40, 24, .96), rgba(16, 11, 7, .97));
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 220, 160, .16),
-    0 14px 32px rgba(0, 0, 0, .55);
+  line-height: 1.45;
+  border-style: solid;
+  border-width: 18px 32px 16px;
+  border-image-source: url(/game/hud/panels_hd/dialog_board.png);
+  border-image-slice: 44 80 44 fill;
+  border-image-width: 18px 32px 16px;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,.92);
+  font-family: "SimSun","Songti SC","Noto Serif CJK SC","Microsoft YaHei",serif;
 }
 .dlg-title {
   color: #ffe7a8;
@@ -280,7 +285,8 @@ button.row:hover, button.row:focus-visible {
 }
 
 /* Status bar — flex/grid, readable numbers, not a scaled 800px sprite strip. */
-.game-hud {
+/* RESTORED: canvas JM bar — HTML status bar disabled */
+.game-hud-DISABLED-UNUSED-DISABLED-UNUSED {
   position: absolute;
   left: 0;
   right: 0;
@@ -301,7 +307,7 @@ button.row:hover, button.row:focus-visible {
 }
 .hud-vitals { display: flex; align-items: center; gap: 10px; flex: 1 1 260px; min-width: 220px; }
 .vital { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-.orb-art { width: 34px; height: 34px; object-fit: contain; flex: none; image-rendering: pixelated; }
+.orb-art { width: 34px; height: 34px; object-fit: contain; flex: none; image-rendering: auto; }
 .vital-copy { flex: 1; min-width: 0; }
 .vital-top { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; color: #f3e6cc; }
 .vital-top b { font-weight: 700; color: #fff6e0; }
@@ -370,7 +376,7 @@ button.row:hover, button.row:focus-visible {
   font: inherit;
   cursor: pointer;
 }
-.slot img { width: 28px; height: 28px; object-fit: contain; image-rendering: pixelated; }
+.slot img { width: 28px; height: 28px; object-fit: contain; image-rendering: auto; }
 .slot-key { font-size: 11px; color: #e4c98a; line-height: 1.1; }
 .slot-state { font-size: 12px; font-weight: 700; line-height: 1.2; color: #cbb892; }
 .slot.ready {
@@ -407,7 +413,7 @@ button.row:hover, button.row:focus-visible {
   .dlg-board, .dlg-body { font-size: 16px; }
   /* The 16:9 canvas is a short strip on a phone. Keep the bar under it so it does not cover the town. */
   #stage { overflow: visible; }
-  .game-hud { position: relative; left: auto; right: auto; bottom: auto; gap: 4px 8px; padding: 6px 8px; }
+  .game-hud-DISABLED-UNUSED { position: relative; left: auto; right: auto; bottom: auto; gap: 4px 8px; padding: 6px 8px; }
   .hud-vitals { flex: 1 1 160px; min-width: 0; }
   .hud-info { flex: 1 1 140px; min-width: 0; }
   .hud-hints { display: none; }
@@ -433,3 +439,94 @@ button.row:hover, button.row:focus-visible {
 
 .combat-help{position:fixed;left:12px;top:64px;bottom:auto;z-index:22;max-width:340px;background:rgba(8,14,28,.88);border:1px solid #3a5a8a;border-radius:8px;padding:8px 10px;color:#cfe;font-size:12px;line-height:1.35}
 .combat-help.hidden{display:none}
+
+
+/* Restored original JM panel chrome (HD panels) */
+/* Phase 20 / 42: ResJM shop / embed / bag. placeChrome() pins 326×226 to the canvas playfield (not the viewport). */
+.inv-panel.jm-mode, .desk-wrap.jm-mode{width:auto;max-width:none;max-height:none;right:auto;bottom:auto;transform:none;background:transparent;border:none;padding:0;overflow:visible;z-index:42;filter:drop-shadow(0 12px 22px rgba(0,0,0,.75));pointer-events:auto}
+.inv-panel.jm-mode, .desk-wrap.jm-mode .box{background:transparent;border:none;padding:0;box-shadow:none;width:100%;height:100%}
+.jm-frame{position:relative;width:100%;height:100%;background-size:100% 100%;background-repeat:no-repeat;image-rendering:auto;font-family:"SimSun","Songti SC","WenQuanYi Micro Hei","Microsoft YaHei",ui-sans-serif,system-ui;color:#f6edd6;font-size:calc(var(--jm-w, 326px) * 0.046)}
+.jm-frame.shop{background-image:url(/game/hud/panels_hd/panel_1550.png)}
+.jm-frame.embed{background-image:url(/game/hud/panels_hd/panel_591.png)}
+.jm-frame.bag{background-image:url(/game/hud/panels_hd/panel_625.png)}
+.jm-frame .jm-title{position:absolute;left:18%;right:18%;top:5%;text-align:center;color:#ffe7a8;font-size:1.05em;font-weight:bold;text-shadow:0 1px 2px #000;pointer-events:none;letter-spacing:0.28em}
+.jm-frame .jm-body{position:absolute;left:10%;right:10%;top:16%;bottom:30%;overflow:auto;color:#f6edd6;font-size:0.95em}
+.jm-frame .jm-body ul{list-style:none;margin:0;padding:0}
+.jm-frame .jm-body li{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px;padding:4px 8px;background:rgba(12,8,2,.42);border:1px solid rgba(196,154,74,.38);color:#f7edd8;text-shadow:0 1px 1px #000}
+
+.jm-frame .jm-body li .nm{flex:1}
+.jm-frame .jm-slots{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;margin-top:2px}
+.jm-frame .jm-slots button{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.45);color:#dfe8ff;border:1px solid #6a5a3a;border-radius:2px;padding:4px 6px;cursor:pointer;font:inherit;font-size:0.78em;text-align:left}
+.jm-frame .jm-slots button .pr{color:#ffd24a;margin-left:6px;white-space:nowrap}
+.jm-frame .jm-slots button .have{color:#ffd56a;font-style:normal;margin-left:4px}
+.jm-frame .jm-slots button:hover{border-color:#ffd24a;color:#ffd24a}
+.jm-frame .jm-money{position:absolute;left:11%;bottom:11%;color:#ffd56a;font-size:1em;font-weight:bold;text-shadow:0 1px 2px #000;letter-spacing:.06em}
+.jm-frame .jm-bag-equip{position:absolute;left:11%;right:12%;bottom:20%;color:#e7d3a6;font-size:0.75em;line-height:1.3;text-shadow:0 1px 2px #000;pointer-events:none}
+.jm-frame .jm-footbar{position:absolute;left:9%;right:7%;bottom:9%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.jm-frame .jm-footbar .jm-money{position:static;flex:0 1 auto;white-space:nowrap}
+.jm-frame .jm-deal-btns{position:static;display:flex;gap:4px;flex:0 0 auto}
+.jm-frame .jm-deal{background:rgba(20,12,8,.75);color:#e8d0a0;border:1px solid #8a6a3a;border-radius:2px;padding:3px 8px;cursor:pointer;font:inherit;font-size:0.75em}
+.jm-frame .jm-deal.close{color:#e88}
+.jm-frame .jm-deal:hover{border-color:#ffd24a;color:#ffd24a}
+.jm-frame .jm-close{position:absolute;right:4.5%;top:4%;width:1.45em;height:1.45em;border-radius:2px;background:rgba(28,14,6,.8);border:1px solid #c4a15a;color:#ffe7a8;font-weight:bold;cursor:pointer;font-size:0.9em;line-height:1.2em;padding:0;text-shadow:0 1px 1px #000}
+.jm-frame .jm-foot{position:absolute;left:40px;right:48px;bottom:16px;color:#c9a86a;font-size:11px}
+.jm-frame .jm-embed-info{position:absolute;left:11%;right:14%;top:16%;color:#e8f0ff;font-size:0.78em;line-height:1.45;text-shadow:0 1px 2px #000}
+.jm-frame .jm-gem-grid{position:absolute;left:12%;top:46%;width:42%;display:grid;grid-template-columns:repeat(3, 1fr);gap:12% 14%}
+.jm-frame .jm-gem{width:100%;aspect-ratio:1;box-sizing:border-box;border:1px solid #6a5a3a;background:rgba(0,0,0,.35);border-radius:2px}
+.jm-frame .jm-gem.on{border-color:#ffd24a;background:rgba(120,80,20,.55);box-shadow:inset 0 0 6px #ffb020}
+.jm-frame .jm-embed-actions{position:absolute;right:8%;bottom:10%;display:flex;gap:4px}
+.jm-frame .jm-embed-actions button{background:rgba(0,0,0,.55);color:#cfe;border:1px solid #6a5a3a;border-radius:2px;padding:3px 10px;cursor:pointer;font:inherit;font-size:0.78em}
+.jm-frame .jm-bag-list{font-size:0.95em}
+.jm-frame .jm-body li .qty{color:#ffd56a;font-weight:bold;min-width:2.2em;text-align:right}
+.jm-frame .jm-body li.empty{justify-content:center;color:#cbb88a;border-style:dashed}
+
+.cutscene{position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cutscene video{max-width:100%;max-height:100%}
+.cut-tip{position:absolute;right:16px;bottom:12px;color:#ccc;font:12px sans-serif;opacity:.7}
+
+.foreword .fore-box{max-width:640px;max-height:70vh;overflow:auto;background:rgba(8,10,18,.92);border:1px solid #6a5a3a;padding:28px 32px;color:#e8dcc0;font:16px/1.7 "Noto Serif CJK SC",serif;white-space:pre-wrap}
+.fore-title{font-size:22px;color:#f0c860;margin-bottom:16px;text-align:center}
+.fore-body{text-indent:2em}
+
+
+
+
+
+
+/* Phase50: original JM dialog board (HD upscaled), cream ink — layout matches original */
+#dialog.jm-dialog, #dialog:not(.hidden){
+  display:block;position:fixed;left:12px;bottom:120px;top:auto;
+  transform:none;z-index:45;pointer-events:auto;
+  border:none;background:transparent;padding:0;margin:0;
+  width:min(760px,92vw);max-width:none;max-height:none;overflow:visible;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.65));
+}
+#dialog .dlg-board, #dialog.jm-dialog .dlg-board{
+  width:100%;box-sizing:border-box;
+  border-style:solid;border-width:18px 32px 16px;
+  border-image-source:url(/game/hud/panels_hd/dialog_board.png);
+  border-image-slice:44 80 44 fill;
+  border-image-width:18px 32px 16px;
+  border-image-repeat:stretch;
+  background:none;min-height:0;overflow:visible;
+  padding:4px 10px 2px;
+  color:#f4ead2;
+  font-family:"SimSun","Songti SC","Noto Serif CJK SC","Microsoft YaHei",serif;
+  font-size:18px;line-height:1.45;
+  text-shadow:0 1px 2px rgba(0,0,0,.92);
+}
+#dialog .dlg-title{color:#ffe7a8;font-size:15px;font-weight:bold;margin:0 0 4px;letter-spacing:.18em;}
+#dialog .dlg-body{font-size:18px;line-height:1.5;color:#f7f0dc;max-height:28vh;overflow:auto}
+#dialog .dlg-body p{margin:0 0 2px}
+#dialog .dlg-hint{margin-top:4px;font-size:12px;color:#e4c98a;text-align:right}
+#dialog .dlg-next{
+  display:inline-block;margin-top:6px;padding:4px 14px;cursor:pointer;
+  background:rgba(20,12,6,.55);border:1px solid #c4a15a;color:#ffe7a8;
+  font:inherit;font-size:15px;border-radius:2px;
+}
+#dialog .dlg-choice{
+  display:block;width:100%;text-align:left;margin:2px 0;padding:4px 8px;
+  background:transparent;border:none;border-bottom:1px solid rgba(255,214,120,.25);
+  color:#f6e7c0;cursor:pointer;font:inherit;font-size:17px;
+}
+#dialog .dlg-choice:hover{background:rgba(255,196,70,.2);color:#fff6d2}

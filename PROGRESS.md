@@ -1,3 +1,10 @@
+
+## Phase 50 — Original-style HD + RH grip (2026-10-10)
+
+User: keep **original JM layout**; sharper HD only (not new modern UI). Canvas `Hud.draw` bottom bar restored. Dialog/bag/shop use **upscaled JM panels** (`panels_hd`). RH grip per-dir nudge + re-export `player`/`player_hd`. Facing `(oct+6)%8` unchanged. No act-2.
+
+Samples: `assets/samples/phase50/` (`grip_before_after_strip.png`, `grip_E_sd_hd.png`, `live_*.png`).
+
 ## Phase 43 — UI direction: modern HTML/CSS chrome (2026-10-10)
 
 **Direction change (coordinator 重温老游戏):** Stop pixel-matching Wine and stop stretching ResJM panel PNGs as the primary dialog / 行囊 / 买卖 / 镶嵌 / HUD chrome. Act-1 only. **Facing unchanged:** `facing = (oct + 6) % 8` (east = art6). Walk export, gait, and run speed were not touched. Phase 42 buy / sell / embed money and stacks stay.
