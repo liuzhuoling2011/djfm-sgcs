@@ -843,6 +843,40 @@ Skipped (schema still broken).
 
 
 
+## Phase 26 — Act-1 polish (playable town → bq2=100 without soft-DF / killFlag)
+
+**Stopped act-2 export expansion** (user priority). Prior act-2 map export (16 maps) remains in tree; quest scripting deferred.
+
+### Done
+1. **Combat (no soft-DF cheat by default)**
+   - Soft-DF formula hack is **opt-in only**: `?softdf=1`. Default OFF.
+   - **PLACEHOLDER foe caps** via `game.json` `combat.scene_tier` / `df_cap` / `hp_cap` / `at_cap` so Init AT+4/lv can clear act-1. HUD shows `·占位数值` (or `·软DF` when query on).
+   - Boss onCombat HP/AT soft-capped similarly (玉衡/魔豕兽/战象/天机).
+   - Melee cone widened slightly for human Space swings.
+2. **1-8s 天冰 hazards** — Model 220 Autos → ice contact damage zones (74), cyan draw; no Type-12 art yet.
+3. **SetBldAni** dialog op → flash stub; locks/SetBldStatus already wired.
+4. **Quest polish** — 玲珑心 needs bq tumble→wake (bq1 50→60) then sdyx with 天芝; dual 天机 fair Space/faceAttack clears → bq2=50→…→100 → `go 2-0s` / ChangeAct.
+5. **WASD-like retest** (`tools/phase26_wasd_playthrough.py`): no `omniAttack` / `killFlag` / softdf. Map teleports for time; combat is single-direction `faceAttack` (=Space). **Reached bq2=100**, scene `2-0s`.
+
+### Screenshots
+`assets/samples/phase26/wasd_*.png`, log `wasd_playthrough_log.txt`.
+
+### Remaining blockers (human WASD, no debug)
+- **Full walk (no map teleport)** not timed; trash pack density on 1-9s/1-11s still high — human may grind or kite.
+- **Paper-doll**: PLI draw-order/anchors improved earlier; Type-12 / Autos (天冰) still placeholders.
+- **ShowJM shop/embed** still simplified JM frames; inventory polish partial; stamina bar exists (Wine) + Shift run drain.
+- **Damage formula** still AT−DF/2 placeholder until exe formula known — caps labeled, not soft-DF.
+- Human path still requires 甘露→泊祁 for sy1=100 (story); combat does not need soft-DF.
+- Act-2 quest scripting intentionally **not** started.
+
+### Deploy
+- Pages `main` `f59277e` (pending refresh if needed)
+- NAS: (pending)
+
+---
+
+### Earlier Phase 26 note (act-2 export — stopped)
+
 ## Phase 26: act-2 map export + enter 芭蕉村 (2026-10-10)
 
 ### Done
@@ -864,6 +898,9 @@ Harness: act-1 clear flags → talk 泊祁 → **2-0s** with chapter foreword �
 - Nanfang **overlay tiles** often miss in compose (ok=0 on overlay pass) — ground+buildings still show.
 - 2-4as / 2-13as lack flag.txt display names (kept id).
 - Minimap / BGM per act-2 scene not specialized.
+
+### Deploy
+- source `e4fd05c`, Pages `2212e23`, .
 
 ### Samples
 - `assets/samples/phase26/act2_grid.png`, `pt_*.png`, `2-0s.png`…
