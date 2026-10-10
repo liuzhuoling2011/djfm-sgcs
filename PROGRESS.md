@@ -567,3 +567,31 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 - **Client:** `?pack=1-2s` (also a toolbar button). Monsters animate idle/walk/attack/hurt/death by direction, show name and HP bar, chase within sight, and respawn 12 s after death.
 - **Shots:** `assets/samples/phase16/web_1-2s_monsters.png`, `web_1-2s_combat.png`. Not yet compared with Wine (1-2s not reached in Wine).
 - **Deploy:** GitHub Pages commit ced17c6 → https://liuzhuoling2011.github.io/djfm-sgcs/ (1-2s meta HTTP 200). NAS deploy OK.
+
+## Phase 16b — HUD: stamina, potions, skills, Q, minimap (2026-10-10 14:14 UTC+8)
+
+- Matched against the Wine HUD (`/tmp/w7.png` 800×600) using masked pixel search over ResJM.Lib.chs:
+  - **Potions:** JM 92 (red) is pixel-exact at (258,572), error 0.1. JM 90 (blue) is exact at (306,572)/(330,572). Slot pitch is 24 px, with yellow key digits 1–4.
+  - **Q skill icon:** JM 63 at (606,551), error 3.7 (the leftover error is the 'Q' text overlay).
+  - **Minimap frame:** JM 1549 (137×133) at (663,0), error 4.7. The scene-name strip sits underneath.
+  - **Orange stamina bar:** spans x255–388, y555–561. No ResJM entry matched (best error 45), so the bar strip is **cropped from Wine** as `hud/stamina_wine.png` and drains from the right. Shift = run (speed 8), which costs stamina.
+- **Gameplay:** keys 1–4 drink potions (red +40 HP, blue +30 MP; counts 5/5/3/3). Q = whirl attack costing 10 MP that hits everything within 2.5 cells. F1/F2 labels are shown; the skills are not implemented.
+- **Minimap:** renders ground_full at 1/8 world scale around the player, with dots: green = player, red = monsters, blue = NPCs. **It does not draw buildings yet**, so it looks plainer than Wine's, and the Wine zoom level is estimated.
+- **Compare images:** `assets/samples/phase16/wine_vs_web_hud.png`, `wine_vs_web_hud_zoom.png` (top: Wine bar; middle: web bar; bottom: minimaps), `web_hud_800.png`, `web_1-2s_hud.png`.
+- **Deploy:** Pages 087ef0a; NAS OK.
+
+## Phase 16c — MAP overlay (col1) blending (2026-10-10 14:16 UTC+8)
+
+- **Method:** `tools/phase16_overlay_blend.py` renders col0 (ground) and col1 (overlay) at full 64×32 pitch at the calibrated Wine cameras (01_gate_rain, 10_pavilion_tower), applies the measured night tint, and scores each blend mode by median absolute error against Wine over the ~105k pixels covered by overlays (HUD excluded). Results are in `assets/samples/phase16/overlay_blend.json`.
+  | mode | gate | pavilion |
+  |---|---|---|
+  | ground only | 15.7 | 14.6 |
+  | **alpha-over (colour key 0xF81F → transparent)** | **6.45** | **6.45** |
+  | Phase 14 black-key (drop <48) | 7.49 | 6.59 |
+  | 50 % | 11.6 | 10.6 |
+  | darken / lighten | 11.4 / 10.5 | 10.4 / 12.5 |
+  | multiply | 37.8 | 30.0 |
+  | additive | 52.8 | 61.8 |
+- Split by tile coverage: full-diamond overlays improve from 14.6→7.5 and 11.2→4.8 when drawn opaque, so **the Phase 14 rule that skipped coverage ≥45 % tiles was wrong**.
+- **Conclusion:** overlay tiles are a plain colour-keyed opaque blit over the ground diamond, with no translucency or special blend mode and no per-tile flag needed. phase14_ground_deco.py and scene_export.py now draw every col1 tile that way. 瓦当镇 now shows Wine's dirt paths and worn patches.
+- **Compare images:** `assets/samples/phase16/wine_vs_model_pavilion_overlay.png`, `wine_vs_model_gate_overlay.png`, `overlay_blend_01_gate_rain.png`, `overlay_blend_10_pavilion_tower.png` (Wine | ground only | best mode).
