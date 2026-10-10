@@ -715,3 +715,30 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
 
 ### Still open
 - Per-frame `n` sync for attack cycles; RH fine gaps on some dirs; inventory/skills still paused until sprites solid.
+
+## Phase 19c — Inventory / skills / dialog (2026-10-10 Asia/Shanghai)
+
+**Resume** after sprite OK confirmation.
+
+### Inventory & equipment
+- `Init.txt` loadout: 金钱400；小血瓶×2、小气瓶×2、飞蝗石×5、指南珠×2；装备 paper-doll `CA/HD/TK/RH_002`.
+- Data: `web/public/game/data/{init,props,skills,equip901}.json`.
+- `web/src/inventory.ts`: bag (I), potion keys 1/3 from PropMdl heals, 5=飞蝗石, 6=指南珠回出生点.
+- HUD shows 金 / 兵器名 / F1·F2 skill names.
+- Blacksmith: talk 买卖物品 → `ShowJM …86` shop; 镶嵌 → embed stub (+AT, 200金). `AddWeaponNum` / `Acquire` / `Miss` / `IsProp` wired in dialog.
+
+### Skills F1 / F2 (Skill.txt)
+- 初始左手=6 **扫叶**（耗气9，环攻；intro Text 133）.
+- 初始右手=35 **疾电**（耗气18，加攻×2，远距；intro Text 138）.
+- F1 whirl AOE；F2 frontal heavy；Q retained as prior whirl.
+
+### Dialog after 沈云
+- `sy.txt` menu 交谈→自我介绍/关于爷爷 from Dialog_Public1 29–32；gate unlock unchanged.
+- Result cmds: Acquire/Miss/AddWeaponNum/ShowJM；IsProp for 蜀水→铁匠强化链.
+
+### Samples / deploy
+- `assets/samples/phase19c/web_town_inv.png`
+- Pages + NAS this milestone.
+
+### Blocked / deferred
+- Full JM shop/embed UI art (ShowJM panels); gem socket rules; Skill.ini frame VFX; act-1 maps beyond dialog; damage formula REA.

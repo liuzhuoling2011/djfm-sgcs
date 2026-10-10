@@ -26,7 +26,7 @@ export class Hud {
     } catch { /* optional */ }
   }
   // Layout measured on Wine 800x600: bar top y=490; HP orb (11,+20); MP orb (41,+18); weapon (156,+61)
-  draw(ctx: CanvasRenderingContext2D, s: Stats) {
+  draw(ctx: CanvasRenderingContext2D, s: Stats, extra?: { skillL?: string; skillR?: string; money?: number; weapon?: string }) {
     const W = ctx.canvas.width, H = ctx.canvas.height
     if (!this.bar) return
     const x0 = Math.round((W - 800) / 2), y0 = H - 110
@@ -53,13 +53,16 @@ export class Hud {
       if (img && this.pots[k] > 0) ctx.drawImage(img, px, py)
       ctx.fillStyle = '#f8e800'; ctx.fillText(String(k + 1), px + 10, py - 1)
     }
-    // Skill slots F1/F2 (Wine x425/448, y552)
+    // Skill slots F1/F2 (Wine x425/448, y552) — labels from Skill.txt 扫叶/疾电
     ctx.fillStyle = '#f8e800'; ctx.fillText('F1', x0 + 425, y0 + 61); ctx.fillText('F2', x0 + 448, y0 + 61)
+    if (extra?.skillL) { ctx.fillStyle = '#cfe6ff'; ctx.font = '9px ui-sans-serif,system-ui'; ctx.fillText(extra.skillL, x0 + 420, y0 + 78) }
+    if (extra?.skillR) { ctx.fillStyle = '#cfe6ff'; ctx.font = '9px ui-sans-serif,system-ui'; ctx.fillText(extra.skillR, x0 + 448, y0 + 78) }
+    ctx.font = 'bold 11px ui-sans-serif,system-ui' 
     // Q skill icon (JM 63 at Wine (606,551)) + 'Q' label
     if (this.q) { ctx.drawImage(this.q, x0 + 606, y0 + 61); ctx.fillStyle = '#fff'; ctx.fillText('Q', x0 + 641, y0 + 62) }
     ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = '#ffe9a0'; ctx.font = '11px ui-sans-serif,system-ui'
-    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}`, x0 + 255, y0 + 52)
+    ctx.fillText(`HP ${Math.ceil(s.hp)}/${s.maxHp}  MP ${Math.ceil(s.mp)}/${s.maxMp}  Lv${s.lvl}` + (extra?.money != null ? `  金${extra.money}` : '') + (extra?.weapon ? `  ${extra.weapon}` : ''), x0 + 255, y0 + 52)
   }
   // Minimap: JM 1549 frame (137×133) at Wine (663,0) = top-right; interior 6..131 × 6..104; name strip below
   drawMinimap(ctx: CanvasRenderingContext2D, ground: CanvasImageSource | null, gx: number, gy: number, k: number,

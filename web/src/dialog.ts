@@ -10,14 +10,21 @@ const load = async <T>(url: string, fallback: T): Promise<T> => {
 }
 
 /** IsFlag name value [op]; op 1 = flag < value (not yet), op 2 = flag >= value. Bare IsFlag name value = flag >= value. */
-export function evalCond(cond: string, flags: Flags): boolean {
+export type InvHook = { hasProp: (id: number) => boolean; acquire: (id: number, n: number) => void; miss: (id: number, n: number) => void; addWeaponNum: () => void; showShop: () => void; showEmbed: () => void }
+
+export function evalCond(cond: string, flags: Flags, inv?: InvHook): boolean {
   if (!cond.trim()) return true
   return cond.split('*').every((c) => {
     const p = c.trim().split(/\s+/)
-    if (p[0] !== 'IsFlag' || p.length < 3) return true // unknown predicates treated as true for now
-    const name = p[1].toLowerCase(), v = Number(p[2]), op = p[3] !== undefined ? Number(p[3]) : 2
-    const cur = flags[name] ?? 0
-    return op === 1 ? cur < v : cur >= v
+    if (p[0] === 'IsFlag' && p.length >= 3) {
+      const name = p[1].toLowerCase(), v = Number(p[2]), op = p[3] !== undefined ? Number(p[3]) : 2
+      const cur = flags[name] ?? 0
+      return op === 1 ? cur < v : cur >= v
+    }
+    if (p[0] === 'IsProp' && p.length >= 2) {
+      return inv?.hasProp(Number(p[1])) ?? false
+    }
+    return true // unknown predicates ignored
   })
 }
 
@@ -30,11 +37,13 @@ export class DialogSys {
   pack = 'public1'
   open = false
   npc = ''
+  lastEventId = ''
   lines: string[] = []
   idx = 0
   choices: { label: string; entry: TalkEntry }[] = []
   state = 0 // talk "当前号"
   onChange: () => void = () => {}
+  inv?: InvHook
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([
@@ -55,13 +64,23 @@ export class DialogSys {
       if (!p[0]) continue
       if (p[0] === 'SetFlag' && p.length >= 3) this.flags[p[1].toLowerCase()] = Number(p[2])
       else if (p[0] === 'SetExitTextID' && p.length >= 3) this.exitText[p[1].toLowerCase()] = Number(p[2])
-      // Acquire / Miss / go / ShowJM / ScreenEffect / Atb ignored for now
+      else if (p[0] === 'Acquire' && p.length >= 2) this.inv?.acquire(Number(p[1]), Number(p[2] ?? 1))
+      else if (p[0] === 'Miss' && p.length >= 2) this.inv?.miss(Number(p[1]), Number(p[2] ?? 1))
+      else if (p[0] === 'AddWeaponNum') this.inv?.addWeaponNum()
+      else if (p[0] === 'ShowJM') {
+        // ShowJM 20|86 = shop, 20|62|92 = embed (from tj.txt)
+        const arg = p.slice(1).join(' ')
+        if (arg.includes('86')) this.inv?.showShop()
+        else if (arg.includes('62')) this.inv?.showEmbed()
+      }
+      // go / ScreenEffect / Atb still deferred
     }
   }
 
   /** Start talk with NPC EventID (e.g. 'sy'). Returns true if a conversation opened. */
   start(eventId: string): boolean {
     const key = eventId.toLowerCase()
+    this.lastEventId = key
     const entries = this.talks[key]
     if (!entries?.length) {
       this.npc = this.names[key] ?? eventId
@@ -70,7 +89,7 @@ export class DialogSys {
     }
     // Prefer auto entries whose condition matches, in order
     for (const e of entries) {
-      if (e.auto && e.cur === this.state && evalCond(e.cond, this.flags)) {
+      if (e.auto && e.cur === this.state && evalCond(e.cond, this.flags, this.inv)) {
         this.applyResult(e.result)
         if (e.jump_type === 1 && e.jump_data) {
           this.npc = this.names[key] ?? eventId
@@ -80,7 +99,7 @@ export class DialogSys {
       }
     }
     // Menu: entries with jump_type 2 (choice root) or cur matching state with choice_text
-    const menu = entries.filter((e) => !e.auto && e.cur === this.state && evalCond(e.cond, this.flags) && e.choice_text)
+    const menu = entries.filter((e) => !e.auto && e.cur === this.state && evalCond(e.cond, this.flags, this.inv) && e.choice_text)
     if (menu.length) {
       this.npc = this.names[key] ?? eventId
       this.lines = []
@@ -103,8 +122,7 @@ export class DialogSys {
     if (c.entry.jump_type === 2) {
       this.state = c.entry.jump_data
       // re-enter menu at new state — caller should start() again; do it here with same npc
-      const key = Object.keys(this.names).find((k) => this.names[k] === this.npc) ?? this.npc
-      this.start(key); return
+      this.start(this.lastEventId || this.npc); return
     }
     if (c.entry.jump_type === 3) { this.close(); return }
     this.close()
