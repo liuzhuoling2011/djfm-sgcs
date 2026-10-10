@@ -24,9 +24,11 @@ export class Inventory {
   items: InvItem[] = []
   money = 0
   weaponSlots = 1 // AddWeaponNum from blacksmith
+  embedGems = 0 // filled gem slots (visual)
   open = false
   shopOpen = false // blacksmith 买卖
-  embedOpen = false // 镶嵌 stub
+  shopMode: 'buy' | 'sell' = 'buy'
+  embedOpen = false // 镶嵌
   toast = ''
   toastT = 0
   potCd = 0  // shared potion cooldown (s)
@@ -133,12 +135,36 @@ export class Inventory {
     return true
   }
 
+  /** Sell price = floor(buy*0.4) for catalog goods; else 5 gold flat for misc props */
+  sellPrice(id: number) {
+    const row = this.shopCatalog().find((r) => r.id === id)
+    if (row) return Math.max(1, Math.floor(row.price * 0.4))
+    return 5
+  }
+
+  sell(id: number) {
+    if (this.qty(id) <= 0) { this.flash('没有此物'); return false }
+    const price = this.sellPrice(id)
+    this.miss(id, 1)
+    this.money += price
+    this.flash(`卖出 ${this.props[String(id)]?.name ?? id} +${price} 金`)
+    return true
+  }
+
   /** 镶嵌 stub: spend 蜀水 (120) already handled by dialog; here spend money to +AT */
   embedUpgrade(stats: { at?: number }) {
-    if (this.money < 200) { this.flash('镶嵌需要 200 金钱'); return false }
-    this.money -= 200
-    stats.at = (stats.at ?? 40) + 2 * this.weaponSlots
-    this.flash(`${this.weaponName()} 镶嵌强化 AT+${2 * this.weaponSlots}`)
+    const cost = 200
+    const hasShuishui = this.qty(120) > 0 // 蜀水
+    if (!hasShuishui && this.money < cost) { this.flash('镶嵌需要 200 金钱或 蜀水'); return false }
+    if (this.embedGems >= Math.max(1, this.weaponSlots) * 2) {
+      this.flash('镶嵌槽已满'); return false
+    }
+    if (hasShuishui) this.miss(120, 1)
+    else this.money -= cost
+    const gain = 2 * Math.max(1, this.weaponSlots)
+    stats.at = (stats.at ?? 40) + gain
+    this.embedGems += 1
+    this.flash(`${this.weaponName()} 镶嵌 AT+${gain}${hasShuishui ? '（蜀水）' : ''}`)
     return true
   }
 }

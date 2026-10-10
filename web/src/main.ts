@@ -354,32 +354,45 @@ async function main() {
       return `<li><span class="nm">${d?.name ?? '#'+it.id}</span><span class="qty">×${it.qty}</span></li>`
     }).join('') || '<li class="empty">（空）</li>'
     if (inv.shopOpen) {
-      // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226; BUY/SELL/CLOSE from JMMDL
-      const slots = inv.shopCatalog().map((r, i) => {
-        const n = inv.props[String(r.id)]?.name ?? r.id
-        return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}</span><span class="pr">${r.price} 金</span></button>`
-      }).join('')
+      // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226
+      const buyMode = inv.shopMode === 'buy'
+      let slots = ''
+      if (buyMode) {
+        slots = inv.shopCatalog().map((r, i) => {
+          const n = inv.props[String(r.id)]?.name ?? r.id
+          return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}</span><span class="pr">${r.price} 金</span></button>`
+        }).join('')
+      } else {
+        const sellable = inv.items.filter((it) => it.qty > 0)
+        slots = sellable.map((it, i) => {
+          const n = inv.props[String(it.id)]?.name ?? it.id
+          const pr = inv.sellPrice(it.id)
+          return `<button type="button" data-sell="${it.id}"><span class="nm">${i + 1}. ${n}×${it.qty}</span><span class="pr">售 ${pr} 金</span></button>`
+        }).join('') || '<div class="jm-empty">（无可卖物品）</div>'
+      }
       invEl.innerHTML = `<div class="box"><div class="jm-frame shop">
         <div class="jm-title">买卖</div>
-        <div class="jm-body"><div class="jm-slots">${slots}</div></div>
+        <div class="jm-body"><div class="jm-slots">${slots}</div>
+          <p class="jm-shop-hint">${buyMode ? '点商品购入' : '点物品卖出（四折）'}</p></div>
         <div class="jm-money">金钱 ${inv.money}</div>
         <div class="jm-deal-btns">
-          <button type="button" class="jm-deal buy" data-close-shop title="购入后点商品">购入</button>
-          <button type="button" class="jm-deal sell" data-close-shop>卖出</button>
+          <button type="button" class="jm-deal buy${buyMode ? ' on' : ''}" data-shop-mode="buy">购入</button>
+          <button type="button" class="jm-deal sell${!buyMode ? ' on' : ''}" data-shop-mode="sell">卖出</button>
           <button type="button" class="jm-deal close" data-close-shop>关闭</button>
         </div>
       </div></div>`
     } else if (inv.embedOpen) {
       // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226; gem rects 25×25
+      const slots = Math.max(1, inv.weaponSlots) * 2
       invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
         <div class="jm-title">镶嵌</div>
-        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽位 ×${inv.weaponSlots}<br/>
-          金钱 ${inv.money}　花费 200 金（AT+${2 * inv.weaponSlots}）</div>
+        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}<br/>
+          金钱 ${inv.money}　蜀水 ×${inv.qty(120)}　花费 200 金或 1 蜀水（AT+${2 * Math.max(1, inv.weaponSlots)}）</div>
         <div class="jm-gem-grid" aria-hidden="true">
-          ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.weaponSlots ? ' on' : ''}"></div>`).join('')}
+          ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.embedGems ? ' on' : ''}"></div>`).join('')}
         </div>
         <div class="jm-embed-actions">
-          <button type="button" data-embed>确认</button>
+          <button type="button" data-embed>确认镶嵌</button>
           <button type="button" data-close-embed>关闭</button>
         </div>
       </div></div>`
@@ -388,42 +401,56 @@ async function main() {
         <div class="jm-title">行囊</div>
         <button type="button" class="jm-close" data-close-inv aria-label="关闭">×</button>
         <div class="jm-body"><ul class="jm-bag-list">${rows}</ul></div>
-        <div class="jm-bag-equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'}</div>
+        <div class="jm-bag-equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
         <div class="jm-money">金钱 ${inv.money}</div>
       </div></div>`
     }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
       inv.buy(Number((b as HTMLElement).dataset.buy)); const ps = inv.potSlots(); hud.pots = [...ps]; renderInv()
     }))
-    invEl.querySelector('[data-close-shop]')?.addEventListener('click', () => { inv.shopOpen = false; renderInv() })
-    invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); inv.embedOpen = false; renderInv() })
-    invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => { inv.embedOpen = false; renderInv() }))
+    invEl.querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', () => {
+      inv.sell(Number((b as HTMLElement).dataset.sell)); const ps = inv.potSlots(); hud.pots = [...ps]; renderInv()
+    }))
+    invEl.querySelectorAll('[data-shop-mode]').forEach((b) => b.addEventListener('click', () => {
+      inv.shopMode = ((b as HTMLElement).dataset.shopMode === 'sell' ? 'sell' : 'buy')
+      renderInv()
+    }))
+    invEl.querySelector('[data-close-shop]')?.addEventListener('click', () => { inv.shopOpen = false; inv.open = false; renderInv() })
+    invEl.querySelector('[data-embed]')?.addEventListener('click', () => { inv.embedUpgrade(stats); renderInv() })
+    invEl.querySelectorAll('[data-close-embed]').forEach((b) => b.addEventListener('click', () => { inv.embedOpen = false; inv.open = false; renderInv() }))
     invEl.querySelector('[data-close-inv]')?.addEventListener('click', () => { inv.open = false; renderInv() })
     placeChrome()
   }
   /** Pin dialog + bag to the canvas. HUD is 110px in 800-space, scaled to canvas width. */
   function placeChrome() {
+    // Phase 41: pin JM panels to playfield — Wine uses 326×226 @ ~center above 110px HUD bar
     const r = canvas.getBoundingClientRect()
     if (r.width < 8 || r.height < 8) return
-    const barDisplay = r.height * (110 * (canvas.width / 800)) / canvas.height
+    const scale = r.width / 800
+    const barDisplay = 110 * scale
     const aboveHud = Math.max(0, window.innerHeight - r.bottom + barDisplay)
     if (dialogEl.style.display !== 'none' && dialogEl.classList.contains('jm-dialog')) {
-      const w = Math.round(r.width * 0.74)
-      dialogEl.style.left = `${Math.round(r.left + r.width * 0.02)}px`
+      const w = Math.round(Math.min(560, r.width * 0.7))
+      dialogEl.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`
       dialogEl.style.width = `${w}px`
       dialogEl.style.right = 'auto'
-      dialogEl.style.bottom = `${Math.round(aboveHud + 2)}px`
+      dialogEl.style.bottom = `${Math.round(aboveHud + 6)}px`
       dialogEl.style.top = 'auto'
       dialogEl.style.transform = 'none'
     }
     if (!invEl.classList.contains('hidden')) {
-      const bw = Math.round(Math.max(300, Math.min(460, r.width * (326 / 800))))
-      const bh = Math.round(bw * (226 / 326))
+      const bw = Math.round(326 * scale)
+      const bh = Math.round(226 * scale)
       invEl.style.setProperty('--jm-w', `${bw}px`)
       invEl.style.setProperty('--jm-h', `${bh}px`)
+      invEl.style.width = `${bw}px`
+      invEl.style.height = `${bh}px`
       invEl.style.left = `${Math.round(r.left + r.width / 2)}px`
-      invEl.style.top = `${Math.round(r.top + (r.height - barDisplay) * 0.46)}px`
+      // Vertical: center of playfield above HUD (Wine ~ mid-screen)
+      const playH = r.height - barDisplay
+      invEl.style.top = `${Math.round(r.top + playH * 0.42)}px`
       invEl.style.right = 'auto'
+      invEl.style.bottom = 'auto'
       invEl.style.transform = 'translate(-50%, -50%)'
     }
   }
@@ -1266,7 +1293,8 @@ async function main() {
     const stamRegen = (INIT.stamina_regen ?? 3) / Math.max(1, INIT.stamina ?? 80)
     stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -stamUse : stamRegen) * dt))
     const ox0 = pos.x, oy0 = pos.y
-    const speed = running ? 7.2 : 4.5
+    // Phase41: Wine run ~1.45× walk; keep stride locked to displacement
+    const speed = running ? 6.5 : 4.5
     const nx = pos.x + (dx / len) * speed * dt
     const ny = pos.y + (dy / len) * speed * dt
     if (walkable(nx, pos.y)) pos.x = nx
@@ -1277,7 +1305,8 @@ async function main() {
     const moved = Math.hypot(pos.x - ox0, pos.y - oy0)
     if (moved > 1e-5) {
       const prev = animT
-      animT += moved * 2.0 // Phase35: ~2 cells per 4-frame walk cycle
+      // Phase41: ~2.2 cells/cycle walk (slower footwork vs slide); run same scale via moved
+      animT += moved * 2.2
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 

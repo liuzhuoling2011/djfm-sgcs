@@ -92,8 +92,17 @@ def walk_subs(sid: int, base: int, d: int, want: int = 4) -> list[int]:
                 # ping-pong (6): take forward 4
                 if nf == 6:
                     subs = subs[:4]
+                # Phase41: 3-frame walks ping-pong (1,2,3,2) instead of duplicate last
                 while len(subs) < want:
-                    subs.append(subs[-1])
+                    if len(subs) >= 2:
+                        # mirror previous-but-one for smoother gait
+                        nxt = subs[-2]
+                        # avoid immediate triple-repeat
+                        if len(subs) >= 3 and nxt == subs[-1]:
+                            nxt = subs[0]
+                        subs.append(nxt)
+                    else:
+                        subs.append(subs[-1])
                 return subs[:want]
     # Only nf=1 singles (dirs 4–5): continuous walk lives in nests 0..15 —
     # do NOT take every-8th idle keys (9,17,25…). Use first `want` nests.
@@ -107,7 +116,13 @@ def walk_subs(sid: int, base: int, d: int, want: int = 4) -> list[int]:
         keys = sorted(by)
         picked = keys[:want]
         while len(picked) < want:
-            picked.append(picked[-1])
+            if len(picked) >= 2:
+                nxt = picked[-2]
+                if len(picked) >= 3 and nxt == picked[-1]:
+                    nxt = picked[0]
+                picked.append(nxt)
+            else:
+                picked.append(picked[-1])
         return picked
     return list(range(1, want + 1))
 

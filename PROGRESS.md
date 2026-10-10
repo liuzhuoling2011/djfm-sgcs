@@ -1459,3 +1459,21 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 
 - Deploy: source `9faf5ea`, Pages `7af67d0`, NAS OK.
 
+## Phase 41 — Walk/run GIFs + 行囊/镶嵌/买卖 (2026-10-10)
+
+### Walk / run
+- Recorded web walk+run GIFs for E/W/N/S (+diags art) under `assets/samples/phase41/`.
+- Live hold-key captures: `live_walk_{E,W,N,S}.gif`, `live_run_{E,W,N,S}.gif` (facing verified E→6 W→2 N→4 S→0).
+- Side-by-side Wine|Web: `sbs_walk_*.gif` / `sbs_run_*.gif` (Wine strips from phase37).
+- Gait: E/SE Spr 3-frame walks now ping-pong `[1,2,3,2]` (was `[1,2,3,3]`); stride `animT+=moved*2.2`; run speed 6.5 (was 7.2).
+- **Kept Phase39** `facing=(oct+6)%8` / RH_002 / art6=east.
+
+### 行囊 / 镶嵌 / 买卖
+- `placeChrome()` pins JM panels at Wine 326×226 scale to canvas mid-playfield.
+- Shop: **购入** mode clicks catalog (gold deduct, stack++); **卖出** mode lists bag (40% buy price / misc 5金); mode toggle buttons work.
+- Embed: spends 200金 or 1×蜀水(120); fills gem slots; AT+=2×weaponSlots; stays open for multi-embed.
+- Bag: list + money + equip/skill/embed count; B/I toggle.
+
+### Verified in Playwright
+- Buy 小血瓶 400→360; sell +16→376; embed money 500→300 gems=1 AT 40→42.
+
