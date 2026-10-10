@@ -1,4 +1,5 @@
 import './style.css'
+import { DialogSys } from './dialog'
 import { Hud, stepFoes, playerAttack, type Foe, type Stats } from './hud'
 
 type Vec = { x: number; y: number }
@@ -125,6 +126,8 @@ async function main() {
   let dialogNpc = ''
   let attackT = 0
   const hud = new Hud(); void hud.load()
+  const dlg = new DialogSys(); void dlg.load()
+  dlg.onChange = () => renderDialog()
   // mb/player/Init.txt 男主角: AT40(+4/lv) DF30(+4) HP800(+80) regen1.4 MP36 Stamina80 regen3/s use10/s
   const stats: Stats = { hp: 800, maxHp: 800, mp: 36, maxMp: 36, exp: 0, lvl: 1, at: 40, df: 30, sp: 1 }
   let monSets: NonNullable<MapMeta['monster_sets']> = {}
@@ -142,21 +145,32 @@ async function main() {
     renderDialog()
   }
   function renderDialog() {
-    if (!dialogOpen) {
-      dialogEl.classList.add('hidden')
-      dialogEl.innerHTML = ''
+    if (dlg.open) {
+      dialogOpen = true
+      dialogEl.style.display = 'block'
+      if (dlg.choices.length) {
+        const opts = dlg.choices.map((c, i) => `<button data-i="${i}" style="display:block;margin:4px 0">${i + 1}. ${c.label}</button>`).join('')
+        dialogEl.innerHTML = `<div class="box"><b>${dlg.npc}</b><div>${opts}</div><small>数字键选择 · Esc 关闭</small></div>`
+        dialogEl.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { dlg.pick(Number((b as HTMLButtonElement).dataset.i)); dialogOpen = dlg.open; renderDialog() }))
+      } else {
+        const line = dlg.lines[dlg.idx] ?? ''
+        dialogEl.innerHTML = `<div class="box"><b>${dlg.npc}</b><p>${line}</p><small>E / Enter 继续 · Esc 关闭</small></div>`
+      }
       return
     }
-    dialogEl.classList.remove('hidden')
+    if (!dialogOpen) { dialogEl.style.display = 'none'; return }
+    dialogEl.style.display = 'block'
     const line = dialogLines[dialogIdx] ?? ''
     dialogEl.innerHTML = `<div class="box"><b>${dialogNpc}</b><p>${line}</p><small>E / Enter 继续 · Esc 关闭</small></div>`
   }
   function advanceDialog() {
-    if (!dialogOpen) return
-    dialogIdx++
-    if (dialogIdx >= dialogLines.length) {
-      dialogOpen = false
+    if (!dialogOpen && !dlg.open) return
+    if (dlg.open) {
+      if (dlg.choices.length) return
+      dlg.advance(); dialogOpen = dlg.open; renderDialog(); return
     }
+    dialogIdx++
+    if (dialogIdx >= dialogLines.length) dialogOpen = false
     renderDialog()
   }
 
@@ -234,7 +248,8 @@ async function main() {
       warpCd = 0.5; warpArmed = false
     }
     if (firstLoad) { firstLoad = false; const at = new URLSearchParams(location.search).get('at'); if (at) { const [ax, ay] = at.split(',').map(Number); pos.x = ax - origin.x; pos.y = ay - origin.y } }
-    if (!walkableNow(pos.x, pos.y, mapW, mapH, blocked)) {
+    const onTrig = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 2.5)
+    if (!walkableNow(pos.x, pos.y, mapW, mapH, blocked) && !onTrig) {
       search: for (let r = 1; r < 40; r++) {
         for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
           if (walkableNow(pos.x + dx, pos.y + dy, mapW, mapH, blocked)) { pos.x += dx; pos.y += dy; break search }
@@ -242,6 +257,18 @@ async function main() {
       }
     }
     spawnPos = { x: pos.x, y: pos.y }
+    // Act-1 town: lock 1-1s exit until 沈云 sets sy1 (scene script IsFlag sy1 1 1 → SetExitTextID 1-1s 308)
+    if (curScene === '1-0s' && (dlg.flags.sy1 ?? 0) < 1 && dlg.exitText['1-1s'] === undefined) dlg.exitText['1-1s'] = 308
+    const gateCells = (meta as { quest_gate_cells?: [number, number][] }).quest_gate_cells
+    if (gateCells && walkGrid) {
+      const open = (dlg.flags.sy1 ?? 0) >= 1 || dlg.exitText['1-1s'] === -1
+      for (const [gx, gy] of gateCells) {
+        if (gy >= 0 && gy < walkGrid.length && gx >= 0 && gx < walkGrid[gy].length) {
+          const row = walkGrid[gy].split(''); row[gx] = open ? '1' : '0'; walkGrid[gy] = row.join('')
+        }
+      }
+      WG = walkGrid ? { g: walkGrid, ox: origin.x, oy: origin.y } : null
+    }
     foes = []
     monSets = meta.monster_sets ?? {}
     for (const [sid, acts] of Object.entries(monSets)) for (const a of Object.values(acts)) for (const f of a.frames) {
@@ -302,17 +329,32 @@ async function main() {
         const d = Math.hypot(ox - pos.x, oy - pos.y)
         if (d <= range && (!best || d < best.d)) best = { d, o }
       }
-      if (best?.o.EventID) showDialog(best.o.EventID)
+      if (best?.o.EventID) { dlg.state = 0; dlg.start(String(best.o.EventID)); dialogOpen = dlg.open; renderDialog() }
     }
     if (k === ' ' && !dialogOpen && attackCd <= 0) {
       attackT = 0.28
       attackCd = (gameData?.attack?.cooldown_ms ?? 450) / 1000
       playerAttack(foes, pos, (facing % 8) * (Math.PI / 4) - Math.PI, stats)
     }
+    if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
+      dlg.pick(Number(k) - 1); dialogOpen = dlg.open; renderDialog(); return
+    }
+    if (k === 'escape' && dlg.open) { dlg.close(); dialogOpen = false; renderDialog(); return }
     // Potions 1–4 (red = HP, blue = MP) and Q skill (whirl: 10 MP, all foes within 2.5 cells)
     if (['1', '2', '3', '4'].includes(k) && !dialogOpen) {
       const i = Number(k) - 1
       if (hud.pots[i] > 0) { hud.pots[i]--; if (i < 2) stats.hp = Math.min(stats.maxHp, stats.hp + 400); else stats.mp = Math.min(stats.maxMp, stats.mp + 18) }
+    }
+    if (k === 'f9') {
+      dlg.unlockNorthGate()
+      // reopen gate cells immediately
+      if (walkGrid) {
+        for (const [gx, gy] of [[70,24],[71,24],[72,24]] as [number,number][]) {
+          if (gy < walkGrid.length) { const row = walkGrid[gy].split(''); row[gx] = '1'; walkGrid[gy] = row.join('') }
+        }
+        WG = { g: walkGrid, ox: origin.x, oy: origin.y }
+      }
+      hint.textContent = 'DEBUG: 北门已开 (sy1=1, exit 1-1s unlocked) — 同与沈云对话'
     }
     if (k === 'q' && !dialogOpen && attackCd <= 0 && stats.mp >= 10) {
       stats.mp -= 10; attackT = 0.4; attackCd = 0.8
@@ -362,13 +404,21 @@ async function main() {
     pos.y = Math.max(0, Math.min(mapH - 1, pos.y))
 
     stepFoes(foes, pos, stats, dt, walkable)
-    warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y }
-    const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 3.2)
+    warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
+    const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
     if (warpCd <= 0 && warpArmed) for (const g of curTriggers) {
       if (Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 3.2) {
         const dest = g.script.split(/\s+/)[1]?.toLowerCase()
-        if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) { warpCd = 99; void applyPack(packOf(dest), curScene); break }
+        if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) {
+          const lock = dlg.exitLock(dest)
+          if (lock) {
+            dlg.npc = '出口'; dlg.lines = (dlg.text(lock).replace(/^\(对话 \d+\)$/, '') || '（前方的路还不能走——先去和沈云说说吧。）').split('\n').filter(Boolean)
+            if (!dlg.lines.length) dlg.lines = ['（前方的路还不能走——先去和沈云说说吧。）']; dlg.idx = 0; dlg.choices = []; dlg.open = true
+            dialogOpen = true; renderDialog(); warpCd = 0.8; break
+          }
+          warpCd = 99; void applyPack(packOf(dest), curScene); break
+        }
       }
     }
     stats.mp = Math.min(stats.maxMp, stats.mp + dt * 1.2)

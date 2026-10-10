@@ -639,3 +639,27 @@ See assets/samples/xp_compare/COMPARE_NOTES.md — Wine original 瓦当镇 shots
   - The per-frame lep header after `b8` holds two (u32, u32) pairs. When the first value is 0, the second equals the decoded W (or H), e.g. 546 f10: (0,17),(0,24) = 17×24. Otherwise the pair seems to be a packed offset plus size that I haven't cracked (594 f0: (1326,6),(667,22) for a 108×51 frame), so the layer registration offsets are unknown.
   - bld_rle also guesses the wrong width on some tiny layer frames (570 f0 → 24×1).
   - Without those offsets, any composite would be a guess, so 190 still uses the spear body (set 594). Next step: decode the header pair (likely x/y origin relative to the role foot) or use the Spr.lib ox/oy tables (`tools/spr.py`) once their res→ResNpc3 mapping is known.
+
+## Phase 18a — act-1 map chain 1-3s / 1-3as (2026-10-10 15:11 UTC+8)
+
+- Exported `1-3s` (256², Map_Ren, 136 bld) and `1-3as` (192², Map_Diyu, 274 bld) via scene_export.py. Added to maps/index.json. Minimap PNGs generated.
+- Go-trigger chain now playable: **1-0s ↔ 1-1s ↔ 1-2s ↔ 1-3s ↔ 1-3as**.
+- The 1-3s→1-3as and return doors sit on MAP cells flagged non-walkable (scripted entrances). Opened short corridors in walk_grid (`meta.scripted_paths`) so the remake can enter; marked as remake-side.
+- Trigger radius 4.5; standing on a go-trigger no longer gets walkable-nudged away.
+- Shots: `assets/samples/phase18/at_1-3as.png`, `back_1-3s.png`, `at_1-2s.png`, `at_1-3s.png`.
+
+## Phase 18b — NPC talk + quest gate (2026-10-10 15:11 UTC+8)
+
+- Exported `web/public/game/dialog/`: Dialog_Public1/2/3, 65 talk scripts, NPC names from trigger/flag.txt.
+- New `web/src/dialog.ts`: flag table, IsFlag cond (op1 = flag&lt;v, op2 = flag≥v), SetFlag / SetExitTextID, auto + choice menus.
+- **E near NPC** runs talk by ONT EventID. Talking to **沈云 (sy)** runs the auto line → dialog 26, `SetFlag sy1 1`, `SetExitTextID 1-1s -1`.
+- Town north exit: locked with exitText 308 while sy1&lt;1 (dialog 308 missing from Public1 → fallback copy「前方的路还不能走——先去和沈云说说吧。」). Gate cells (70–72,24) stay blocked until unlock.
+- **F9** debug unlock mirrors the sy talk result.
+- Verified: talk sets sy1=1; locked exit shows the fallback; F9 then walk/warp reaches 1-1s.
+- Shots: `talk_sy.png`, `exit_locked.png`, `unlock_to_1-1s.png`.
+
+## Phase 18c — damage/stamina RE (2026-10-10 15:11 UTC+8)
+
+- Strings scan of ComeOn.exe found `ChangeObjHp`, `ATB HP`, `ATB MAXHP`, `ATB MP`, `ATB HPRESUME`, `PoisonRate` / `define.ini` (matches known DoT). No `Stamina` ASCII string; no 耐力 hits in a quick GBK pass.
+- Opened the PE in REA successfully; `search_strings` then failed with an MCP schema error (`result`/`evidence_id` required), so no xrefs or decompile of the damage path.
+- **Still blocked:** original damage formula and stamina-bar draw. Placeholders remain (AT−DF/2 ±10%; Wine-cropped stamina strip).

@@ -104,7 +104,11 @@ def main(scene):
             mons.append(dict(x=x, y=y, role=mid, name=role.get(mid, {}).get('name', '?'), set=s0, **st,
                              range=[o.get('MoveRangeX', x), o.get('MoveRangeY', y), o.get('MoveRangeCx', 0), o.get('MoveRangeCy', 0)]))
         else:
-            npcs.append(dict(x=x, y=y, ModelID=mid, Type=o.get('Type'), EventID=o.get('EventID')))
+            gid = role.get(mid, {}).get('graph', '')
+            try: gid = int(gid) if str(gid).isdigit() else mid
+            except Exception: gid = mid
+            npcs.append(dict(x=x, y=y, ModelID=mid, Type=o.get('Type'), EventID=o.get('EventID'),
+                             name=role.get(mid, {}).get('name', ''), graph=gid))
     _, act = tsv('ActMdl.txt')
     spawn = None
     for p in act:
@@ -114,7 +118,7 @@ def main(scene):
         if mons: cand = [(abs(x - mons[0]['x']) + abs(y - mons[0]['y']) + (100 if abs(x - mons[0]['x']) + abs(y - mons[0]['y']) < 8 else 0), x, y) for _, x, y in cand]
         _, sx, sy = min(cand); spawn = [sx, sy]
     meta = dict(scene=scene, scene_name=scene, pack_id=scene, chunk_origin=[0, 0], chunk_size=[mw, mh], map_dims=[mw, mh],
-                tile_pixel=[64, 32], spawn=spawn, grid=[], buildings=blds, npcs=[], objects=[], monsters=mons, monster_sets=monsets, triggers=trig,
+                tile_pixel=[64, 32], spawn=spawn, grid=[], buildings=blds, npcs=npcs, objects=npcs, monsters=mons, monster_sets=monsets, triggers=trig,
                 walk_grid=walk, ground_full=dict(file='ground_full.png', **orig, pixel_size=list(g.size)),
                 source=f'Phase16 scene_export {scene}: {mp.name}+{libname}+{mdl}')
     (out / 'meta.json').write_text(json.dumps(meta, ensure_ascii=False))
