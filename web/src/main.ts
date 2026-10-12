@@ -1,6 +1,6 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, type Foe, type Stats, type FloatDmg } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, dmgMid, type Foe, type Stats, type FloatDmg } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 import { loadSfx, playSfx, setSfxEnabled } from './sfx'
@@ -113,18 +113,18 @@ async function main() {
   let npcImgs = new Map<string, HTMLImageElement>()
   let origin = { x: 0, y: 0 }
   const qs = new URLSearchParams(location.search)
-  setSoftDf(qs.get('softdf') === '1')
+  setSoftDf(qs.get('softdf') === '1' || qs.get('legacydf') === '1')
   const helpEl = document.createElement('div')
   helpEl.className = 'combat-help'
   helpEl.id = 'combat-help'
   const helpTxt = (gameData as { combat?: { help?: string } } | null)?.combat?.help
-    ?? 'Init成长 AT40+4/lv；伤害 AT−DF/2；怪物 RolePrivate+场景封顶。?softdf=1 软DF。'
+    ?? 'Init成长 AT40+4/lv；伤害≈AT±10%（防御≈闪避）；怪物 RolePrivate+场景封顶。?legacydf=1 旧AT−DF/2。'
   helpEl.innerHTML = helpTxt + ' <button type="button" style="margin-left:8px">知道了</button>'
   document.body.append(helpEl)
   helpEl.querySelector('button')?.addEventListener('click', () => helpEl.classList.add('hidden'))
   window.setTimeout(() => helpEl.classList.add('hidden'), 14000)
-  if (SOFT_DF) console.info('[djfm] soft-DF ON (?softdf=1)')
-  else console.info('[djfm] soft-DF off; using placeholder foe caps')
+  if (SOFT_DF) console.info('[djfm] legacy AT−DF/2 ON (?softdf=1|legacydf=1)')
+  else console.info('[djfm] Phase52 on-hit≈AT±10% (DF→dodge); scene_tier caps on foe HP/AT')
   {
     const ig = (gameData as { combat?: { init_male?: Record<string, number> } })?.combat?.init_male
     if (ig) setInitGrowth(ig)
@@ -1454,7 +1454,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, dmgMid, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }

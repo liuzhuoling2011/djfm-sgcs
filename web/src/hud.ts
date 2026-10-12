@@ -1,3 +1,4 @@
+import { DAMAGE } from './evidence'
 // Phase 15: original HUD (ResJM.Lib.chs) + HP/MP orbs + simple combat model.
 export type Foe = {
   x: number; y: number; hp: number; maxHp: number; cd: number; hitT: number; dead: number
@@ -40,14 +41,31 @@ export function tryLevelUp(st: Stats): boolean {
   st.mp = st.maxMp
   return true
 }
-// Damage: PLACEHOLDER (Phase 51). ComeOn.exe opened in REA but string/proc search MCP-schema-broken;
-// no address-level formula. Working model AT−DF/2 ±10% min1 (Phase 17c). Soft-DF only ?softdf=1.
-// Act-1 playability: scene_tier caps in game.json, not this formula.
+// Damage Phase 52: on-hit ≈ AT±10% (DF is dodge per series FAQ + 命中/闪避 columns).
+// Legacy AT−DF/2 via ?softdf=1 / ?legacydf=1. scene_tier caps still tame raw RolePrivate HP/AT.
 export let SOFT_DF = false
+/** When true, use Phase 17c AT−DF/2 (± soft cap). Default false = AT-flat. */
 export function setSoftDf(on: boolean) { SOFT_DF = on }
 export const dmg = (at: number, df: number) => {
-  const use = SOFT_DF ? Math.min(df, at * 0.85) : df
-  return Math.max(1, (at - use / 2) * (0.9 + Math.random() * 0.2))
+  const lo = DAMAGE.varianceMin, hi = DAMAGE.varianceMax
+  const roll = lo + Math.random() * (hi - lo)
+  if (SOFT_DF) {
+    // LEGACY PLACEHOLDER (Phase 17c): AT − DF/2 ±10%, optional soft DF cap
+    const use = Math.min(df, at * 0.85)
+    return Math.max(DAMAGE.minDealt, (at - use / 2) * roll)
+  }
+  // Default: VERIFIED direction (DF≠mitigation) + HEURISTIC magnitude
+  void df
+  return Math.max(DAMAGE.minDealt, at * roll)
+}
+/** Deterministic mid-roll damage for tests (no RNG). */
+export const dmgMid = (at: number, df: number, legacy = false) => {
+  const mid = (DAMAGE.varianceMin + DAMAGE.varianceMax) / 2
+  if (legacy) {
+    const use = Math.min(df, at * 0.85)
+    return Math.max(DAMAGE.minDealt, (at - use / 2) * mid)
+  }
+  return Math.max(DAMAGE.minDealt, at * mid)
 }
 
 /** Remake tuning (not from tables): late-map trash density / leash — see game.json combat.remake */

@@ -1,3 +1,41 @@
+## Phase 52 — Melee damage: AT-flat (DF≈dodge) (2026-10-12 ~22:50 Asia/Shanghai)
+
+**Ask:** Replace AT−DF/2 ±10% PLACEHOLDER with best evidence-backed formula **without** broken REA `search_strings`.
+
+### Evidence searched
+- `mb/*.txt|*.ini` + `player/Init.txt` / `skill.txt` / `RolePrivate.txt` / `define.ini` — **no** physical AT−DF equation (same finding as Phase 17c). `define.ini` only poison/fire DoT rates.
+- Tables **do** separate `命中率` / `闪避率` from AT/DF; `skill.txt` 「加攻击力」 scales skill AT.
+- Init `DF4..DF0` = 100/100/80/70/60 still **unresolved** (not wired).
+- ComeOn.exe: `RolePrivate.txt` string @ file `0x1742ec`; no GBK「伤害」; REA string/proc search still MCP-schema-broken — skipped heavy retries.
+- **Community FAQ** (刀剑封魔录系列, e.g. game773): **防御≈闪避** — DF lowers hit chance; a landed hit still hurts by attacker AT vs your HP. Matches table layout.
+
+### Formula (default)
+| Label | Rule |
+|-------|------|
+| VERIFIED direction | DF is **not** on-hit mitigation |
+| HEURISTIC magnitude | `dealt = max(1, AT * U(0.9,1.1))` |
+| LEGACY debug | `?softdf=1` / `?legacydf=1` → old AT−DF/2 (± soft DF cap) |
+
+Skill F1/F2 still multiply AT before `playerAttack`. Facing `(oct+6)%8` unchanged. Act-1 only.
+
+### Files
+- `web/src/evidence.ts` — `DAMAGE` block
+- `web/src/hud.ts` — `dmg` / `dmgMid`
+- `web/src/main.ts` — query + help banner
+- `web/public/game/data/game.json` — combat.note / damage_model
+- `tools/phase52_damage_check.py` — **PASS**
+- `PROGRESS.md` (this section)
+
+### Build / git
+`cd web && npm run build`. Branch `phase52-damage` (from phase51-evidence-slice).
+
+### Remaining blockers
+1. Hit/dodge equation (命中 vs 闪避/DF) not implemented — remake still always hits in cone.
+2. Difficulty (英雄无悔) AT/HP scale unknown — scene_tier caps still needed for raw RolePrivate.
+3. Init DF4..DF0 / elemental IceDp·FireDp·PoisonDp not wired into damage.
+
+---
+
 ## Phase 51 — Evidence-driven act-1 vertical slice (2026-10-12 ~22:40 Asia/Shanghai)
 
 **Ask:** Remake 上古传说 chapter-1 again, but nail **one system at a time** with REA/static evidence (no Wine GIF chase). Act-1 / 瓦当镇 only. No jump. Facing `(oct+6)%8` kept.

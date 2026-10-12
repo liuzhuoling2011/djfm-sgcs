@@ -4,7 +4,7 @@
  * Labels:
  *   VERIFIED  = read from original mb tables / scene scripts (fol extract)
  *   HEURISTIC = remake world-unit scale or timing fitted to prior Wine feel
- *   PLACEHOLDER = still unknown in exe (REA search_strings schema-broken this session)
+ *   PLACEHOLDER = still unknown (hit/dodge eq; DF4..DF0; difficulty AT scale)
  *
  * REA: ComeOn.exe opened OK (sha256 97ae4c23…, PE32 x86). binary_overview timed out;
  * search_strings / list_strings / search_procedures returned MCP schema errors
@@ -65,8 +65,38 @@ export const MELEE = {
   hitWhenRemainingS: 0.2,
   /** game.json attack.range — Skill stub */
   range: 1.75,
-  /** PLACEHOLDER — exe formula unknown; working model AT−DF/2 ±10% min1 */
-  damageNote: 'AT-DF/2 ±10% min1 (PLACEHOLDER; Soft-DF only with ?softdf=1)',
+  /** See DAMAGE — on-hit no longer subtracts DF */
+  damageNote: 'on-hit ≈ AT±10% (DF is dodge; see DAMAGE)',
+} as const
+
+/**
+ * Melee on-hit damage (Phase 52).
+ *
+ * VERIFIED (design / tables, not exe address):
+ * - Community FAQ (刀剑封魔录系列): 防御≈闪避 — DF lowers enemy hit chance, does NOT
+ *   subtract from damage when a hit lands. HP vs AT decides survivability on contact.
+ *   Source: game773 FAQ mirrored in PROGRESS Phase 52.
+ * - Tables separate 命中率 (Init / RolePrivate) and 闪避率 (RolePrivate) from AT/DF;
+ *   skill.txt 「加攻击力」 scales AT for skills, not a DF term.
+ * - define.ini only documents poison/fire DoT rates — no physical AT−DF formula.
+ *
+ * HEURISTIC:
+ * - On-hit: max(1, AT * U(0.9,1.1)) — DF unused in damage path.
+ * - ±10% keep prior remake variance feel.
+ *
+ * LEGACY / debug:
+ * - ?softdf=1 or ?legacydf=1 → old AT−DF/2 ±10% (Phase 17c PLACEHOLDER) for A/B.
+ *
+ * Still unresolved (PLACEHOLDER): exact hit/dodge equation; Init DF4..DF0 meaning;
+ * difficulty multipliers (英雄无悔) that may scale RolePrivate AT/HP.
+ */
+export const DAMAGE = {
+  model: 'at_flat' as const,
+  varianceMin: 0.9,
+  varianceMax: 1.1,
+  minDealt: 1,
+  label: 'VERIFIED-direction / HEURISTIC-magnitude: on-hit≈AT±10%; DF→dodge not mitigation',
+  legacyNote: 'AT-DF/2 ±10% only with ?softdf=1 or ?legacydf=1',
 } as const
 
 /**
