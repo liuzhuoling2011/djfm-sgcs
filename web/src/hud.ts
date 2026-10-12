@@ -1,22 +1,28 @@
-import { DAMAGE } from './evidence'
+import { DAMAGE, HIT } from './evidence'
 // Phase 15: original HUD (ResJM.Lib.chs) + HP/MP orbs + simple combat model.
 export type Foe = {
   x: number; y: number; hp: number; maxHp: number; cd: number; hitT: number; dead: number
   at?: number; df?: number; exp?: number; sight?: number; spd?: number; name?: string; set?: number | string
+  /** RolePrivate 命中率 (VERIFIED table) */
+  hit?: number
+  /** RolePrivate 闪避率 / meta.eva — 0 everywhere in extract; dodge falls back to DF */
+  eva?: number
   hx?: number; hy?: number; act?: 'idle' | 'walk' | 'attack' | 'hurt' | 'death'; actT?: number; dir?: number
   kbX?: number; kbY?: number; gone?: boolean; event?: string
 }
-export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number }
+export type Stats = { hp: number; maxHp: number; mp: number; maxMp: number; exp: number; lvl: number; at?: number; df?: number; sp?: number; hit?: number }
 /** mb/player/Init.txt 男主角 growth */
 export type InitGrowth = {
   at: number; at_per_lv: number; df: number; df_per_lv: number
   hp: number; hp_per_lv: number; mp: number; mp_per_lv: number
   stamina?: number; stamina_per_lv?: number; exp_per_lv?: number
   hp_regen?: number; mp_regen?: number; stamina_regen?: number; stamina_use?: number
+  hit?: number; hit_per_lv?: number
 }
 export const DEFAULT_INIT: InitGrowth = {
   at: 40, at_per_lv: 4, df: 30, df_per_lv: 4, hp: 800, hp_per_lv: 80, mp: 36, mp_per_lv: 1.2,
   stamina: 80, stamina_per_lv: 0.4, exp_per_lv: 100, hp_regen: 1.4, mp_regen: 1.2, stamina_regen: 3, stamina_use: 10,
+  hit: HIT.playerHitBase, hit_per_lv: HIT.playerHitPerLv,
 }
 export let INIT = { ...DEFAULT_INIT }
 export function setInitGrowth(g: Partial<InitGrowth>) { INIT = { ...DEFAULT_INIT, ...g } }
@@ -27,6 +33,7 @@ export function applyInitLevel(st: Stats, lvl: number) {
   st.lvl = L
   st.at = INIT.at + INIT.at_per_lv * n
   st.df = INIT.df + INIT.df_per_lv * n
+  st.hit = (INIT.hit ?? HIT.playerHitBase) + (INIT.hit_per_lv ?? HIT.playerHitPerLv) * n
   st.maxHp = INIT.hp + INIT.hp_per_lv * n
   st.maxMp = INIT.mp + INIT.mp_per_lv * n
   st.hp = Math.min(st.hp, st.maxHp)
@@ -66,6 +73,26 @@ export const dmgMid = (at: number, df: number, legacy = false) => {
     return Math.max(DAMAGE.minDealt, (at - use / 2) * mid)
   }
   return Math.max(DAMAGE.minDealt, at * mid)
+}
+
+/** VERIFIED: empty 闪避率 → DF as dodge (FAQ 防御≈闪避). */
+export function dodgeStat(df: number, eva?: number): number {
+  const e = Number(eva ?? 0)
+  if (e > 0) return e
+  return Math.max(0, Number(df) || 0)
+}
+
+/** HEURISTIC: p = hit / (hit + dodgeEff), clamped to HIT.pMin..pMax. */
+export function hitChance(atkHit: number, defDodge: number): number {
+  const h = Math.max(0, Number(atkHit) || 0)
+  const d = Math.max(0, Number(defDodge) || 0)
+  if (h + d <= 0) return HIT.pMax
+  const p = h / (h + d)
+  return Math.max(HIT.pMin, Math.min(HIT.pMax, p))
+}
+
+export function rollHit(atkHit: number, defDodge: number, rng: () => number = Math.random): boolean {
+  return rng() < hitChance(atkHit, defDodge)
 }
 
 /** Remake tuning (not from tables): late-map trash density / leash — see game.json combat.remake */
@@ -228,7 +255,8 @@ export class Hud {
   }
 }
 
-export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt: number, walk: (x: number, y: number) => boolean) {
+export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt: number, walk: (x: number, y: number) => boolean): FloatDmg[] {
+  const floats: FloatDmg[] = []
   for (const f of foes) {
     f.actT = (f.actT ?? 0) + dt
     if (f.gone) continue
@@ -267,12 +295,20 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
       if (walk(f.x, ny)) f.y = ny
       if (f.act !== 'walk') { f.act = 'walk'; f.actT = 0 }
     } else if (aggro && d <= 1.3 && f.cd <= 0) {
-      st.hp -= dmg(f.at ?? 20, st.df ?? 10); f.cd = 1.5; f.act = 'attack'; f.actT = 0
+      f.cd = 1.5; f.act = 'attack'; f.actT = 0
+      const atkHit = f.hit ?? 20
+      const defDodge = dodgeStat(st.df ?? 10)
+      if (!rollHit(atkHit, defDodge)) {
+        floats.push({ x: p.x, y: p.y, text: 'MISS', t: 0.55, max: 0.55, color: '#a0a8b8' })
+      } else {
+        st.hp -= dmg(f.at ?? 20, st.df ?? 10)
+      }
     } else if (f.act !== 'idle') { f.act = 'idle'; f.actT = 0 }
   }
+  return floats
 }
 
-// melee arc: hits foes within range in facing half-plane
+// melee arc: cone first, then hit/dodge roll (Phase 53), then Phase52 damage
 export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.75): FloatDmg[] {
   const floats: FloatDmg[] = []
   for (const f of foes) {
@@ -282,6 +318,12 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     // Phase 36: tighter cone + short knockback (Wine melee, not arcade shove)
     if (d < 0.95 || diff < 1.15) {
+      const atkHit = st.hit ?? HIT.playerHitBase
+      const defDodge = dodgeStat(f.df ?? 10, f.eva)
+      if (!rollHit(atkHit, defDodge)) {
+        floats.push({ x: f.x, y: f.y, text: 'MISS', t: 0.5, max: 0.5, color: '#a0a8b8' })
+        continue
+      }
       const dealt = dmg(st.at ?? 40, f.df ?? 10)
       f.hp -= dealt; f.hitT = 0.22; f.act = 'hurt'; f.actT = 0
       if (d > 0.01) { f.kbX = (dx / d) * 1.75; f.kbY = (dy / d) * 1.75 }

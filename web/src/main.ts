@@ -1,6 +1,6 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, dmgMid, type Foe, type Stats, type FloatDmg } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, dmgMid, hitChance, dodgeStat, type Foe, type Stats, type FloatDmg } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 import { loadSfx, playSfx, setSfxEnabled } from './sfx'
@@ -25,7 +25,7 @@ type MapMeta = {
   ground_full?: { file: string; min_sx: number; min_sy: number; tile_w: number; tile_h: number; scale: number }
   lazy?: { chunk: number; atlases: Atlas[]; mode: string }
   walk_grid?: string[]
-  monsters?: { x: number; y: number; role: number; name: string; set: number; hp: number; at: number; df: number; exp: number; spd: number; sight: number }[]
+  monsters?: { x: number; y: number; role: number; name: string; set: number; hp: number; at: number; df: number; exp: number; spd: number; sight: number; hit?: number; eva?: number }[]
   monster_sets?: Record<string, Record<string, { per_dir: number; frames: ([string, number, number] | null)[] }>>
 }
 type GameData = {
@@ -118,13 +118,13 @@ async function main() {
   helpEl.className = 'combat-help'
   helpEl.id = 'combat-help'
   const helpTxt = (gameData as { combat?: { help?: string } } | null)?.combat?.help
-    ?? 'Init成长 AT40+4/lv；伤害≈AT±10%（防御≈闪避）；怪物 RolePrivate+场景封顶。?legacydf=1 旧AT−DF/2。'
+    ?? 'Init成长 AT40+4/lv；伤害≈AT±10%；命中 hit/(hit+DF)；怪物 RolePrivate+场景封顶。?legacydf=1 旧减伤。'
   helpEl.innerHTML = helpTxt + ' <button type="button" style="margin-left:8px">知道了</button>'
   document.body.append(helpEl)
   helpEl.querySelector('button')?.addEventListener('click', () => helpEl.classList.add('hidden'))
   window.setTimeout(() => helpEl.classList.add('hidden'), 14000)
   if (SOFT_DF) console.info('[djfm] legacy AT−DF/2 ON (?softdf=1|legacydf=1)')
-  else console.info('[djfm] Phase52 on-hit≈AT±10% (DF→dodge); scene_tier caps on foe HP/AT')
+  else console.info('[djfm] Phase52 dmg≈AT±10%; Phase53 hit=hit/(hit+dodgeEff); scene_tier caps')
   {
     const ig = (gameData as { combat?: { init_male?: Record<string, number> } })?.combat?.init_male
     if (ig) setInitGrowth(ig)
@@ -339,7 +339,7 @@ async function main() {
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
   // mb/player/Init.txt 男主角 — applied via applyInitLevel / setInitGrowth
-  const stats: Stats = { hp: INIT.hp, maxHp: INIT.hp, mp: INIT.mp, maxMp: INIT.mp, exp: 0, lvl: 1, at: INIT.at, df: INIT.df, sp: 1 }
+  const stats: Stats = { hp: INIT.hp, maxHp: INIT.hp, mp: INIT.mp, maxMp: INIT.mp, exp: 0, lvl: 1, at: INIT.at, df: INIT.df, hit: INIT.hit ?? 21, sp: 1 }
   applyInitLevel(stats, 1)
   let monSets: NonNullable<MapMeta['monster_sets']> = {}
   const monImgs = new Map<string, HTMLImageElement>()
@@ -1074,7 +1074,7 @@ async function main() {
       for (const mo of mons) {
         const lx = mo.x - origin.x, ly = mo.y - origin.y
         const b = balanceFoe({ hp: mo.hp, at: mo.at, df: mo.df }, curScene)
-        foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: b.hp, maxHp: b.hp, cd: 1, hitT: 0, dead: 0, at: b.at, df: b.df, exp: mo.exp, sight: Math.min(mo.sight ?? 7, REMAKE.sight_cap), spd: mo.spd, name: mo.name, set: mo.set, act: 'idle', actT: 0, dir: 0, event: (mo as {event?: string}).event })
+        foes.push({ x: lx, y: ly, hx: lx, hy: ly, hp: b.hp, maxHp: b.hp, cd: 1, hitT: 0, dead: 0, at: b.at, df: b.df, hit: Number((mo as { hit?: number }).hit ?? 20), eva: Number((mo as { eva?: number }).eva ?? 0), exp: mo.exp, sight: Math.min(mo.sight ?? 7, REMAKE.sight_cap), spd: mo.spd, name: mo.name, set: mo.set, act: 'idle', actT: 0, dir: 0, event: (mo as {event?: string}).event })
       }
     }
     // Phase 25: scene loot from AddItem tables (scatter potions near spawn, once per scene visit)
@@ -1419,7 +1419,8 @@ async function main() {
 
     {
       const hp0 = stats.hp
-      stepFoes(foes, pos, stats, dt, walkable)
+      const foeFx = stepFoes(foes, pos, stats, dt, walkable)
+      floaters.push(...foeFx)
       if (stats.hp < hp0 - 0.5) {
         playerHurtFlash = 0.35
         playSfx('hurt')
@@ -1454,7 +1455,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, dmgMid, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, dmgMid, hitChance, dodgeStat, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }

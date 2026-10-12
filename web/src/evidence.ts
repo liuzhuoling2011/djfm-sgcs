@@ -87,8 +87,7 @@ export const MELEE = {
  * LEGACY / debug:
  * - ?softdf=1 or ?legacydf=1 → old AT−DF/2 ±10% (Phase 17c PLACEHOLDER) for A/B.
  *
- * Still unresolved (PLACEHOLDER): exact hit/dodge equation; Init DF4..DF0 meaning;
- * difficulty multipliers (英雄无悔) that may scale RolePrivate AT/HP.
+ * Still unresolved (PLACEHOLDER): Init DF4..DF0 meaning; difficulty AT/HP scale.
  */
 export const DAMAGE = {
   model: 'at_flat' as const,
@@ -117,6 +116,32 @@ export const NORTH_GATE = {
     'mb/trigger/talk/sy.txt',
     'mb/Text.txt#308',
   ],
+} as const
+
+
+/**
+ * Hit / dodge (Phase 53).
+ *
+ * VERIFIED (tables + FAQ, not exe address):
+ * - Init.txt 男主角: 命中率=21, +3/lv (also game.json combat.init_male.hit).
+ * - RolePrivate: 命中率 filled per foe; 闪避率 column empty on all 249 rows (meta.eva=0).
+ * - Series FAQ: 防御≈闪避 — when 闪避率 is empty, use DF as dodge stat.
+ * - skill.txt 「命中率」 for basic skills is usually 1 (treat as ×1); large values (999) ≈ guarantee.
+ * - define.ini: no hit/dodge equation.
+ *
+ * HEURISTIC probability (no exe formula found):
+ *   dodgeEff = eva > 0 ? eva : df
+ *   pHit = clamp( hit / (hit + dodgeEff), 0.08, 0.95 )
+ * Same units for hit & DF in RolePrivate make a ratio model the natural HEURISTIC.
+ */
+export const HIT = {
+  model: 'ratio' as const,
+  pMin: 0.08,
+  pMax: 0.95,
+  /** Init.txt 男主角 base / per-level */
+  playerHitBase: 21,
+  playerHitPerLv: 3,
+  label: 'VERIFIED stats (命中/DF→dodge); HEURISTIC p=hit/(hit+dodgeEff) clamped',
 } as const
 
 /** Facing art column — keep unless address-level REA proves otherwise */

@@ -1,3 +1,33 @@
+## Phase 53 — Hit / dodge (no more free cone hits) (2026-10-12 ~23:00 Asia/Shanghai)
+
+**Ask:** Melee must roll hit/dodge using table evidence; keep Phase 52 AT-flat damage; facing unchanged; act-1 only.
+
+### Evidence
+| Source | Finding | Label |
+|--------|---------|-------|
+| Init.txt 男主角 | 命中率 **21**, +**3**/lv | VERIFIED |
+| RolePrivate | 命中率 filled; **闪避率 empty** on all 249 rows (`meta.eva=0`) | VERIFIED |
+| Series FAQ | 防御≈闪避 | VERIFIED direction |
+| define.ini / Skill.ini | no pHit equation; skill 命中率 often `1` | — |
+| Remake equation | `dodgeEff = eva>0 ? eva : DF`; `p = clamp(hit/(hit+dodgeEff), 0.08, 0.95)` | HEURISTIC |
+
+### Code
+- `web/src/evidence.ts` — `HIT`
+- `web/src/hud.ts` — `dodgeStat` / `hitChance` / `rollHit`; `playerAttack` + `stepFoes` show **MISS**
+- `web/src/main.ts` — foe `hit`/`eva` from meta; Init hit on `Stats`
+- `tools/phase53_hit_check.py` — **PASS**
+- Soft/legacy DF flags unchanged. Facing `(oct+6)%8` unchanged.
+
+### Build / git
+`cd web && npm run build`. Branch `phase53-hit-dodge`.
+
+### Blockers
+1. Exact exe hit formula still unknown (ratio is HEURISTIC).
+2. Skill 命中率 (1 vs 999) not yet applied as guarantee on F1/F2.
+3. Difficulty-scaled hit/DF still unmodeled.
+
+---
+
 ## Phase 52 — Melee damage: AT-flat (DF≈dodge) (2026-10-12 ~22:50 Asia/Shanghai)
 
 **Ask:** Replace AT−DF/2 ±10% PLACEHOLDER with best evidence-backed formula **without** broken REA `search_strings`.

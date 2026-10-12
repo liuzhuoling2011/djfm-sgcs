@@ -197,7 +197,7 @@
   "interact_key": "e",
   "interact_range": 2.0,
   "combat": {
-    "note": "Phase52: on-hit damage ≈ AT±10% (DF≈dodge per series FAQ + 命中/闪避 columns). Legacy AT−DF/2 with ?softdf=1 or ?legacydf=1. Player growth from mb/player/Init.txt 男主角. Foe RolePrivate raw AT/HP era-scaled; scene_tier caps keep act-1 clearable.",
+    "note": "Phase53: hit chance HEURISTIC p=hit/(hit+dodgeEff) with dodgeEff=eva||DF (FAQ 防御≈闪避; RolePrivate 闪避率 empty). Phase52 on-hit ≈ AT±10%. Legacy AT−DF/2 with ?softdf=1|legacydf=1. Init 命中率 21+3/lv. scene_tier caps on foe HP/AT/DF.",
     "softdf_query": "softdf=1|legacydf=1",
     "scene_tier": {
       "1-1s": 1,
@@ -267,7 +267,7 @@
       "move": 16.0,
       "exp_per_lv": 100
     },
-    "help": "伤害≈AT±10%（防御≈闪避；?legacydf=1 旧公式）。操作：WASD/方向键移动 · <b>Shift 奔跑</b>（耗体力）· E 对话/交互 · Space 攻击 · F1/F2 技能 · 1/3 吃药 · I / B 行囊 · S/L 快速存读 · M 静音。<br>原版无跳跃键；本重制亦不提供跳跃。",
+    "help": "命中≈hit/(hit+DF)；伤害≈AT±10%。伤害≈AT±10%（防御≈闪避；?legacydf=1 旧公式）。操作：WASD/方向键移动 · <b>Shift 奔跑</b>（耗体力）· E 对话/交互 · Space 攻击 · F1/F2 技能 · 1/3 吃药 · I / B 行囊 · S/L 快速存读 · M 静音。<br>原版无跳跃键；本重制亦不提供跳跃。",
     "remake": {
       "note": "Remake tuning (not from ComeOn tables): thin late-map trash + shorter aggro leash so WASD clears feel less exhausting.",
       "sight_cap": 5.5,
@@ -285,6 +285,7 @@
         "1-11s"
       ]
     },
-    "damage_model": "at_flat"
+    "damage_model": "at_flat",
+    "hit_model": "ratio_hit_over_hit_plus_dodge"
   }
 }
