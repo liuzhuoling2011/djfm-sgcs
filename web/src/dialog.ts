@@ -82,6 +82,7 @@ export class DialogSys {
   isDead?: DeadCheck
   lockText: Record<string, number> = {}
   bldStatus: Record<string, number> = {}
+  pendingGo: string | null = null
 
   async load(base = 'game/dialog') {
     ;[this.dialogs, this.talks, this.names] = await Promise.all([
@@ -113,7 +114,7 @@ export class DialogSys {
         else if (arg.includes('62')) this.inv?.showEmbed()
       } else if (op === 'go' && p.length >= 2) {
         // talk/sws.txt: go sws → scene warp (SWS.txt then sets sy1 19 → 1-3s)
-        this.onGo?.(p[1].toLowerCase())
+        this.pendingGo = p[1].toLowerCase()
       } else if (op === 'addfellow' && p.length >= 3) {
         // AddFellow sws 1 | AddFellow sws 0
         this.onFellow?.(p[1].toLowerCase(), Number(p[2]) !== 0)
@@ -121,6 +122,8 @@ export class DialogSys {
         this.onFx?.('screen', p[1])
       } else if (op === 'playavi') {
         this.onFx?.('avi', p.slice(1).join(' '))
+      } else if (op === 'settumble') {
+        this.onFx?.('tumble')
       } else if (op === 'remitem' && p.length >= 2) {
         this.onRem?.(p[1].toLowerCase(), 'rem')
       } else if (op === 'resetobj' && p.length >= 2) {
@@ -207,7 +210,12 @@ export class DialogSys {
     else this.onChange()
   }
 
-  close() { this.open = false; this.choices = []; this.lines = []; this.state = 0; this.onChange() }
+  close() {
+    this.open = false; this.choices = []; this.lines = []; this.state = 0
+    const go = this.pendingGo; this.pendingGo = null
+    this.onChange()
+    if (go) this.onGo?.(go)
+  }
 
   /** Whether a go-exit to `dest` is locked. Returns lock dialog id or 0 if free. */
   exitLock(dest: string): number {

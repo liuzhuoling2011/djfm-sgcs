@@ -185,6 +185,8 @@ async function main() {
     dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
   }
   dlg.onChange = () => { syncAct1ExitGates(); renderDialog(); renderInv() }
+  const _dlgClose = dlg.close.bind(dlg)
+  dlg.close = () => { _dlgClose(); flashQuestHint() }
   void (async () => {
     await Promise.all([hud.load(), inv.load(), dlg.load()])
     dlg.inv = {
@@ -335,6 +337,7 @@ async function main() {
       if (kind === 'screen') inv.flash(`（ScreenEffect ${arg ?? ''}）`)
       else if (kind === 'bldani') inv.flash(`（机关动画 ${arg ?? ''}）`)
       else if (kind === 'avi') playAvi((arg ?? '').trim().toLowerCase().replace(/\.dhp$/i, ''))
+      else if (kind === 'tumble') inv.flash('（泊祁突然跌倒……稍后再与他对话）')
     }
     const ps = inv.potSlots(); hud.pots = [...ps]
   })()
@@ -720,9 +723,40 @@ async function main() {
     // 1-2s pig heart already handled elsewhere via qty
   }
 
+  /** Act-1 next-step toast from script flag thresholds (Phase 55). */
+  function questHint(): string | null {
+    const f = dlg.flags
+    const sy = f.sy1 ?? 0, bq = f.bq ?? 0, b1 = f.bq1 ?? 0, b2 = f.bq2 ?? 0
+    if (sy < 1) return '主线：先与沈云对话，开启北门→1-1s'
+    if (sy < 30) return '主线：落马洞击败玉衡，取得玉净甘露'
+    if (sy < 100) return '主线：回镇把玉净甘露交给泊祁（sy1→100）'
+    if (sy >= 100 && sy < 101) return '主线：再与沈云一谈（sy1→101），方便泊祁推进'
+    if (b1 < 10) return '主线：与沈万山对话，开启玲珑心（bq1→10，东门）'
+    if (b1 < 20) return '主线：找水英雄/封魔战神（sdyx）推进 bq1→20'
+    if (b1 < 30) return '主线：回镇找泊祁，开启西路冰池（bq1→30）'
+    if (b1 < 40) return '主线：九天池取天芝血参（tzxs）'
+    if (b1 < 70) return '主线：泊祁跌倒→醒来后找水英雄交天芝，换玲珑心'
+    if (b1 < 100) return '主线：交玲珑心给泊祁，开启南门炎炀关（bq2→1）'
+    if (b2 < 10) return '主线：炎炀关战象 / 气凝洞三机关取气凝珠'
+    if (b2 < 50) return '主线：1-10a6s 双天机（需气凝珠）'
+    if (b2 < 60) return '主线：回镇找泊祁汇报（bq2→60）'
+    if (b2 < 70) return '主线：与沈万山对话（bq2→70）'
+    if (b2 < 100) return '主线：再找泊祁收束第一章（bq2→100）'
+    return '第一章主线已完成（bq2≥100）— 可前往芭蕉村'
+  }
+  let lastQuestHint = ''
+  function flashQuestHint(force = false) {
+    const h = questHint()
+    if (!h) return
+    if (!force && h === lastQuestHint) return
+    lastQuestHint = h
+    inv.flash(h)
+  }
+
   /** Scene script hooks from mb/trigger/scene/*.txt (only sy1/蜀水-related subset). */
   let swsTimer: number | null = null
   function runSceneEnter(scene: string) {
+
     if (swsTimer != null) { window.clearTimeout(swsTimer); swsTimer = null }
     if (scene === 'sws') {
       // SWS.txt: IsScnIn*IsFlag sy1 18 2 → go 1-3s; else SetTimer 90 → go 1-3s*SetFlag sy1 19
@@ -839,6 +873,7 @@ async function main() {
       dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
       dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
       dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
+      flashQuestHint()
     }
     if (scene === '2-0s') {
       // scene/2-0s.txt: ChangeAct 1; ShowActForeword 114 1447 1 once; SetFlagTable 2sws 111 1

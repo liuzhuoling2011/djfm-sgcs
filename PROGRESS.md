@@ -1681,6 +1681,53 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 - Act-2 maps not started.
 
 
+
+## Phase 55 — Act-1 主线 E2E → bq2=100 (2026-10-12)
+
+### 目标
+把第一章主线打通到 **bq2=100**（瓦当镇→沈云北门→魔豕/玉衡→蜀水→玲珑心→战象→气凝珠/双天机→收束），保留 Phase 51–54 战斗证据，不撞车 facing/伤害/命中。
+
+### 本轮修复
+1. **主线提示 `questHint`**：进镇 / 对话关闭后 toast 下一步（含 sdyx→bq1=20、sws→bq2=70）。
+2. **1-11s `jiguan1`**：`meta.json` 空 script 点 (197,157) 标为 `jiguan1`/`机关1`（原逻辑已有坐标兜底）。
+3. **`SetTumble`**：对话结果触发跌倒 toast（泊祁 bq1 50 段）。
+4. **E2E `tools/phase55_act1_e2e.py`**：补齐 `sy→101`、`sws→bq1=10`、`sdyx→20`、`bq→30` 与终局 `bq→60` / `sws→70` / `bq→100` 顺序。
+5. **`DialogSys.pendingGo`**：`go` 延到对话 `close` 再 `onGo`（避免与开对话抢 `applyPack`）；`bq2=100*go 2-0s` 可进芭蕉村门口。
+
+### 验证（Playwright，零 ASSIST）
+```
+sws/sdyx/bq → bq1=30；tzxs→40；bq tumble 50→60；sdyx→70+玲珑心；bq→bq2=1
+战象 zhs1=10；jiguan→气凝珠；双天机 bq2=50；bq→60；sws→70；bq→100
+FINAL {bq2:100, bq1:100, sy1:102, scene:2-0s, act:1, qty120:1, qty124:1} RESULT PASS（零 ASSIST）
+```
+日志：`assets/samples/phase55/e2e_log.txt` · 截图 `01_sy_unlock.png` / `99_final.png`。
+
+### 旗标链（脚本原貌）
+| 段 | 对话/场景 | 旗标 |
+|----|-----------|------|
+| 北门 | sy | sy1=1，开 1-1s |
+| 甘露 | bossyuheng→bq | sy1=30→100 |
+| 沈云再谈 | sy | sy1=101 |
+| 玲珑心开 | sws / sdyx / bq | bq1=10→20→30（东/西门） |
+| 天芝 | 1-8s tzxs | bq1=40 + prop 121 |
+| 换心 | bq / sdyx / bq | 50→60→70(+119)→100，bq2=1（南门） |
+| 战象 | 1-9s | zhs1=10 |
+| 气凝 | 1-11s 三机关 | prop 124，bq2=40 |
+| 天机 | 1-10a6s | bq2=50 |
+| 收束 | bq / sws / bq | 60→70→**100**（`go 2-0s`） |
+
+### 仍未做 / 已知缺口
+- **`go 2-0s`**：对话关闭后延迟跳转已接通；E2E FINAL `scene=2-0s` · `currentAct=1`。Act-2 内容仍不实现。
+- 战象/魔豕/魔猿纸娃娃与 Wine 物种仍不完全一致（不影响主线旗标）。
+- Act-2 未开；无跳跃；facing `(oct+6)%8` 保持。
+- DHP 真播放、完整旁支、宝石孔等仍后置。
+
+### 分支 / 构建
+- Branch: `phase55-act1-e2e`
+- Build: green（`index-Cp9ByLFB.js`）
+- 未合 main / 未强推 Pages（等审）。
+
+
 ## Phase 22 — 玉衡 sprites, AddFellow, Type-12 NPCs, side quests (2026-10-10)
 
 ### 1. 玉衡 boss art (ResNpc / ResExNpc)
