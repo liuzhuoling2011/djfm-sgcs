@@ -34,7 +34,7 @@ Damage Phase52 + dodge→DF Phase53 unchanged. Facing `(oct+6)%8` unchanged.
 
 ## Phase 55 deploy — Act-1 E2E → bq2=100 (2026-10-12)
 
-**Source:** `phase55-act1-e2e` / merge to `master` · **Pages:** `main` (this deploy) → https://liuzhuoling2011.github.io/djfm-sgcs/
+**Source:** `master` `f659d6a` (merged `phase55-act1-e2e`) · **Pages:** `main` `8a16ea3` → https://liuzhuoling2011.github.io/djfm-sgcs/ (`index-76eJuVK4.js` live)
 **Bundle:** `assets/index-76eJuVK4.js` (+ `index-P_9TZ2IC.css`) · jiguan1 meta on `game/maps/1-11s/`
 **E2E:** zero-ASSIST `bq2=100` · finale `go 2-0s` / `currentAct=1`. Combat Phases 51–54 kept. No Act-2 content.
 
