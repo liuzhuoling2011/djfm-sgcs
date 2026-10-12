@@ -142,6 +142,20 @@ export const HIT = {
   playerHitBase: 21,
   playerHitPerLv: 3,
   label: 'VERIFIED stats (命中/DF→dodge); HEURISTIC p=hit/(hit+dodgeEff) clamped',
+  /**
+   * skill.txt 「命中率」 semantics (Phase 54) — HEURISTIC mapping of table values:
+   * - VERIFIED presence: col 命中率 on every skill row; 扫叶(6)/疾电(35) both = 1.
+   * - Histogram: mostly 1 / 1.0 / 1.5 / 2 / 3; many ultimates 999; some negatives.
+   * - Absolute-as-1 would make F1/F2 unusable vs Init hit 21 → reject absolute for small values.
+   * Rules applied to character hit H:
+   *   missing/NaN → H (plain melee)
+   *   0           → H (no modifier)
+   *   0 < v < 100 → H * v   (multiplier; 1 = unchanged — F1/F2)
+   *   v >= 100    → GUARANTEE (999 → pMax; AoE ultimates)
+   *   v < 0       → max(0, H + v)  (additive penalty)
+   */
+  skillHitGuaranteeAt: 100,
+  skillHitGuaranteeValue: 1e6,
 } as const
 
 /** Facing art column — keep unless address-level REA proves otherwise */

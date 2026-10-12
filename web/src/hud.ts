@@ -95,6 +95,21 @@ export function rollHit(atkHit: number, defDodge: number, rng: () => number = Ma
   return rng() < hitChance(atkHit, defDodge)
 }
 
+/**
+ * Apply skill.txt 命中率 onto character hit (Init/RolePrivate).
+ * See HIT.skillHit* in evidence.ts for semantics.
+ */
+export function effectiveHit(baseHit: number, skillHit?: string | number | null): number {
+  const H = Math.max(0, Number(baseHit) || 0)
+  if (skillHit === undefined || skillHit === null || skillHit === '') return H
+  const v = Number(skillHit)
+  if (!Number.isFinite(v)) return H
+  if (v === 0) return H
+  if (v >= HIT.skillHitGuaranteeAt) return HIT.skillHitGuaranteeValue
+  if (v < 0) return Math.max(0, H + v)
+  return H * v
+}
+
 /** Remake tuning (not from tables): late-map trash density / leash — see game.json combat.remake */
 export let REMAKE = { sight_cap: 5.5, leash: 9, max_trash: 12, trash_scenes: ['1-9s','1-10s','1-10a1s','1-10a2s','1-10a3s','1-10a4s','1-10a5s','1-10a6s','1-11s'] as string[] }
 export function setRemakeTuning(t: Partial<typeof REMAKE>) { REMAKE = { ...REMAKE, ...t, trash_scenes: t.trash_scenes ?? REMAKE.trash_scenes } }
@@ -308,8 +323,11 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
   return floats
 }
 
-// melee arc: cone first, then hit/dodge roll (Phase 53), then Phase52 damage
-export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.75): FloatDmg[] {
+// melee arc: cone → skill 命中率 (Phase 54) → hit/dodge (Phase 53) → damage (Phase 52)
+export function playerAttack(
+  foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.75,
+  opts?: { skillHit?: string | number | null },
+): FloatDmg[] {
   const floats: FloatDmg[] = []
   for (const f of foes) {
     if (f.dead > 0 || f.gone) continue
@@ -318,7 +336,7 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     // Phase 36: tighter cone + short knockback (Wine melee, not arcade shove)
     if (d < 0.95 || diff < 1.15) {
-      const atkHit = st.hit ?? HIT.playerHitBase
+      const atkHit = effectiveHit(st.hit ?? HIT.playerHitBase, opts?.skillHit)
       const defDodge = dodgeStat(f.df ?? 10, f.eva)
       if (!rollHit(atkHit, defDodge)) {
         floats.push({ x: f.x, y: f.y, text: 'MISS', t: 0.5, max: 0.5, color: '#a0a8b8' })

@@ -1,3 +1,37 @@
+## Phase 54 — Skill 命中率 on F1/F2 (2026-10-12 ~23:10 Asia/Shanghai)
+
+**Ask:** Wire skill.txt 「命中率」 for F1 扫叶 / F2 疾电 into Phase 53 hit roll. Clarify `1` vs `999`.
+
+### Semantics (chosen)
+| Table value | Remake rule | Rationale |
+|-------------|-------------|-----------|
+| missing | character hit H | plain Space melee |
+| `0` | H | no modifier |
+| `0 < v < 100` (incl. **1**, 1.5, 2) | **H × v** | absolute-1 would brick F1/F2 vs Init H=21; histogram of small floats fits multipliers |
+| `v ≥ 100` (e.g. **999**) | guarantee (`1e6` → pMax) | ultimates in skill.txt |
+| `v < 0` | `max(0, H+v)` | additive penalty rows |
+
+**VERIFIED table:** 扫叶 id6 & 疾电 id35 both 命中率=**1** → same pHit as Space (×1). Wiring is still required so non-1 skills work and F1 floaters collect MISS/dmg.
+
+### Code
+- `evidence.ts` HIT.skillHit*
+- `hud.ts` `effectiveHit`; `playerAttack(..., { skillHit })`
+- `main.ts` F1/F2 pass `sk.hit`; F1 now pushes floaters
+- `inventory.ts` SkillDef.hit
+- `tools/phase54_skill_hit_check.py` — **PASS**
+
+Damage Phase52 + dodge→DF Phase53 unchanged. Facing `(oct+6)%8` unchanged.
+
+### Build / git
+`cd web && npm run build`. Branch `phase54-skill-hit`.
+
+### Blockers
+1. skill 命中率 mapping still HEURISTIC (exe not decoded).
+2. Q-skill / 飞蝗石 not using skill hit column.
+3. Hit/dodge ratio itself still HEURISTIC.
+
+---
+
 ## Phase 53 — Hit / dodge (no more free cone hits) (2026-10-12 ~23:00 Asia/Shanghai)
 
 **Ask:** Melee must roll hit/dodge using table evidence; keep Phase 52 AT-flat damage; facing unchanged; act-1 only.

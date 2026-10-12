@@ -6,6 +6,8 @@ export type PropDef = {
 }
 export type SkillDef = {
   id: number; name: string; mp: number; at_mult: string; range: string; intro: string
+  /** skill.txt 命中率 — see evidence HIT / effectiveHit */
+  hit?: string
   hits?: string; combo?: string; level?: string
 }
 export type InitData = {
@@ -117,12 +119,13 @@ export class Inventory {
 
   /** Simple blacksmith shop: buy 小血瓶/小气瓶/飞蝗石 */
   shopCatalog() {
+    const n = (id: number) => this.props[String(id)]?.name ?? String(id)
     return [
-      { id: 4, price: 40 },
-      { id: 8, price: 40 },
-      { id: 63, price: 10 },
-      { id: 5, price: 130 },
-      { id: 9, price: 130 },
+      { id: 4, price: 40, name: n(4) },
+      { id: 8, price: 40, name: n(8) },
+      { id: 63, price: 10, name: n(63) },
+      { id: 5, price: 130, name: n(5) },
+      { id: 9, price: 130, name: n(9) },
     ]
   }
 

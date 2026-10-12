@@ -1,6 +1,6 @@
 import './style.css'
 import { DialogSys } from './dialog'
-import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, dmgMid, hitChance, dodgeStat, type Foe, type Stats, type FloatDmg } from './hud'
+import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyInitLevel, setRemakeTuning, INIT, REMAKE, dmgMid, hitChance, dodgeStat, effectiveHit, type Foe, type Stats, type FloatDmg } from './hud'
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 import { loadSfx, playSfx, setSfxEnabled } from './sfx'
@@ -1161,7 +1161,12 @@ async function main() {
       stats.mp -= cost; attackT = 0.45; attackCd = 0.9
       const mult = Math.abs(Number(sk?.at_mult ?? 1)) || 1
       const at0 = stats.at ?? 40; stats.at = at0 * (mult > 0 && mult < 5 ? Math.max(mult, 1) : 1.2)
-      for (let a = 0; a < 8; a++) playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.2)
+      // Phase54: skill.txt 命中率 (扫叶=1 → ×1 character hit)
+      const hitOpt = { skillHit: sk?.hit }
+      for (let a = 0; a < 8; a++) {
+        const fl = playerAttack(foes.filter((f) => f.hitT <= 0), pos, a * Math.PI / 4, stats, 2.2, hitOpt)
+        floaters.push(...fl)
+      }
       stats.at = at0
       skillFx = spawnFx('saoye', 0)
       inv.flash(`${sk?.name ?? '扫叶'}！`)
@@ -1175,7 +1180,8 @@ async function main() {
       stats.mp -= cost; attackT = 0.35; attackCd = 0.85
       const mult = Number(sk?.at_mult ?? 2) || 2
       const at0 = stats.at ?? 40; stats.at = at0 * mult
-      { const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, 3.2); floaters.push(...fl); if (fl.length) playSfx('hit2') }
+      // Phase54: skill.txt 命中率 (疾电=1 → ×1; 999 would guarantee)
+      { const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, 3.2, { skillHit: sk?.hit }); floaters.push(...fl); if (fl.some((x) => x.text !== 'MISS')) playSfx('hit2') }
       stats.at = at0
       skillFx = spawnFx('jidian', facingWorldAng(facing))
       inv.flash(`${sk?.name ?? '疾电'}！`)
@@ -1455,7 +1461,7 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, dmgMid, hitChance, dodgeStat, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, dmgMid, hitChance, dodgeStat, effectiveHit, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
