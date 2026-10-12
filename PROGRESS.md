@@ -32,6 +32,12 @@ Damage Phase52 + dodge→DF Phase53 unchanged. Facing `(oct+6)%8` unchanged.
 
 ---
 
+## Phase 55 deploy — Act-1 E2E → bq2=100 (2026-10-12)
+
+**Source:** `phase55-act1-e2e` / merge to `master` · **Pages:** `main` (this deploy) → https://liuzhuoling2011.github.io/djfm-sgcs/
+**Bundle:** `assets/index-76eJuVK4.js` (+ `index-P_9TZ2IC.css`) · jiguan1 meta on `game/maps/1-11s/`
+**E2E:** zero-ASSIST `bq2=100` · finale `go 2-0s` / `currentAct=1`. Combat Phases 51–54 kept. No Act-2 content.
+
 ## Phase 53 — Hit / dodge (no more free cone hits) (2026-10-12 ~23:00 Asia/Shanghai)
 
 **Ask:** Melee must roll hit/dodge using table evidence; keep Phase 52 AT-flat damage; facing unchanged; act-1 only.
