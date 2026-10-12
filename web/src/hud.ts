@@ -40,9 +40,9 @@ export function tryLevelUp(st: Stats): boolean {
   st.mp = st.maxMp
   return true
 }
-// Damage: original formula is exe-only. Working model AT−DF/2 ±10% min1 (PROGRESS Phase 17c).
-// Soft-DF formula hack is OPT-IN only (?softdf=1). Default uses raw DF; act-1 playability comes from
-// PLACEHOLDER foe stat caps in main.ts (game.json combat.scene_tier), not this formula.
+// Damage: PLACEHOLDER (Phase 51). ComeOn.exe opened in REA but string/proc search MCP-schema-broken;
+// no address-level formula. Working model AT−DF/2 ±10% min1 (Phase 17c). Soft-DF only ?softdf=1.
+// Act-1 playability: scene_tier caps in game.json, not this formula.
 export let SOFT_DF = false
 export function setSoftDf(on: boolean) { SOFT_DF = on }
 export const dmg = (at: number, df: number) => {
@@ -255,7 +255,7 @@ export function stepFoes(foes: Foe[], p: { x: number; y: number }, st: Stats, dt
 }
 
 // melee arc: hits foes within range in facing half-plane
-export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.55): FloatDmg[] {
+export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng: number, st: Stats, range = 1.75): FloatDmg[] {
   const floats: FloatDmg[] = []
   for (const f of foes) {
     if (f.dead > 0 || f.gone) continue
@@ -263,7 +263,7 @@ export function playerAttack(foes: Foe[], p: { x: number; y: number }, facingAng
     if (d > range) continue
     const a = Math.atan2(dy, dx), diff = Math.abs(Math.atan2(Math.sin(a - facingAng), Math.cos(a - facingAng)))
     // Phase 36: tighter cone + short knockback (Wine melee, not arcade shove)
-    if (d < 0.85 || diff < 0.92) {
+    if (d < 0.95 || diff < 1.15) {
       const dealt = dmg(st.at ?? 40, f.df ?? 10)
       f.hp -= dealt; f.hitT = 0.22; f.act = 'hurt'; f.actT = 0
       if (d > 0.01) { f.kbX = (dx / d) * 1.75; f.kbY = (dy / d) * 1.75 }

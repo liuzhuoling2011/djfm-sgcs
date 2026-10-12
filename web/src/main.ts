@@ -4,6 +4,10 @@ import { Hud, SOFT_DF, playerAttack, setSoftDf, stepFoes, setInitGrowth, applyIn
 import { Inventory } from './inventory'
 import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 import { loadSfx, playSfx, setSfxEnabled } from './sfx'
+import {
+  PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, FACING_OCT_OFFSET,
+  ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC,
+} from './evidence'
 
 type Vec = { x: number; y: number }
 type MapObj = {
@@ -172,7 +176,15 @@ async function main() {
   const hud = new Hud()
   const inv = new Inventory()
   const dlg = new DialogSys()
-  dlg.onChange = () => { renderDialog(); renderInv() }
+  function syncAct1ExitGates() {
+    // VERIFIED scene/1-0s.txt + talk/sy.txt: sy1<1 → ExitText 308; talk sets -1
+    dlg.exitText[NORTH_GATE.dest] = (dlg.flags[NORTH_GATE.flag] ?? 0) < NORTH_GATE.unlockAt
+      ? NORTH_GATE.lockDialogId : -1
+    dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
+    dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
+    dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
+  }
+  dlg.onChange = () => { syncAct1ExitGates(); renderDialog(); renderInv() }
   void (async () => {
     await Promise.all([hud.load(), inv.load(), dlg.load()])
     dlg.inv = {
@@ -823,7 +835,7 @@ async function main() {
     }
     if (scene === '1-0s' || scene === 'ren') {
       // scene/1-0s.txt + talk/sy SetExitTextID: flag gates (force lock/unlock each enter)
-      dlg.exitText['1-1s'] = (dlg.flags.sy1 ?? 0) < 1 ? 308 : -1
+      dlg.exitText[NORTH_GATE.dest] = (dlg.flags[NORTH_GATE.flag] ?? 0) < NORTH_GATE.unlockAt ? NORTH_GATE.lockDialogId : -1
       dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
       dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
       dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
@@ -1020,14 +1032,14 @@ async function main() {
     spawnPos = { x: pos.x, y: pos.y }
     // Act-1 town: north gate locked until 沈云 (sy1≥1 / exitText -1). Re-sync on every load.
     if (curScene === '1-0s') {
-      dlg.exitText['1-1s'] = (dlg.flags.sy1 ?? 0) < 1 ? 308 : -1
+      dlg.exitText[NORTH_GATE.dest] = (dlg.flags[NORTH_GATE.flag] ?? 0) < NORTH_GATE.unlockAt ? NORTH_GATE.lockDialogId : -1
       dlg.exitText['1-4s'] = (dlg.flags.bq1 ?? 0) < 10 ? 303 : -1
       dlg.exitText['1-7as'] = (dlg.flags.bq1 ?? 0) < 30 ? 303 : -1
       dlg.exitText['1-9s'] = (dlg.flags.bq2 ?? 0) < 1 ? 303 : -1
     }
     const gateCells = (meta as { quest_gate_cells?: [number, number][] }).quest_gate_cells
     if (gateCells && walkGrid) {
-      const open = (dlg.flags.sy1 ?? 0) >= 1 || dlg.exitText['1-1s'] === -1
+      const open = (dlg.flags[NORTH_GATE.flag] ?? 0) >= NORTH_GATE.unlockAt || dlg.exitText[NORTH_GATE.dest] === -1
       for (const [gx, gy] of gateCells) {
         if (gy >= 0 && gy < walkGrid.length && gx >= 0 && gx < walkGrid[gy].length) {
           const row = walkGrid[gy].split(''); row[gx] = open ? '1' : '0'; walkGrid[gy] = row.join('')
@@ -1127,10 +1139,10 @@ async function main() {
 
   function doMelee() {
     if (dialogOpen || attackCd > 0) return
-    // Phase 36: Wine-like melee — windup then hit (not instant arcade)
-    attackT = 0.34
+    // Phase51: Skill.ini 剑客_普通攻击1 ~0.3s floats (HEURISTIC) + prior Wine windup
+    attackT = MELEE.durationS
     attackPending = true
-    skillFx = spawnFx('slash', facingWorldAng(facing), 0.34)
+    skillFx = spawnFx('slash', facingWorldAng(facing), MELEE.durationS)
     playSfx('attack')
     playSfx('slash', { vol: 0.65 })
     attackCd = Math.max(0.52, (gameData?.attack?.cooldown_ms ?? 520) / 1000)
@@ -1177,6 +1189,10 @@ async function main() {
   const keys = new Set<string>()
   let facing = 0, animT = 0, moving = false, attackPending = false
   window.addEventListener('keydown', (e) => {
+    const cs = document.querySelector('.cutscene') as HTMLElement | null
+    if (cs && (e.key === 'Escape' || e.key === 'e' || e.key === 'E' || e.key === ' ' || e.key === 'Enter')) {
+      cs.click(); e.preventDefault(); return
+    }
     const k = e.key.toLowerCase()
     keys.add(k)
     if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault()
@@ -1280,6 +1296,23 @@ async function main() {
   function iso(x: number, y: number): Vec {
     return { x: (x - y) * (tileW / 2), y: (x + y) * (tileH / 2) }
   }
+  function faceNearestFoe(maxR = 2.4): boolean {
+    let best: { x: number; y: number } | null = null, bestD = maxR
+    for (const f of foes) {
+      if (f.dead > 0 || f.gone) continue
+      const d = Math.hypot(f.x - pos.x, f.y - pos.y)
+      if (d < bestD) { bestD = d; best = f }
+    }
+    if (!best) return false
+    const ang = Math.atan2(best.y - pos.y, best.x - pos.x)
+    let bestF = facing, bestDiff = 99
+    for (let f = 0; f < 8; f++) {
+      const diff = Math.abs(Math.atan2(Math.sin(ang - facingWorldAng(f)), Math.cos(ang - facingWorldAng(f))))
+      if (diff < bestDiff) { bestDiff = diff; bestF = f }
+    }
+    facing = bestF
+    return true
+  }
   /** World cell atan2 for attack cones — inverse of facing=(screenOct+6)%8 */
   function facingWorldAng(f: number): number {
     const o = (f + 2) % 8
@@ -1313,11 +1346,12 @@ async function main() {
     last = now
     if (attackCd > 0) attackCd -= dt
     if (attackT > 0) attackT -= dt
-    // Hit lands ~mid swing (Wine: contact on attack frame, not keydown)
-    if (attackPending && attackT > 0 && attackT <= 0.20) {
+    // Hit lands mid swing (MELEE.hitWhenRemainingS from Skill.ini-backed HEURISTIC)
+    if (attackPending && attackT > 0 && attackT <= MELEE.hitWhenRemainingS) {
       attackPending = false
       const before = foes.filter((f) => f.dead <= 0 && !f.gone)
-      const range = gameData?.attack?.range ?? 1.55
+      const range = gameData?.attack?.range ?? 1.75
+      faceNearestFoe(range + 0.6)
       const fl = playerAttack(foes, pos, facingWorldAng(facing), stats, range)
       floaters.push(...fl)
       if (fl.length) { playSfx('hit'); hitStop = Math.max(hitStop, 0.055) }
@@ -1347,15 +1381,16 @@ async function main() {
       // Phase39: RH_002 at (body+3)%8 fixes saber; keep P34 facing (D→art6 east profile).
       const sdx = dx - dy, sdy = dx + dy
       const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8
-      facing = (oct + 6) % 8
+      facing = (oct + FACING_OCT_OFFSET) % 8 // evidence: keep until REA address proof
     }
     const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
     const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)
     const stamRegen = (INIT.stamina_regen ?? 3) / Math.max(1, INIT.stamina ?? 80)
     stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -stamUse : stamRegen) * dt))
     const ox0 = pos.x, oy0 = pos.y
-    // Phase41: Wine run ~1.45× walk; keep stride locked to displacement
-    const speed = running ? 6.5 : 4.5
+    // Phase51: RolePrivate fightSpeed=8 / runSpeed=16 (VERIFIED) → cells via CELL_SCALE_HEURISTIC
+    // walk 4.5 / run 9.0 (table ratio 2×). Wine ~1.45× was HEURISTIC; facing (oct+6)%8 unchanged.
+    const speed = running ? PLAYER_RUN_CELLS : PLAYER_WALK_CELLS
     const nx = pos.x + (dx / len) * speed * dt
     const ny = pos.y + (dy / len) * speed * dt
     if (walkable(nx, pos.y)) pos.x = nx
@@ -1419,12 +1454,12 @@ async function main() {
         }
       }
     }
-    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
+    ;(window as unknown as { __djfmDbg: unknown }).__djfmDbg = { evidence: { PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC }, applyPack, dlg, inv, stats, setFacing: (d: number) => { facing = ((d % 8) + 8) % 8 }, getFacing: () => facing, getAnim: () => ({ facing, animT, moving }), get foes() { return foes }, get objects() { return objects }, pos, origin: () => origin, scene: () => curScene, hidden: () => [...hiddenEvents], sync: () => { dialogOpen = dlg.open; renderDialog() }, talk: (e: string) => { dlg.state = 0; dlg.start(e); dialogOpen = dlg.open; renderDialog() }, pickProp: () => tryPickProp(), renderInv, openShop: () => { inv.shopOpen = true; inv.embedOpen = false; inv.shopMode = 'buy'; inv.open = false; playSfx('ui'); renderInv() }, openEmbed: () => { inv.embedOpen = true; inv.shopOpen = false; inv.open = false; playSfx('ui'); renderInv() }, groundLoot: () => groundLoot, iceHazards: () => iceHazards, remake: () => REMAKE, triggers: () => curTriggers, quickSave, quickLoad, killFlag: (ev: string) => {
       const match = (x: Foe) => !x.gone && (x.event === ev || x.name === ev || (ev === 'bossdaxiang' && x.name === '战象') || ((ev === 'bosstianji' || ev === 'boss') && x.name === '天机'))
       const f = foes.find(match)
       if (f) { f.hp = 0; f.dead = 0.05; onFoeKilled(f); f.gone = true }
-    }, faceAttack: (ang?: number) => { const a = ang ?? (facingWorldAng(facing)); const before = foes.filter(f => f.dead <= 0 && !f.gone); floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats)); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5)); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
-    warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags.sy1 ?? 0, exit11: dlg.exitText['1-1s'] ?? null }
+    }, faceAttack: (ang?: number) => { if (ang == null) faceNearestFoe(2.6); const a = ang ?? (facingWorldAng(facing)); const before = foes.filter(f => f.dead <= 0 && !f.gone); floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a, stats, 1.9)); for (const f of before) if (f.dead > 0) onFoeKilled(f) }, omniAttack: () => { /* debug only */ const before = foes.filter(f => f.dead <= 0 && !f.gone); for (let a = 0; a < 8; a++) floaters.push(...playerAttack(foes.filter(f => f.hitT <= 0), pos, a * Math.PI / 4, stats, 3.5)); for (const f of before) if (f.dead > 0) onFoeKilled(f) } }
+    warpCd -= dt; (window as unknown as { __djfm: unknown }).__djfm = { scene: curScene, nt: curTriggers.length, cd: warpCd, near: Math.min(...curTriggers.map((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y))), x: pos.x + origin.x, y: pos.y + origin.y, sy1: dlg.flags[NORTH_GATE.flag] ?? 0, exit11: dlg.exitText[NORTH_GATE.dest] ?? null, walkCells: PLAYER_WALK_CELLS, runCells: PLAYER_RUN_CELLS }
     const nearT = curTriggers.some((g) => Math.hypot(g.x - origin.x - pos.x, g.y - origin.y - pos.y) < 4.5)
     if (!nearT) warpArmed = true
     if (warpCd <= 0 && warpArmed) for (const g of curTriggers) {
@@ -1444,8 +1479,15 @@ async function main() {
         if (dest && packIndex?.packs.some((p) => p.id === packOf(dest))) {
           const lock = dlg.exitLock(dest)
           if (lock) {
-            dlg.npc = '出口'; dlg.lines = (dlg.text(lock).replace(/^\(对话 \d+\)$/, '') || '（前方的路还不能走——先去和沈云说说吧。）').split('\n').filter(Boolean)
-            if (!dlg.lines.length) dlg.lines = ['（前方的路还不能走——先去和沈云说说吧。）']; dlg.idx = 0; dlg.choices = []; dlg.open = true
+            dlg.npc = '出口'; dlg.lines = (dlg.text(lock).replace(/^\(对话 \d+\)$/, '') || '').split('\n').filter(Boolean)
+            if (!dlg.lines.length || dlg.lines.every(l => /^\(对话/.test(l))) {
+              const hint = dest === '1-1s' ? '（北门未开——先去找沈云谈谈。）'
+                : dest === '1-4s' ? '（此路未开——先与沈万山/泊祁推进至 bq1≥10。）'
+                : dest === '1-7as' ? '（此路未开——玲珑心线需泊祁指引至 bq1≥30。）'
+                : dest === '1-9s' ? '（炎炀关未开——完成玲珑心后 bq2≥1 再来。）'
+                : '（前方的路还不能走——先推进主线对话。）'
+              dlg.lines = [hint]
+            }; dlg.idx = 0; dlg.choices = []; dlg.open = true
             dialogOpen = true; renderDialog(); warpCd = 0.8; break
           }
           warpCd = 99; void applyPack(packOf(dest), curScene); break
@@ -1615,7 +1657,7 @@ async function main() {
       const d = ((facing % 8) + 8) % 8
       // Phase 27: attack frame sync — windup (walk), hit (attack), recover (idle)
       if (attackT > 0) {
-        const u = attackT / 0.34
+        const u = attackT / MELEE.durationS
         // windup → strike pose → recover
         if (u > 0.72 && playerWalk[d]?.[0]) spr = playerWalk[d][0]
         else if (u > 0.22 && playerAttackSpr[d]) spr = playerAttackSpr[d]

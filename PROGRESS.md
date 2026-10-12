@@ -1,3 +1,49 @@
+## Phase 51 — Evidence-driven act-1 vertical slice (2026-10-12 ~22:40 Asia/Shanghai)
+
+**Ask:** Remake 上古传说 chapter-1 again, but nail **one system at a time** with REA/static evidence (no Wine GIF chase). Act-1 / 瓦当镇 only. No jump. Facing `(oct+6)%8` kept.
+
+### REA
+- Opened `/home/box/vms/game_share/DJFM/ComeOn.exe` (PE32 x86, sha256 `97ae4c23…`) via `user-rea/open_binary` — OK.
+- `binary_overview` timed out; `search_strings` / `list_strings` / `search_procedures` MCP schema errors (`result`/`evidence_id` required) — same class as Phase 18c. **No address-level move/damage constants this run.**
+- 1.1GB `Blade And Sword 2 Ancient Legend.exe` not used (packer); evidence from `mb` fol tables instead.
+
+### 1. Player move — VERIFIED tables → remake cells
+| Source | Field | Value | Label |
+|--------|-------|------:|-------|
+| `mb/RolePrivate.txt` 男主角 lv1 | 战斗速度 | 8 | VERIFIED |
+| `mb/RolePrivate.txt` 男主角 lv1 | 跑步速度 | 16 | VERIFIED |
+| `mb/player/Init.txt` 男主角 | 移动速度 | 16 | VERIFIED |
+| remake scale | `CELL_SCALE_HEURISTIC = 8/4.5` | → walk **4.5** / run **9.0** | HEURISTIC scale, VERIFIED 2× ratio |
+
+Prior Wine hold suggested ~1.45× walk (run 6.5) — superseded for ratio by RolePrivate 8:16. Walk cells kept at 4.5 so gait feel does not jump.
+
+### 2. Melee — Skill.ini HEURISTIC + damage PLACEHOLDER
+- `Skill.ini` `剑客_普通攻击1` float triplet ~**0.3 / 0.3 / 1.0** (column map not fully RE'd) → `MELEE.durationS=0.34`, hit when remaining ≤`0.20`.
+- Damage still **AT−DF/2 ±10% min1** PLACEHOLDER (`hud.dmg`); Soft-DF only `?softdf=1`. Init AT/DF growth already table-backed.
+
+### 3. North portal 瓦当镇→1-1s — VERIFIED scripts, remake OK
+- `scene/1-0s.txt`: `IsFlag sy1 1 1` → `SetExitTextID 1-1s 308`
+- `talk/sy.txt`: first talk → `SetFlag sy1 1` + `SetExitTextID 1-1s -1`
+- `Text.txt` 308: 是谁救了我？得先向他道谢才是。
+- Remake `sy1<1→308 / ≥1→-1` matches. Check: `python3 tools/phase51_portal_gate_check.py` → **PASS**.
+
+### Files
+- `web/src/evidence.ts` (new)
+- `web/src/main.ts` — walk/run/melee/gate wired to evidence
+- `web/src/hud.ts` — damage PLACEHOLDER note
+- `tools/phase51_portal_gate_check.py`
+- `PROGRESS.md` (this section)
+
+### Build
+`cd web && npm run build` → `web/dist`. Branch `phase51-evidence-slice`. No force-push. Asset PNG churn left unstaged.
+
+### Top blockers for act-1 E2E
+1. Damage formula still exe-only (REA string search broken) — late 1-x trash needs scene_tier caps.
+2. Wine Present freeze (Phase 43) — cannot re-validate run 9.0 vs live gait.
+3. lep/paper-doll / some monster packs still incomplete for full chapter feel.
+
+---
+
 ## Phase 50b — Merge PR #3 JM desks/HUD (2026-10-10)
 
 Merged updated PR #3 (original JM panels for dialog/bag/shop + canvas stone bar). Kept RH grip nudges + `player_hd`. Facing `(oct+6)%8` unchanged.
