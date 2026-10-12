@@ -1,3 +1,157 @@
+## Phase 54 — Skill 命中率 on F1/F2 (2026-10-12 ~23:10 Asia/Shanghai)
+
+**Ask:** Wire skill.txt 「命中率」 for F1 扫叶 / F2 疾电 into Phase 53 hit roll. Clarify `1` vs `999`.
+
+### Semantics (chosen)
+| Table value | Remake rule | Rationale |
+|-------------|-------------|-----------|
+| missing | character hit H | plain Space melee |
+| `0` | H | no modifier |
+| `0 < v < 100` (incl. **1**, 1.5, 2) | **H × v** | absolute-1 would brick F1/F2 vs Init H=21; histogram of small floats fits multipliers |
+| `v ≥ 100` (e.g. **999**) | guarantee (`1e6` → pMax) | ultimates in skill.txt |
+| `v < 0` | `max(0, H+v)` | additive penalty rows |
+
+**VERIFIED table:** 扫叶 id6 & 疾电 id35 both 命中率=**1** → same pHit as Space (×1). Wiring is still required so non-1 skills work and F1 floaters collect MISS/dmg.
+
+### Code
+- `evidence.ts` HIT.skillHit*
+- `hud.ts` `effectiveHit`; `playerAttack(..., { skillHit })`
+- `main.ts` F1/F2 pass `sk.hit`; F1 now pushes floaters
+- `inventory.ts` SkillDef.hit
+- `tools/phase54_skill_hit_check.py` — **PASS**
+
+Damage Phase52 + dodge→DF Phase53 unchanged. Facing `(oct+6)%8` unchanged.
+
+### Build / git
+`cd web && npm run build`. Branch `phase54-skill-hit`.
+
+### Blockers
+1. skill 命中率 mapping still HEURISTIC (exe not decoded).
+2. Q-skill / 飞蝗石 not using skill hit column.
+3. Hit/dodge ratio itself still HEURISTIC.
+
+---
+
+## Phase 55 deploy — Act-1 E2E → bq2=100 (2026-10-12)
+
+**Source:** `phase55-act1-e2e` / merge to `master` · **Pages:** `main` (this deploy) → https://liuzhuoling2011.github.io/djfm-sgcs/
+**Bundle:** `assets/index-76eJuVK4.js` (+ `index-P_9TZ2IC.css`) · jiguan1 meta on `game/maps/1-11s/`
+**E2E:** zero-ASSIST `bq2=100` · finale `go 2-0s` / `currentAct=1`. Combat Phases 51–54 kept. No Act-2 content.
+
+## Phase 53 — Hit / dodge (no more free cone hits) (2026-10-12 ~23:00 Asia/Shanghai)
+
+**Ask:** Melee must roll hit/dodge using table evidence; keep Phase 52 AT-flat damage; facing unchanged; act-1 only.
+
+### Evidence
+| Source | Finding | Label |
+|--------|---------|-------|
+| Init.txt 男主角 | 命中率 **21**, +**3**/lv | VERIFIED |
+| RolePrivate | 命中率 filled; **闪避率 empty** on all 249 rows (`meta.eva=0`) | VERIFIED |
+| Series FAQ | 防御≈闪避 | VERIFIED direction |
+| define.ini / Skill.ini | no pHit equation; skill 命中率 often `1` | — |
+| Remake equation | `dodgeEff = eva>0 ? eva : DF`; `p = clamp(hit/(hit+dodgeEff), 0.08, 0.95)` | HEURISTIC |
+
+### Code
+- `web/src/evidence.ts` — `HIT`
+- `web/src/hud.ts` — `dodgeStat` / `hitChance` / `rollHit`; `playerAttack` + `stepFoes` show **MISS**
+- `web/src/main.ts` — foe `hit`/`eva` from meta; Init hit on `Stats`
+- `tools/phase53_hit_check.py` — **PASS**
+- Soft/legacy DF flags unchanged. Facing `(oct+6)%8` unchanged.
+
+### Build / git
+`cd web && npm run build`. Branch `phase53-hit-dodge`.
+
+### Blockers
+1. Exact exe hit formula still unknown (ratio is HEURISTIC).
+2. Skill 命中率 (1 vs 999) not yet applied as guarantee on F1/F2.
+3. Difficulty-scaled hit/DF still unmodeled.
+
+---
+
+## Phase 52 — Melee damage: AT-flat (DF≈dodge) (2026-10-12 ~22:50 Asia/Shanghai)
+
+**Ask:** Replace AT−DF/2 ±10% PLACEHOLDER with best evidence-backed formula **without** broken REA `search_strings`.
+
+### Evidence searched
+- `mb/*.txt|*.ini` + `player/Init.txt` / `skill.txt` / `RolePrivate.txt` / `define.ini` — **no** physical AT−DF equation (same finding as Phase 17c). `define.ini` only poison/fire DoT rates.
+- Tables **do** separate `命中率` / `闪避率` from AT/DF; `skill.txt` 「加攻击力」 scales skill AT.
+- Init `DF4..DF0` = 100/100/80/70/60 still **unresolved** (not wired).
+- ComeOn.exe: `RolePrivate.txt` string @ file `0x1742ec`; no GBK「伤害」; REA string/proc search still MCP-schema-broken — skipped heavy retries.
+- **Community FAQ** (刀剑封魔录系列, e.g. game773): **防御≈闪避** — DF lowers hit chance; a landed hit still hurts by attacker AT vs your HP. Matches table layout.
+
+### Formula (default)
+| Label | Rule |
+|-------|------|
+| VERIFIED direction | DF is **not** on-hit mitigation |
+| HEURISTIC magnitude | `dealt = max(1, AT * U(0.9,1.1))` |
+| LEGACY debug | `?softdf=1` / `?legacydf=1` → old AT−DF/2 (± soft DF cap) |
+
+Skill F1/F2 still multiply AT before `playerAttack`. Facing `(oct+6)%8` unchanged. Act-1 only.
+
+### Files
+- `web/src/evidence.ts` — `DAMAGE` block
+- `web/src/hud.ts` — `dmg` / `dmgMid`
+- `web/src/main.ts` — query + help banner
+- `web/public/game/data/game.json` — combat.note / damage_model
+- `tools/phase52_damage_check.py` — **PASS**
+- `PROGRESS.md` (this section)
+
+### Build / git
+`cd web && npm run build`. Branch `phase52-damage` (from phase51-evidence-slice).
+
+### Remaining blockers
+1. Hit/dodge equation (命中 vs 闪避/DF) not implemented — remake still always hits in cone.
+2. Difficulty (英雄无悔) AT/HP scale unknown — scene_tier caps still needed for raw RolePrivate.
+3. Init DF4..DF0 / elemental IceDp·FireDp·PoisonDp not wired into damage.
+
+---
+
+## Phase 51 — Evidence-driven act-1 vertical slice (2026-10-12 ~22:40 Asia/Shanghai)
+
+**Ask:** Remake 上古传说 chapter-1 again, but nail **one system at a time** with REA/static evidence (no Wine GIF chase). Act-1 / 瓦当镇 only. No jump. Facing `(oct+6)%8` kept.
+
+### REA
+- Opened `/home/box/vms/game_share/DJFM/ComeOn.exe` (PE32 x86, sha256 `97ae4c23…`) via `user-rea/open_binary` — OK.
+- `binary_overview` timed out; `search_strings` / `list_strings` / `search_procedures` MCP schema errors (`result`/`evidence_id` required) — same class as Phase 18c. **No address-level move/damage constants this run.**
+- 1.1GB `Blade And Sword 2 Ancient Legend.exe` not used (packer); evidence from `mb` fol tables instead.
+
+### 1. Player move — VERIFIED tables → remake cells
+| Source | Field | Value | Label |
+|--------|-------|------:|-------|
+| `mb/RolePrivate.txt` 男主角 lv1 | 战斗速度 | 8 | VERIFIED |
+| `mb/RolePrivate.txt` 男主角 lv1 | 跑步速度 | 16 | VERIFIED |
+| `mb/player/Init.txt` 男主角 | 移动速度 | 16 | VERIFIED |
+| remake scale | `CELL_SCALE_HEURISTIC = 8/4.5` | → walk **4.5** / run **9.0** | HEURISTIC scale, VERIFIED 2× ratio |
+
+Prior Wine hold suggested ~1.45× walk (run 6.5) — superseded for ratio by RolePrivate 8:16. Walk cells kept at 4.5 so gait feel does not jump.
+
+### 2. Melee — Skill.ini HEURISTIC + damage PLACEHOLDER
+- `Skill.ini` `剑客_普通攻击1` float triplet ~**0.3 / 0.3 / 1.0** (column map not fully RE'd) → `MELEE.durationS=0.34`, hit when remaining ≤`0.20`.
+- Damage still **AT−DF/2 ±10% min1** PLACEHOLDER (`hud.dmg`); Soft-DF only `?softdf=1`. Init AT/DF growth already table-backed.
+
+### 3. North portal 瓦当镇→1-1s — VERIFIED scripts, remake OK
+- `scene/1-0s.txt`: `IsFlag sy1 1 1` → `SetExitTextID 1-1s 308`
+- `talk/sy.txt`: first talk → `SetFlag sy1 1` + `SetExitTextID 1-1s -1`
+- `Text.txt` 308: 是谁救了我？得先向他道谢才是。
+- Remake `sy1<1→308 / ≥1→-1` matches. Check: `python3 tools/phase51_portal_gate_check.py` → **PASS**.
+
+### Files
+- `web/src/evidence.ts` (new)
+- `web/src/main.ts` — walk/run/melee/gate wired to evidence
+- `web/src/hud.ts` — damage PLACEHOLDER note
+- `tools/phase51_portal_gate_check.py`
+- `PROGRESS.md` (this section)
+
+### Build
+`cd web && npm run build` → `web/dist`. Branch `phase51-evidence-slice`. No force-push. Asset PNG churn left unstaged.
+
+### Top blockers for act-1 E2E
+1. Damage formula still exe-only (REA string search broken) — late 1-x trash needs scene_tier caps.
+2. Wine Present freeze (Phase 43) — cannot re-validate run 9.0 vs live gait.
+3. lep/paper-doll / some monster packs still incomplete for full chapter feel.
+
+---
+
 ## Phase 50b — Merge PR #3 JM desks/HUD (2026-10-10)
 
 Merged updated PR #3 (original JM panels for dialog/bag/shop + canvas stone bar). Kept RH grip nudges + `player_hd`. Facing `(oct+6)%8` unchanged.
@@ -1531,6 +1685,53 @@ Reached **bq2=100, zhs1=100, bq1=100, xqnz=1** with props 122/123/124 acquired a
 - Full DHP video playback (only still-frame stub).
 - Side-quest / flag coverage beyond sy1/蜀水/cds/td/cjg subset.
 - Act-2 maps not started.
+
+
+
+## Phase 55 — Act-1 主线 E2E → bq2=100 (2026-10-12)
+
+### 目标
+把第一章主线打通到 **bq2=100**（瓦当镇→沈云北门→魔豕/玉衡→蜀水→玲珑心→战象→气凝珠/双天机→收束），保留 Phase 51–54 战斗证据，不撞车 facing/伤害/命中。
+
+### 本轮修复
+1. **主线提示 `questHint`**：进镇 / 对话关闭后 toast 下一步（含 sdyx→bq1=20、sws→bq2=70）。
+2. **1-11s `jiguan1`**：`meta.json` 空 script 点 (197,157) 标为 `jiguan1`/`机关1`（原逻辑已有坐标兜底）。
+3. **`SetTumble`**：对话结果触发跌倒 toast（泊祁 bq1 50 段）。
+4. **E2E `tools/phase55_act1_e2e.py`**：补齐 `sy→101`、`sws→bq1=10`、`sdyx→20`、`bq→30` 与终局 `bq→60` / `sws→70` / `bq→100` 顺序。
+5. **`DialogSys.pendingGo`**：`go` 延到对话 `close` 再 `onGo`（避免与开对话抢 `applyPack`）；`bq2=100*go 2-0s` 可进芭蕉村门口。
+
+### 验证（Playwright，零 ASSIST）
+```
+sws/sdyx/bq → bq1=30；tzxs→40；bq tumble 50→60；sdyx→70+玲珑心；bq→bq2=1
+战象 zhs1=10；jiguan→气凝珠；双天机 bq2=50；bq→60；sws→70；bq→100
+FINAL {bq2:100, bq1:100, sy1:102, scene:2-0s, act:1, qty120:1, qty124:1} RESULT PASS（零 ASSIST）
+```
+日志：`assets/samples/phase55/e2e_log.txt` · 截图 `01_sy_unlock.png` / `99_final.png`。
+
+### 旗标链（脚本原貌）
+| 段 | 对话/场景 | 旗标 |
+|----|-----------|------|
+| 北门 | sy | sy1=1，开 1-1s |
+| 甘露 | bossyuheng→bq | sy1=30→100 |
+| 沈云再谈 | sy | sy1=101 |
+| 玲珑心开 | sws / sdyx / bq | bq1=10→20→30（东/西门） |
+| 天芝 | 1-8s tzxs | bq1=40 + prop 121 |
+| 换心 | bq / sdyx / bq | 50→60→70(+119)→100，bq2=1（南门） |
+| 战象 | 1-9s | zhs1=10 |
+| 气凝 | 1-11s 三机关 | prop 124，bq2=40 |
+| 天机 | 1-10a6s | bq2=50 |
+| 收束 | bq / sws / bq | 60→70→**100**（`go 2-0s`） |
+
+### 仍未做 / 已知缺口
+- **`go 2-0s`**：对话关闭后延迟跳转已接通；E2E FINAL `scene=2-0s` · `currentAct=1`。Act-2 内容仍不实现。
+- 战象/魔豕/魔猿纸娃娃与 Wine 物种仍不完全一致（不影响主线旗标）。
+- Act-2 未开；无跳跃；facing `(oct+6)%8` 保持。
+- DHP 真播放、完整旁支、宝石孔等仍后置。
+
+### 分支 / 构建
+- Branch: `phase55-act1-e2e`
+- Build: green（`index-Cp9ByLFB.js`）
+- 未合 main / 未强推 Pages（等审）。
 
 
 ## Phase 22 — 玉衡 sprites, AddFellow, Type-12 NPCs, side quests (2026-10-10)

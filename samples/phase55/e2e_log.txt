@@ -1,0 +1,62 @@
+[ren] foes=0 flags={"sy1": null, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": null, "xss": null}
+  talk sy → {"sy1": 1}
+  north gate sy1=1 exit1-1s=-1
+[1-1s] foes=0 flags={"sy1": 1, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": null, "xss": null}
+[1-2s] foes=4 flags={"sy1": 1, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": null, "xss": null}
+  talk bossyezhu → {"sy1": 1}
+  fight ['魔豕兽', 'bossyezhu'] hits=24 left=[] at=48 hit=27 lv=3
+  pig heart qty54=1
+[ren] foes=0 flags={"sy1": 1, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 10, "xss": null}
+  talk cjg → {"sy1": 1, "cjg1": 100}
+  talk sws → {"sy1": 1, "cjg1": 100}
+[1-3s] foes=0 flags={"sy1": 19, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 100, "xss": null}
+  talk sws → {"sy1": 20, "cjg1": 100}
+[1-3as] foes=1 flags={"sy1": 20, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 100, "xss": null}
+  talk bossyuheng → {"sy1": 20, "cjg1": 100}
+  fight ['玉衡', 'bossyuheng'] hits=27 left=[] at=48 hit=27 lv=3
+  玉净甘露 qty118=1
+[ren] foes=0 flags={"sy1": 30, "bq": null, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 100, "xss": null}
+  talk bq → {"sy1": 30, "cjg1": 100, "bq": 1}
+  talk bq → {"sy1": 100, "cjg1": 100, "bq": 1}
+  talk bq → {"sy1": 100, "cjg1": 100, "bq": 2}
+[1-6s] foes=0 flags={"sy1": 100, "bq": 2, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 100, "xss": null}
+  pick 'shushui' → True
+  蜀水=1
+[ren] foes=0 flags={"sy1": 100, "bq": 2, "bq1": null, "bq2": null, "zhs1": null, "cjg1": 100, "xss": 1}
+  talk sy → {"sy1": 101, "cjg1": 100, "bq": 2, "xss": 1}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 2, "xss": 1}
+  talk sdyx → {"sy1": 102, "cjg1": 100, "bq": 2, "xss": 1, "bq1": 20}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 20}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 20}
+  talk sdyx → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 20}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 30}
+[1-8s] foes=0 flags={"sy1": 102, "bq": 3, "bq1": 30, "bq2": null, "zhs1": null, "cjg1": 100, "xss": 1}
+  pick 'tzxs' → True
+[ren] foes=0 flags={"sy1": 102, "bq": 3, "bq1": 40, "bq2": null, "zhs1": null, "cjg1": 100, "xss": 1}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 50, "xtzxs": 1}
+  talk sdyx → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 50, "xtzxs": 1}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 50, "xtzxs": 1}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 60, "xtzxs": 1}
+  talk sdyx → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 70, "xtzxs": 1}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 71, "xtzxs": 1}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 1}
+  talk sdyx → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 1}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 1}
+[1-9s] foes=9 flags={"sy1": 102, "bq": 3, "bq1": 100, "bq2": 1, "zhs1": null, "cjg1": 100, "xss": 1}
+  talk bossdaxiang → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 1}
+  fight ['战象', 'bossdaxiang'] hits=38 left=[] at=52 hit=30 lv=4
+[1-11s] foes=12 flags={"sy1": 102, "bq": 3, "bq1": 100, "bq2": 1, "zhs1": 10, "cjg1": 100, "xss": 1}
+  pick 'jiguan1' → True
+  pick 'jiguan2' → True
+  pick 'jiguan3' → True
+  气凝珠=1 bld={'jiguan1': 1, 'jiguan2': 1, 'jiguan3': 1}
+[1-10a6s] foes=11 flags={"sy1": 102, "bq": 3, "bq1": 100, "bq2": 40, "zhs1": 10, "cjg1": 100, "xss": 1}
+  talk bosstianji → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 40, "zhs1": 10, "xqnz": 1}
+  fight ['天机', 'bosstianji', 'boss'] hits=67 left=[] at=56 hit=33 lv=5
+  talk boss → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 50, "zhs1": 10, "xqnz": 1}
+  fight ['天机', 'bosstianji', 'boss'] hits=0 left=[] at=56 hit=33 lv=5
+[ren] foes=0 flags={"sy1": 102, "bq": 3, "bq1": 100, "bq2": 50, "zhs1": 10, "cjg1": 100, "xss": 1}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 60, "zhs1": 10, "xqnz": 1}
+  talk sws → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 70, "zhs1": 10, "xqnz": 1}
+  talk bq → {"sy1": 102, "cjg1": 100, "bq": 3, "xss": 1, "bq1": 100, "xtzxs": 1, "bq2": 100, "zhs1": 10, "xqnz": 1}
+FINAL {'bq2': 100, 'bq1': 100, 'sy1': 102, 'scene': '2-0s', 'act': 1, 'qty120': 1, 'qty124': 1} pageErrors []
