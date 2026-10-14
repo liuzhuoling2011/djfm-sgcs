@@ -1,0 +1,22 @@
+{
+  "model": "realesrgan-x4plus-anime",
+  "bin": "tools/realesrgan/realesrgan-ncnn-vulkan",
+  "vk_icd": "/usr/share/vulkan/icd.d/lvp_icd.json",
+  "player": {
+    "counts": {
+      "walk": 32,
+      "run": 32,
+      "idle": 8,
+      "attack": 8
+    },
+    "scale": 4,
+    "model": "realesrgan-x4plus-anime"
+  },
+  "samples": [
+    "assets/samples/phase44_hd/player_walk_8dir_grid.png",
+    "assets/samples/phase44_hd/player_before_after.png",
+    "assets/samples/phase44_hd/npc_8dir_grid.png",
+    "assets/samples/phase44_hd/mon_before_after.png",
+    "assets/samples/phase44_hd/README.md"
+  ]
+}
