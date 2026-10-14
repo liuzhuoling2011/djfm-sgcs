@@ -524,3 +524,11 @@ button.row:hover, button.row:focus-visible {
 .pn57::before{content:"";position:absolute;left:7%;top:5%;right:7%;bottom:7%;background:#0d0c0e;z-index:-1}
 .x57.bagx{left:33.5%;top:83%}.x57.statx{left:76.5%;top:82.5%}.x57.shopx{left:79%;top:83%}.x57.embx{left:76.5%;top:83%}
 .pn57::before{display:none}
+/* Phase59: Esc system menu + V skill panel in original stone-panel style */
+#sysmenu,#skillpanel{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#sysmenu.hidden,#skillpanel.hidden{display:none}
+.sys-board{pointer-events:auto;width:24.4%;aspect-ratio:195/319;background:url(../game/hud/panels/panel_563.png) 0 0/100% 100%;display:flex;flex-direction:column;justify-content:space-around;padding:12% 0;box-sizing:border-box;align-items:center}
+.sys-board button{width:62%;background:none;border:0;color:#f0d79a;font:calc(13*var(--u,1px)) "SimSun","Noto Serif CJK SC",serif;cursor:pointer;padding:4px}
+.sys-board button:hover{color:#fff}
+.sk-board{pointer-events:auto;position:absolute;left:0;top:56.333%;width:40.75%;height:37.667%;background:url(../game/hud/panels/panel_1550.png) 0 0/100% 100%;padding:6% 10%;box-sizing:border-box;color:#fff;font:calc(12*var(--u,1px)) "SimSun","Noto Serif CJK SC",serif}
+.sk-t{color:#ffe9a0;margin-bottom:6px}.sk-e{padding:3px 6px;cursor:default}.sk-e:hover{outline:1px solid #e7c068}.sk-e i{float:right;color:#ffef9a;font-style:normal}

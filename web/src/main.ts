@@ -1153,10 +1153,12 @@ async function main() {
   // E/SE (dirs 6,7) sheets already bake CA [1,2,3,2] / run [9,10,11,10] — play sequential 0..3
   const GAIT_PP = [0, 1, 2, 3, 2, 1]
   const GAIT_BAKED_SEQ = new Set([6, 7])
+  // Phase59: graph-901 16-dir sheets — walk res6 8 frames, run res10 7 frames, played sequentially
+  const PLAYER_WALK_N = 8, PLAYER_RUN_N = 7
   await Promise.all(Array.from({ length: 8 }, async (_, d) => {
-    for (let f = 0; f < 4; f++) {
-      try { playerWalk[d].push(await loadImageHd(`${playerBase}/walk/${d}_${f}.png`, `game/player/walk/${d}_${f}.png`)) } catch { /* */ }
-      try { playerRun[d].push(await loadImageHd(`${playerBase}/run/${d}_${f}.png`, `game/player/run/${d}_${f}.png`)) } catch { /* */ }
+    for (let f = 0; f < 8; f++) {
+      if (f < PLAYER_WALK_N) try { playerWalk[d].push(await loadImageHd(`${playerBase}/walk/${d}_${f}.png`, `game/player/walk/${d}_${f}.png`)) } catch { /* */ }
+      if (f < PLAYER_RUN_N) try { playerRun[d].push(await loadImageHd(`${playerBase}/run/${d}_${f}.png`, `game/player/run/${d}_${f}.png`)) } catch { /* */ }
     }
     try { playerIdle[d] = await loadImageHd(`${playerBase}/idle/${d}_0.png`, `game/player/idle/${d}_0.png`) } catch { /* */ }
     try { playerAttackSpr[d] = await loadImageHd(`${playerBase}/attack/${d}_0.png`, `game/player/attack/${d}_0.png`) } catch { /* */ }
@@ -1237,8 +1239,10 @@ async function main() {
     if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault()
     if (k === 'g') useGround = !useGround
     if (k === 'm') { muted = !muted; if (audio) audio.muted = muted; setSfxEnabled(!muted) }
-    if (k === 's' && !dialogOpen && !inv.shopOpen) { quickSave(); return }
-    if (k === 'l' && !dialogOpen) { void quickLoad(); return }
+    if (k === 'f5' && !dialogOpen) { e.preventDefault(); quickSave(); return }
+    if (k === 'f8' && !dialogOpen) { e.preventDefault(); void quickLoad(); return }
+    if (k === 'tab') e.preventDefault()
+    if (k === 'escape' && !dlg.open && !dialogOpen && !inv.shopOpen && !inv.embedOpen && !inv.open) { toggleSysMenu(); return }
     if (k === 'escape') {
       // One overlay at a time: dialog, else the desk that is actually open.
       if (dlg.open || dialogOpen) {
@@ -1271,7 +1275,18 @@ async function main() {
       }
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
-    if (k === ' ' && !dialogOpen) doMelee()
+    if (k === ' ' && dialogOpen) { advanceDialog(); return }
+    if (k === ' ' && !dialogOpen) { if (!actOnMouseTarget()) doMelee() }
+    if (k === 'z' && !dialogOpen) { runToggle = !runToggle; inv.flash(runToggle ? '跑步' : '行走') }
+    if (k === 'c' && !dialogOpen) { inv.shopOpen = false; inv.embedOpen = false; inv.open = !inv.open; playSfx('ui'); renderInv(); return }
+    if (k === 'v' && !dialogOpen) { toggleSkillPanel(); return }
+    if (k === 'n' || k === 'tab') { showMini = !showMini; return }
+    if (HOTKEYS.includes(k) && !dialogOpen && !e.ctrlKey && !e.metaKey) {
+      if (skillHover) { skillBind[k] = skillHover; inv.flash(`${k.toUpperCase()} ← ${skillHover === 'jump' ? '跳跃' : inv.skill(skillHover as "left" | "right")?.name ?? skillHover}`); renderSkillPanel(); return }
+      const b = skillBind[k]
+      if (b === 'jump') { rightAction = 'jump'; inv.flash('右键：跳跃'); return }
+      if (b === 'left' || b === 'right') { rightAction = b; inv.flash(`右键：${inv.skill(b)?.name ?? b}`); return }
+    }
     if (dlg.open && dlg.choices.length && ['1','2','3','4','5','6','7','8','9'].includes(k)) {
       dlg.pick(Number(k) - 1); dialogOpen = dlg.open; renderDialog(); return
     }
@@ -1307,8 +1322,8 @@ async function main() {
     if (k === '6' && !dialogOpen) {
       if (inv.useCompass()) { pos.x = spawnPos.x; pos.y = spawnPos.y }
     }
-    if (k === 'f1') doSkillLeft()
-    if (k === 'f2') doSkillRight()
+    if (k === 'f1') { e.preventDefault(); doSkillLeft() }
+    if (k === 'f2') { e.preventDefault(); doSkillRight() }
     if (k === 'f9') {
       dlg.unlockNorthGate()
       // reopen gate cells immediately
@@ -1332,9 +1347,126 @@ async function main() {
         hint.textContent = 'DEBUG: 北门已开 (sy1=1) — Shift+F9 蜀水 / Alt+Shift+F9 手交就绪'
       }
     }
-    if (k === 'q') doQSkill()
+    if (['f3', 'f4', 'f5', 'f6'].includes(k)) e.preventDefault()
   })
   window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()))
+
+  // ── Phase59 input (original key map from exe key handling): mouse walk, Q→right-click jump,
+  // 18 letter hotkeys (hover skill in V panel + press letter binds), Space acts on mouse target,
+  // Esc system menu, C/B/I 人物, V 技能, N/Tab 小地图, Z walk/run toggle.
+  const HOTKEYS = ['q','w','e','r','t','y','u','i','o','a','s','d','f','g','h','j','k','l'].filter((x) => x !== 'e' && x !== 'i')
+  const skillBind: Record<string, string> = { q: 'jump', w: 'left', a: 'right' }
+  let skillHover: string | null = null
+  let rightAction = 'jump'
+  let runToggle = false
+  let showMini = true
+  let mouseWalk: { sx: number; sy: number; held: boolean; goal: { x: number; y: number } } | null = null
+  let mouseSX = 400, mouseSY = 300
+  function canvasXY(ev: MouseEvent) {
+    const r = canvas.getBoundingClientRect()
+    return { sx: (ev.clientX - r.left) * (canvas.width / r.width), sy: (ev.clientY - r.top) * (canvas.height / r.height) }
+  }
+  function screenToWorld(sx: number, sy: number) {
+    const X = sx - cam.x, Y = sy - cam.y
+    return { x: Y / tileH + X / tileW, y: Y / tileH - X / tileW }
+  }
+  function objAt(sx: number, sy: number, r = 1.3) {
+    const w = screenToWorld(sx, sy + 30)
+    let best: { d: number; o: MapObj } | null = null
+    for (const o of objects) {
+      if (!o.EventID || isHidden(String(o.EventID))) continue
+      const ox = o.lx ?? (o.x != null ? o.x - origin.x : null), oy = o.ly ?? (o.y != null ? o.y - origin.y : null)
+      if (ox == null || oy == null) continue
+      const d = Math.hypot(ox - w.x, oy - w.y)
+      if (d < r && (!best || d < best.d)) best = { d, o }
+    }
+    return best?.o ?? null
+  }
+  function foeAt(sx: number, sy: number) {
+    const w = screenToWorld(sx, sy + 30)
+    return foes.find((f) => !f.gone && f.dead <= 0 && Math.hypot(f.x - w.x, f.y - w.y) < 1.2) ?? null
+  }
+  function faceToward(x: number, y: number) {
+    const ddx = x - pos.x, ddy = y - pos.y
+    const oct = ((Math.round(Math.atan2(ddx + ddy, ddx - ddy) / (Math.PI / 4)) % 8) + 8) % 8
+    facing = (oct + FACING_OCT_OFFSET) % 8
+  }
+  function talkTo(o: MapObj) {
+    dlgAnchor = { x: o.lx ?? (o.x != null ? o.x - origin.x : pos.x), y: o.ly ?? (o.y != null ? o.y - origin.y : pos.y) }
+    dlg.state = 0; dlg.start(String(o.EventID)); dialogOpen = dlg.open; renderDialog()
+  }
+  function actOnMouseTarget(): boolean {
+    const f = foeAt(mouseSX, mouseSY)
+    if (f) { faceToward(f.x, f.y); doMelee(); return true }
+    const o = objAt(mouseSX, mouseSY)
+    if (o) {
+      const ox = o.lx ?? (o.x ?? 0) - origin.x, oy = o.ly ?? (o.y ?? 0) - origin.y
+      if (Math.hypot(ox - pos.x, oy - pos.y) <= (gameData?.interact_range ?? 2) + 0.5) { talkTo(o); return true }
+      mouseWalk = { sx: mouseSX, sy: mouseSY, held: false, goal: { x: ox, y: oy } }; return true
+    }
+    return false
+  }
+  canvas.addEventListener('mousemove', (ev) => {
+    const p = canvasXY(ev); mouseSX = p.sx; mouseSY = p.sy
+    if (mouseWalk?.held) { mouseWalk.sx = p.sx; mouseWalk.sy = p.sy }
+  })
+  canvas.addEventListener('mousedown', (ev) => {
+    const p = canvasXY(ev); mouseSX = p.sx; mouseSY = p.sy
+    if (ev.button === 0) {
+      if (dialogOpen) { advanceDialog(); return }
+      if (ev.shiftKey || foeAt(p.sx, p.sy)) { const f = foeAt(p.sx, p.sy); if (f) faceToward(f.x, f.y); else { const w = screenToWorld(p.sx, p.sy); faceToward(w.x, w.y) } doMelee(); return }
+      const o = objAt(p.sx, p.sy)
+      if (o && actOnMouseTarget()) return
+      mouseWalk = { sx: p.sx, sy: p.sy, held: true, goal: screenToWorld(p.sx, p.sy) }
+    } else if (ev.button === 2 && !dialogOpen) {
+      const w = screenToWorld(p.sx, p.sy); faceToward(w.x, w.y)
+      if (rightAction === 'jump') doJump(w)
+      else if (rightAction === 'left') doSkillLeft()
+      else if (rightAction === 'right') doSkillRight()
+    }
+  })
+  window.addEventListener('mouseup', (ev) => {
+    if (ev.button === 0 && mouseWalk?.held) { mouseWalk.goal = screenToWorld(mouseWalk.sx, mouseWalk.sy); mouseWalk.held = false }
+  })
+  canvas.addEventListener('contextmenu', (ev) => ev.preventDefault())
+  let jumpT = 0
+  function doJump(w: { x: number; y: number }) {
+    if (jumpT > 0 || (stats.sp ?? 1) < 0.15) return
+    const ddx = w.x - pos.x, ddy = w.y - pos.y, d = Math.hypot(ddx, ddy) || 1
+    const L = Math.min(3, d)
+    for (let t = L; t > 0.2; t -= 0.25) {
+      const nx = pos.x + ddx / d * t, ny = pos.y + ddy / d * t
+      if (walkable(nx, ny)) { pos.x = nx; pos.y = ny; break }
+    }
+    stats.sp = Math.max(0, (stats.sp ?? 1) - 0.12); jumpT = 0.45; mouseWalk = null
+    playSfx('ui')
+  }
+  setInterval(() => { if (jumpT > 0) jumpT = Math.max(0, jumpT - 0.05) }, 50)
+  // System menu (Esc)
+  const sysEl = document.createElement('div'); sysEl.id = 'sysmenu'; sysEl.className = 'hidden'
+  sysEl.innerHTML = `<div class="sys-board"><button data-s="resume">继续游戏</button><button data-s="save">保存进度</button><button data-s="load">读取进度</button><button data-s="mute">声音开关</button><button data-s="help">操作说明</button></div>`
+  document.querySelector('#stage')?.appendChild(sysEl)
+  function toggleSysMenu() { sysEl.classList.toggle('hidden') }
+  sysEl.addEventListener('click', (ev) => {
+    const b = (ev.target as HTMLElement).dataset.s; if (!b) return
+    if (b === 'save') quickSave()
+    if (b === 'load') void quickLoad()
+    if (b === 'mute') { muted = !muted; if (audio) audio.muted = muted; setSfxEnabled(!muted) }
+    if (b === 'help') inv.flash('左键走路/对话 · Shift+左键攻击 · 右键=绑定技能(默认Q跳跃) · 空格作用于鼠标目标 · 1-6/F1-F6 快捷栏 · C人物 V技能 N小地图 Z走跑 · F5存 F8读')
+    sysEl.classList.add('hidden')
+  })
+  // Skill panel (V): hover an entry and press a letter to bind it
+  const skEl = document.createElement('div'); skEl.id = 'skillpanel'; skEl.className = 'hidden'
+  document.querySelector('#stage')?.appendChild(skEl)
+  function renderSkillPanel() {
+    const ent: [string, string][] = [['jump', '跳跃'], ['left', inv.skill('left')?.name ?? '技能1'], ['right', inv.skill('right')?.name ?? '技能2']]
+    skEl.innerHTML = `<div class="sk-board"><div class="sk-t">技能（鼠标指向后按字母键绑定）</div>${ent.map(([id, n]) => `<div class="sk-e" data-sk="${id}">${n}<i>${Object.entries(skillBind).filter(([, v]) => v === id).map(([k]) => k.toUpperCase()).join(' ')}</i></div>`).join('')}</div>`
+    skEl.querySelectorAll<HTMLElement>('.sk-e').forEach((el) => {
+      el.addEventListener('mouseenter', () => { skillHover = el.dataset.sk! })
+      el.addEventListener('mouseleave', () => { skillHover = null })
+    })
+  }
+  function toggleSkillPanel() { renderSkillPanel(); skEl.classList.toggle('hidden'); skillHover = null }
 
   function iso(x: number, y: number): Vec {
     return { x: (x - y) * (tileW / 2), y: (x + y) * (tileH / 2) }
@@ -1411,10 +1543,16 @@ async function main() {
     let dx = 0, dy = 0
     if (dying > 0) { /* freeze controls while downed */ }
     else if (!dialogOpen) {
-      if (keys.has('w') || keys.has('arrowup')) { dx -= 1; dy -= 1 }
-      if (keys.has('s') || keys.has('arrowdown')) { dx += 1; dy += 1 }
-      if (keys.has('a') || keys.has('arrowleft')) { dx -= 1; dy += 1 }
-      if (keys.has('d') || keys.has('arrowright')) { dx += 1; dy -= 1 }
+      // Phase59: original walks by mouse only (left click/hold); arrows kept as an extra.
+      if (keys.has('arrowup')) { dx -= 1; dy -= 1 }
+      if (keys.has('arrowdown')) { dx += 1; dy += 1 }
+      if (keys.has('arrowleft')) { dx -= 1; dy += 1 }
+      if (keys.has('arrowright')) { dx += 1; dy -= 1 }
+      if (dx === 0 && dy === 0 && mouseWalk) {
+        const t = mouseWalk.held ? screenToWorld(mouseWalk.sx, mouseWalk.sy) : mouseWalk.goal
+        const ddx = t.x - pos.x, ddy = t.y - pos.y, dd = Math.hypot(ddx, ddy)
+        if (dd > 0.25) { dx = ddx / dd; dy = ddy / dd } else if (!mouseWalk.held) mouseWalk = null
+      }
     }
     const len = Math.hypot(dx, dy) || 1
     moving = dx !== 0 || dy !== 0
@@ -1426,7 +1564,7 @@ async function main() {
       const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8
       facing = (oct + FACING_OCT_OFFSET) % 8 // evidence: keep until REA address proof
     }
-    const running = keys.has('shift') && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
+    const running = (keys.has('shift') || runToggle) && (dx !== 0 || dy !== 0) && (stats.sp ?? 1) > 0.02
     const stamUse = (INIT.stamina_use ?? 10) / Math.max(1, INIT.stamina ?? 80)
     const stamRegen = (INIT.stamina_regen ?? 3) / Math.max(1, INIT.stamina ?? 80)
     stats.sp = Math.max(0, Math.min(1, (stats.sp ?? 1) + (running ? -stamUse : stamRegen) * dt))
@@ -1445,7 +1583,7 @@ async function main() {
     if (moved > 1e-5) {
       const prev = animT
       // Phase42: Wine hold GIFs — walk ~2.0 (weightier), run ~1.65 (longer stride per cycle)
-      animT += moved * (running ? 1.65 : 2.35) // Phase57: Mac rec walk cycle ≈0.57s (~15fps poses)
+      animT += moved * (running ? 1.65 * 7 / 6 : 2.35 * 8 / 6) // Phase57: Mac rec walk cycle ≈0.57s (~15fps poses)
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 
@@ -1966,14 +2104,14 @@ async function main() {
       // Phase 30: consistent ground-pixel space (no /2 mismatch); scale by map size
       const mapSpan = Math.max(mapW, mapH, 64)
       const kMini = miniImg ? Math.min(0.55, 90 / (mapSpan * (tw / 2))) : Math.min(0.35, 70 / (mapSpan * (tw / 2)))
-      hud.drawMinimap(ctx, miniImg ?? ground, me.x, me.y, kMini, dots, mapLabel.split(' ')[0])
+      if (showMini) hud.drawMinimap(ctx, miniImg ?? ground, me.x, me.y, kMini, dots, mapLabel.split(' ')[0])
     }
     ctx.fillStyle = '#9ecbff'
     ctx.font = '12px ui-sans-serif,system-ui'
     const wx = (pos.x + origin.x).toFixed(1), wy = (pos.y + origin.y).toFixed(1)
     const bgmState = muted ? 'BGM:mute' : 'BGM:on'
     ctx.fillText(
-      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | WASD Shift跑 E谈 Space砍 I/B囊 S存 L读 M静音`,
+      `[${packId}] ${mapLabel} | (${wx},${wy}) ${bgmState} | 左键走 Shift+左键砍 右键跳(Q) 空格=鼠标目标 C/B囊 V技能 Esc菜单 F5存 F8读`,
       12, 20,
     )
     requestAnimationFrame(frame)

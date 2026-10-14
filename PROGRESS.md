@@ -1862,3 +1862,8 @@ FINAL {bq2:100, bq1:100, sy1:102, scene:2-0s, act:1, qty120:1, qty124:1} RESULT 
 - 发现：ResPlayer1 res4/5 = 16 方向 × 8 帧动作（Spr 组 19–33），原版走路一周期约 8 个姿势；重制仍用 4 帧 ping-pong — 待重做为 16 向 8 帧。
 - 弹窗：原版 JM 面板均为 326×226 石框，左 (0,338)、右行囊 (474,338)、属性 (474,0)，10×5 格子图标。
   重制 商店=panel_625 货架+panel_82 行囊（点货买、点行囊卖）、人物(I/B)=panel_591 装备+panel_82+panel_1550 属性、镶嵌=panel_591+行囊。sbs：`sbs_popups_phase58.png`。
+
+## Phase 59 — rec2 16-dir locomotion + original input scheme
+- Player sheets rebuilt from graph 901 paper-doll (tools/phase59_player_16dir.py): walk = res6 8 frames, run = res10 7 frames (forward lean), dir idx E0/N4/W8/S12 via template match vs Mac rec2; sword baked per direction (S = steep up-left as in rec). Sequential gait, cadence scaled to 8/7 frames.
+- Input (from original key handler): left click/hold walk (arrows kept), Shift+left attack, right click = bound action (default Q=jump), 18 letter hotkeys bind via V panel hover, Space = act on mouse target / advance dialog, Esc = system menu, C/B/I bag+stats, N/Tab minimap, Z walk/run toggle, F5/F8 save/load.
+- Open: frames past Spr-listed offsets reuse last offset (run frames 1/5 legs shift slightly); idle uses walk frame 0; attack sheets unchanged.
