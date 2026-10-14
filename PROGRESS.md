@@ -8,7 +8,7 @@
 - `web/src/main.ts`: `loadImageHd` always loads SD; skip `ground_hd` / `player_hd`; player draw scale = 1
 - `web/src/style.css`: JM dialog/bag/shop/embed → `/game/hud/panels/` (not `panels_hd`)
 
-**Branch:** `reset-original-sd` · Build: `index-C9kXbHfl.js` + `index-D6yjGMsc.css`
+**Branch:** `reset-original-sd` @ `28267b7` · **Pages:** `main` `019ce5f` → `index-C1oWuOvH.js` + `index-D6yjGMsc.css` · NAS: SOCKS:1055 down (skipped)
 
 ---
 
