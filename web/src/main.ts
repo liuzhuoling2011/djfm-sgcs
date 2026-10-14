@@ -384,64 +384,58 @@ async function main() {
     const bagScroll = inv.items.length > 5 ? ' scroll' : ''
     const head = (title: string, closeAttr: string) =>
       `<header class="desk-head"><h3>${title}</h3><button type="button" class="desk-x" ${closeAttr} aria-label="关闭">×</button></header>`
-    if (inv.shopOpen) {
-      // ShowJM 20|86 → JM_DEAL; panel_1550 = 326×226
-      const buyMode = inv.shopMode === 'buy'
-      let slots = ''
-      if (buyMode) {
-        slots = inv.shopCatalog().map((r, i) => {
-          const n = inv.props[String(r.id)]?.name ?? r.id
-          const have = inv.qty(r.id)
-          return `<button type="button" data-buy="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${have}</i></span><span class="pr">${r.price} 金</span></button>`
-        }).join('')
-      } else {
-        // Only goods the blacksmith stocks (potions / 飞蝗石). Quest props stay in the bag.
-        const sellable = inv.shopCatalog().filter((r) => inv.qty(r.id) > 0)
-        slots = sellable.map((r, i) => {
-          const n = inv.props[String(r.id)]?.name ?? r.id
-          const pr = inv.sellPrice(r.id)
-          return `<button type="button" data-sell="${r.id}"><span class="nm">${i + 1}. ${n}<i class="have">×${inv.qty(r.id)}</i></span><span class="pr">售 ${pr} 金</span></button>`
-        }).join('') || '<div class="jm-empty">行囊里没有铁匠收购的药品或飞蝗石</div>'
-      }
-      invEl.innerHTML = `<div class="desk shop">
-        ${head('买卖', 'data-close-shop')}
-        <div class="desk-list">${slots}</div>
-        <footer class="desk-foot">
-          <div class="money">金钱 ${inv.money}</div>
-          <div class="desk-actions">
-            <button type="button" class="${buyMode ? 'on' : ''}" data-shop-mode="buy">购入</button>
-            <button type="button" class="${buyMode ? '' : 'on'}" data-shop-mode="sell">卖出</button>
-            <button type="button" data-close-shop>关闭</button>
-          </div>
-        </div>
-      </div></div>`
-    } else if (inv.embedOpen) {
-      // ShowJM 20|62|92 → JM_Enchase; panel_591 326×226
-      const gain = 2 * Math.max(1, inv.weaponSlots)
-      invEl.innerHTML = `<div class="box"><div class="jm-frame embed">
-        <div class="jm-title">镶嵌</div>
-        <button type="button" class="jm-close" data-close-embed aria-label="关闭">×</button>
-        <div class="jm-embed-info">兵器：${inv.weaponName()}　槽 ×${inv.weaponSlots}　已嵌 ${inv.embedGems}<br/>
-          攻击 ${stats.at ?? 40}　金钱 ${inv.money}　蜀水 ×${inv.qty(120)}<br/>
-          花费 200 金或 1 蜀水（AT+${gain}）</div>
-        <div class="jm-gem-grid" aria-hidden="true">
-          ${Array.from({ length: 6 }, (_, i) => `<div class="jm-gem${i < inv.embedGems ? ' on' : ''}"></div>`).join('')}
-        </div>
-        <div class="jm-embed-actions">
-          <button type="button" data-embed>确认镶嵌</button>
-          <button type="button" data-close-embed>关闭</button>
-        </div>
-      </div></div>`
-    } else {
-      invEl.innerHTML = `<div class="desk bag">
-        ${head('行囊', 'data-close-inv')}
-        <ul class="desk-list${bagScroll}">${rows}</ul>
-        <footer class="desk-foot">
-          <div class="equip">装备 ${inv.weaponName()} · F1 ${inv.skill('left')?.name ?? '—'} · F2 ${inv.skill('right')?.name ?? '—'} · 镶嵌 ${inv.embedGems}</div>
-          <div class="money">金钱 ${inv.money}</div>
-        </footer>
-      </div>`
+    // Phase58: original JM layout measured from Mac recording (800×600): 326×226 stone panels —
+    // left (0,338), right bag (474,338), stats top-right (474,0). Grid 10×5 cells @ (44,30) step 24.2×24.8.
+    const H = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
+    const icon = (id: number) => {
+      const n = inv.props[String(id)]?.name ?? String(id)
+      if (/血/.test(n)) return `<img src="./game/hud/jm_92.png" alt="">`
+      if (/气|蜀水/.test(n)) return `<img src="./game/hud/jm_90.png" alt="">`
+      return `<b>${H(n.slice(0, 1))}</b>`
     }
+    const cell = (id: number | null, qty: number, attr: string) => id == null ? '<i class="c"></i>'
+      : `<button type="button" class="c" ${attr} title="${H(inv.props[String(id)]?.name ?? String(id))} ×${qty}">${icon(id)}${qty > 1 ? `<s>${qty}</s>` : ''}</button>`
+    const grid = (cells: string[]) => { while (cells.length < 50) cells.push('<i class="c"></i>'); return `<div class="g57">${cells.slice(0, 50).join('')}</div>` }
+    const bagPanel = (sell: boolean) => `<div class="pn57 pr" style="background:url(./game/hud/panels/panel_82.png) 0 0/100% 100% no-repeat,linear-gradient(#0d0c0e,#0d0c0e) 50% 45%/86% 86% no-repeat">
+        ${grid(inv.items.map((it) => cell(it.id, it.qty, sell ? `data-sell="${it.id}"` : '')))}
+        <span class="money57">${inv.money}</span>
+        <button type="button" class="x57 bagx" data-close-all aria-label="关闭"></button></div>`
+    const statsPanel = () => `<div class="pn57 pt" style="background:url(./game/hud/panels/panel_1550.png) 0 0/100% 100% no-repeat,linear-gradient(#0d0c0e,#0d0c0e) 50% 45%/86% 86% no-repeat">
+        <span class="st57" style="left:20%;top:12%">等级</span><span class="st57" style="left:40%;top:12%">${stats.lvl ?? 1}</span>
+        <span class="st57" style="left:18%;top:24%">经验值</span><span class="st57" style="left:52%;top:24%">${stats.exp ?? 0}/600</span>
+        ${[['生命值', `${Math.round(stats.hp)}/${stats.maxHp}`, '攻击力', stats.at], ['气值', `${Math.round(stats.mp ?? 0)}/${stats.maxMp ?? 0}`, '防御力', stats.df],
+           ['怒气值', '0/0', '命中率', stats.hit ?? 21], ['体力值', `${Math.round((stats.sp ?? 1) * 80)}/80`, '移动速度', 16]]
+          .map((r, i) => { const t = 40.5 + i * 10.6; return `<span class="st57" style="left:14.5%;top:${t}%">${r[0]}</span><span class="st57" style="left:28%;top:${t}%">${r[1]}</span><span class="st57" style="left:57%;top:${t}%">${r[2]}</span><span class="st57" style="left:82%;top:${t}%">${r[3]}</span>` }).join('')}
+        <button type="button" class="x57 statx" data-close-all aria-label="关闭"></button></div>`
+    if (inv.shopOpen) {
+      // JM_DEAL: left goods (panel_625, potions as icons) + right bag; click goods = buy, click bag = sell.
+      const goods = inv.shopCatalog().map((r) => cell(r.id, 1, `data-buy="${r.id}" title="${H(inv.props[String(r.id)]?.name ?? '')} ${r.price}金"`))
+      invEl.innerHTML = `<div class="ui57">
+        <div class="pn57 pl" style="background:url(./game/hud/panels/panel_625.png) 0 0/100% 100% no-repeat,linear-gradient(#0d0c0e,#0d0c0e) 50% 45%/86% 86% no-repeat">${grid(goods)}
+          <span class="lbl57">点物品购入 · 点行囊卖出</span>
+          <button type="button" class="x57 shopx" data-close-all aria-label="关闭"></button></div>
+        ${bagPanel(true)}</div>`
+    } else if (inv.embedOpen) {
+      // JM_Enchase: panel_591 (weapon/armor silhouettes, 6 sockets) + bag
+      const gain = 2 * Math.max(1, inv.weaponSlots)
+      const sock = [[11.3, 10.6], [11.3, 26.5], [11.3, 42.5], [52.5, 10.6], [52.5, 26.5], [52.5, 42.5]]
+      invEl.innerHTML = `<div class="ui57">
+        <div class="pn57 pl" style="background:url(./game/hud/panels/panel_591.png) 0 0/100% 100% no-repeat,linear-gradient(#0d0c0e,#0d0c0e) 50% 45%/86% 86% no-repeat">
+          ${sock.map((p, i) => `<i class="sock57${i < inv.embedGems ? ' on' : ''}" style="left:${p[0]}%;top:${p[1]}%"></i>`).join('')}
+          <button type="button" class="lbl57 btn57" data-embed title="花费 200 金或 1 蜀水（AT+${gain}）">镶嵌 ${H(inv.weaponName())} (${inv.embedGems}/${inv.weaponSlots})</button>
+          <button type="button" class="x57 embx" data-close-all aria-label="关闭"></button></div>
+        ${bagPanel(false)}</div>`
+    } else {
+      // Character (original 人物 view): equip panel_591 left + bag right + stats top-right
+      invEl.innerHTML = `<div class="ui57">
+        <div class="pn57 pl" style="background:url(./game/hud/panels/panel_591.png) 0 0/100% 100% no-repeat,linear-gradient(#0d0c0e,#0d0c0e) 50% 45%/86% 86% no-repeat">
+          <span class="lbl57">${H(inv.weaponName())} · 镶嵌 ${inv.embedGems}</span>
+          <button type="button" class="x57 embx" data-close-all aria-label="关闭"></button></div>
+        ${bagPanel(false)}${statsPanel()}</div>`
+    }
+    invEl.querySelectorAll('[data-close-all]').forEach((b) => b.addEventListener('click', () => {
+      inv.open = false; inv.shopOpen = false; inv.embedOpen = false; renderInv()
+    }))
     const syncPots = () => { hud.pots = [...inv.potSlots()] }
     invEl.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', () => {
       inv.buy(Number((b as HTMLElement).dataset.buy)); syncPots(); renderInv()
@@ -475,6 +469,7 @@ async function main() {
     if (space === hudSpace) return
     hudSpace = space
     stageEl.style.setProperty('--hud-space', `${space}px`)
+    stageEl.style.setProperty('--u', `${w / 800}px`)
   }
   window.addEventListener('resize', () => placeChrome())
   window.addEventListener('scroll', () => placeChrome(), true)
@@ -1426,7 +1421,7 @@ async function main() {
     if (moving) {
       // Screen-space 8-dir: atan2(sdy,sdx) oct 0=screen-E … 2=S … 4=W … 6=N
       // Art dirs: S=0 SW=1 W=2 NW=3 N=4 NE=5 E=6 SE=7. facing=(oct+6)%8 → E→6…SE→7.
-      // Phase39: RH_002 at (body+3)%8 fixes saber; keep P34 facing (D→art6 east profile).
+      // Phase58: RH dir = body dir (W keeps +3), RH under only W/NW — per Mac recording (tools/phase41_player_sprites.py).
       const sdx = dx - dy, sdy = dx + dy
       const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8
       facing = (oct + FACING_OCT_OFFSET) % 8 // evidence: keep until REA address proof

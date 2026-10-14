@@ -496,3 +496,31 @@ button.row:hover, button.row:focus-visible {
 #stage #dialog .dlg-choice:hover{color:#ffd77a;background:transparent}
 #stage #dialog .dlg-body p{margin:0}
 #stage #dialog .dlg-choice{display:block;width:auto;line-height:1.4;min-height:0}
+
+/* Phase58: original JM panels at native 800×600 positions (Mac recording). --u = 1 original px. */
+#stage #inv.desk-wrap{position:absolute;left:0;top:0;right:0;bottom:0;width:100%;height:100%;filter:none;pointer-events:none;z-index:44;background:none;padding:0;margin:0;transform:none;display:block}
+#stage #inv.desk-wrap.hidden{display:none}
+#stage #inv .ui57{position:absolute;inset:0;pointer-events:none}
+.pn57{position:absolute;width:40.75%;height:37.667%;background-size:100% 100%;pointer-events:auto;
+  font-family:"SimSun","NSimSun","Songti SC","Noto Serif CJK SC",serif;font-size:calc(12*var(--u,1px));color:#fff}
+.pn57.pl{left:0;top:56.333%}.pn57.pr{left:59.25%;top:56.333%}.pn57.pt{left:59.25%;top:0}
+.g57{position:absolute;left:13.5%;top:13.27%;width:74.2%;height:54.9%;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(5,1fr)}
+.g57 .c{position:relative;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;margin:0;color:#e8d7a8;font:inherit;cursor:pointer;overflow:hidden}
+.g57 i.c{cursor:default}
+.g57 .c:hover{outline:1px solid #e7c068;outline-offset:-1px}
+.g57 .c img{height:78%;image-rendering:pixelated}
+.g57 .c b{font-weight:normal;font-size:calc(11*var(--u,1px))}
+.g57 .c s{position:absolute;right:1px;bottom:0;text-decoration:none;font-size:calc(9*var(--u,1px));color:#ffef9a}
+.money57{position:absolute;left:25.2%;top:72.5%;color:#fff}
+.lbl57{position:absolute;left:42.3%;top:72.5%;color:#ffe9a0;white-space:nowrap;background:none;border:0;padding:0;font:inherit}
+.btn57{cursor:pointer}.btn57:hover{color:#fff}
+.st57{position:absolute;color:#fff;white-space:nowrap}
+.sock57{position:absolute;width:7.4%;height:10.6%}
+.sock57.on{background:radial-gradient(circle,#9fe3ff 0 35%,transparent 40%)}
+.x57{position:absolute;width:8%;height:11.5%;background:none;border:0;cursor:pointer;border-radius:50%}
+.x57:hover{box-shadow:0 0 0 1px #e7c068 inset}
+.x57.bagx{left:14.5%;top:82%}.x57.statx{left:74%;top:83%}.x57.shopx{left:60.5%;top:83%}.x57.embx{left:85%;top:83%}
+.pn57{isolation:isolate}
+.pn57::before{content:"";position:absolute;left:7%;top:5%;right:7%;bottom:7%;background:#0d0c0e;z-index:-1}
+.x57.bagx{left:33.5%;top:83%}.x57.statx{left:76.5%;top:82.5%}.x57.shopx{left:79%;top:83%}.x57.embx{left:76.5%;top:83%}
+.pn57::before{display:none}

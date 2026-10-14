@@ -31,9 +31,13 @@ HOLD_ORDER = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE']
 
 BODY = {'CA': (34, 0), 'HD': (112, 128), 'TK': (114, 256)}
 RH_SID, RH_BASE = 165, 896
-RH_DIR_OFF = 3
+RH_DIR_OFF = 0  # Phase58: Mac recording S/N/E sword = RH same dir as body (was +3 for all)
+# Phase58 per-body override: W keeps raised up-right blade (+3) as in the recording
+RH_DIR_OFF_BY_BODY = {2: 3}
+def rh_dir(body_d: int) -> int:
+    return (body_d + RH_DIR_OFF_BY_BODY.get(body_d, RH_DIR_OFF)) % 8
 # Phase41: Wine strips — sword behind for S/SW/W/NW/N/NE; over for E/SE
-RH_UNDER_BODY = [3, 4, 5]
+RH_UNDER_BODY = [2, 3]  # Phase58: right hand on far side only when facing W/NW
 
 CX, CY = 64, 100
 CANVAS = (128, 128)
@@ -172,7 +176,7 @@ def export_player():
         subs = ca_run[body_d] if mode == 'run' else ca_walk[body_d]
         sub1 = subs[fi % len(subs)]
         nest_i = max(0, sub1 - 1)
-        rh_d = (body_d + RH_DIR_OFF) % 8
+        rh_d = rh_dir(body_d)
         rh_subs = loco_subs(RH_SID, RH_BASE, rh_d, which=(1 if mode == 'run' else 0))
         rh_sub1 = rh_subs[fi % len(rh_subs)]
         rh_nest = max(0, rh_sub1 - 1)
@@ -184,6 +188,10 @@ def export_player():
             if k == 'RH':
                 ims = rh_frames[rh_d]
                 ni, s1 = rh_nest, rh_sub1
+                # Phase58: run blade nest empty → reuse walk blade of the same step (recording: blade always visible)
+                if mode == 'run' and (ni >= len(ims) or ims[ni] is None):
+                    ws = loco_subs(RH_SID, RH_BASE, rh_d, which=0)
+                    s1 = ws[fi % len(ws)]; ni = max(0, s1 - 1)
                 ox, oy = lookup_oxoy(rh_oxoy[rh_d], s1, DEFAULT_OXOY['RH'])
             else:
                 ims = body_frames[k][body_d]
@@ -203,13 +211,13 @@ def export_player():
                 sub1 = ca_walk[d][0]
                 for k in BODY:
                     anchors[k].append(list(lookup_oxoy(body_oxoy[k][d], sub1, DEFAULT_OXOY[k])))
-                rh_d = (d + RH_DIR_OFF) % 8
+                rh_d = rh_dir(d)
                 rh_s = loco_subs(RH_SID, RH_BASE, rh_d, which=0)[0]
                 anchors['RH'].append(list(lookup_oxoy(rh_oxoy[rh_d], rh_s, DEFAULT_OXOY['RH'])))
         # attack: mid nest of CA strip (unchanged spirit from P39)
         n_ca = max(1, len(body_frames['CA'][d]))
         ai_sub = min(n_ca, max(ca_walk[d][-1] + 4, n_ca // 2))
-        rh_d = (d + RH_DIR_OFF) % 8
+        rh_d = rh_dir(d)
         c = Image.new('RGBA', CANVAS, (0, 0, 0, 0))
         under = d in RH_UNDER_BODY
         order = ['RH', 'CA', 'TK', 'HD'] if under else ['CA', 'TK', 'HD', 'RH']

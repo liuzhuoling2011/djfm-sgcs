@@ -1853,3 +1853,12 @@ FINAL {bq2:100, bq1:100, sy1:102, scene:2-0s, act:1, qty120:1, qty124:1} RESULT 
 ### Combat
 - Hit connect window 0.18→0.20; hitStop 0.045→0.055; melee cone 0.95→0.92; KB 1.6→1.75.
 **Deploy:** Source `ed80fd9` · Pages `a8bbe11` · NAS light (index-DE_Q-XBu.js).
+
+## Phase 58 — 主角持剑方向 / 走跑 8 方向对比 / 弹窗按原版布局（Mac 录像）
+- 录像 0–51s 走/跑段：用背景相位相关反推主角屏幕运动方向（主角领先镜头可交叉验证），分 8 向×走/跑，裁主角做 sbs：
+  `assets/samples/mac_compare/sbs_walk_8dir_phase58.png`、`sbs_run_8dir_phase58.png`（原始裁切 `orig_walk_8dir.png`/`orig_run_8dir.png`）。
+- 持剑：原版 S/N/E 剑都“拖在身后”（E 剑尖朝左下、N 剑朝右、S 剑朝左上），旧版 RH=(body+3)%8 使 E 剑朝前上 → 改为 RH 与身体同向，W 保留 +3（原版 W 剑上扬向右后），RH 在身后仅 W/NW。
+- 跑步 RH 帧缺失时回退到同步走路剑帧（部分方向 run 嵌套是空/碎帧）。
+- 发现：ResPlayer1 res4/5 = 16 方向 × 8 帧动作（Spr 组 19–33），原版走路一周期约 8 个姿势；重制仍用 4 帧 ping-pong — 待重做为 16 向 8 帧。
+- 弹窗：原版 JM 面板均为 326×226 石框，左 (0,338)、右行囊 (474,338)、属性 (474,0)，10×5 格子图标。
+  重制 商店=panel_625 货架+panel_82 行囊（点货买、点行囊卖）、人物(I/B)=panel_591 装备+panel_82+panel_1550 属性、镶嵌=panel_591+行囊。sbs：`sbs_popups_phase58.png`。
