@@ -158,5 +158,27 @@ export const HIT = {
   skillHitGuaranteeValue: 1e6,
 } as const
 
+
+/**
+ * 瓦当镇 rain (ScnInfo 1-0s Wea_BigRain=15 / Wea_SmallRain=20).
+ * VERIFIED table counts; angle/alpha/length HEURISTIC from native/Wine town captures
+ * (top-left→bottom-right, ~+4° from vertical; sparse two-layer streaks over world).
+ */
+export const RAIN_1_0S = {
+  bigCount: 15,
+  smallCount: 20,
+  /** degrees from vertical; + = lean toward bottom-right (dx>0 as dy>0) */
+  leanDeg: 22,  // ~68° from horizontal (captures); was +4 mis-measured
+  bigLen: 18,
+  smallLen: 11,
+  bigAlpha: 0.36,
+  smallAlpha: 0.22,
+  bigSpeedY: 460,
+  smallSpeedY: 380,
+  /** multiply table counts by this for on-screen density @800×600 (HEURISTIC vs captures) */
+  densityMul: 1.6,
+  label: 'VERIFIED ScnInfo BigRain15/SmallRain20; HEURISTIC lean/alpha/density vs native town',
+} as const
+
 /** Facing art column — keep unless address-level REA proves otherwise */
 export const FACING_OCT_OFFSET = 6 // facing = (oct + 6) % 8

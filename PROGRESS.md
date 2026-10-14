@@ -1,3 +1,23 @@
+
+## Phase 56 — 瓦当镇 rain + walk/run vs live original (2026-10-14 ~10:00 Asia/Shanghai)
+
+**Ask:** Fix rain + walk/run on `reset-original-sd`; compare live original; prefer non-Wine launcher.
+
+**Reference launcher used**
+- **ReactOS/QEMU** (`/home/box/vms/reactos/reactos.qcow2` ≈197KB): **not usable** — empty disk, no installed OS/game session.
+- **Non-Wine that works:** `sg/verify/townchk.sh` / `sg/live/play.py` (**sgcore** Unicorn i386 host) — PASS town+walk in 63s. Frames under `sg/verify/frames/` and copied to `assets/samples/compare_rain_walk/native_*`.
+- **Wine** `sgcs-mac/run.sh` (builtin ddraw): reinstalled wine32; title reached; load-menu xdotool flaky this session. Prior Wine town PNGs + sgcore frames used for rain/walk metrics.
+
+**Root causes**
+1. **Rain:** streak lean was `dx=-3` (top-right→bottom-left). Original/native is ~**+4° from vertical** (top-left→bottom-right). Single 140-line layer ignored ScnInfo BigRain15/SmallRain20 two-layer density.
+2. **Walk feel:** canvas was **1280×720** (zoomed-out vs ComeOn 800×600) so same cell-speed felt sluggish; missing **foot shadow**; E/SE sheets already bake CA `[1,2,3,2]` but code re-applied `GAIT_PP` (double ping-pong).
+
+**Fixes** (`web/src/evidence.ts` `RAIN_1_0S`, `web/src/main.ts`, `web/src/style.css`)
+- Two-layer rain from ScnInfo counts × densityMul; lean +4°; draw over world / under HUD.
+- Canvas **800×600**; `#stage` max-width 800; oval foot shadow; E/SE sequential frame index.
+
+**Proofs:** `assets/samples/compare_rain_walk/compare_rain_final.png`, `compare_walk_final.png`, `web_rain_800.png`, `native_town_fresh.png`.
+
 ## Reset original SD (2026-10-14 Asia/Shanghai)
 
 **Ask:** Reset web remake to non-HD original style (JM panels, SD sprites); keep Act-1 / combat E2E logic.

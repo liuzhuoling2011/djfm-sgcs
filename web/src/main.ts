@@ -6,7 +6,7 @@ import { spawnFx, tickFx, drawFx, loadFxSprites, type SkillFx } from './fx'
 import { loadSfx, playSfx, setSfxEnabled } from './sfx'
 import {
   PLAYER_WALK_CELLS, PLAYER_RUN_CELLS, MELEE, NORTH_GATE, FACING_OCT_OFFSET,
-  ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC,
+  ROLE_PRIVATE_MALE, INIT_MALE_MOVE, CELL_SCALE_HEURISTIC, RAIN_1_0S,
 } from './evidence'
 
 type Vec = { x: number; y: number }
@@ -75,7 +75,7 @@ async function main() {
     </header>
     <div class="toolbar" id="packs"></div>
     <div id="stage">
-      <canvas id="c" width="1280" height="720"></canvas>
+      <canvas id="c" width="800" height="600"></canvas>
       <div id="toast" class="toast hidden"></div>
       <div id="dialog" class="dialog hidden"></div>
       <div id="inv" class="desk-wrap hidden"></div>
@@ -1140,7 +1140,9 @@ async function main() {
   const playerIdle: HTMLImageElement[] = []
   const playerAttackSpr: HTMLImageElement[] = []
   // Phase41: ping-pong gait 0,1,2,3,2,1 (Spr code-6 / Wine half-cycle)
+  // E/SE (dirs 6,7) sheets already bake CA [1,2,3,2] / run [9,10,11,10] — play sequential 0..3
   const GAIT_PP = [0, 1, 2, 3, 2, 1]
+  const GAIT_BAKED_SEQ = new Set([6, 7])
   await Promise.all(Array.from({ length: 8 }, async (_, d) => {
     for (let f = 0; f < 4; f++) {
       try { playerWalk[d].push(await loadImageHd(`${playerBase}/walk/${d}_${f}.png`, `game/player/walk/${d}_${f}.png`)) } catch { /* */ }
@@ -1698,7 +1700,9 @@ async function main() {
         if (sheet?.length) {
           const n = sheet.length
           let fi: number
-          if (n === 4) {
+          if (n === 4 && GAIT_BAKED_SEQ.has(d)) {
+            fi = ((Math.floor(animT) % 4) + 4) % 4
+          } else if (n === 4) {
             fi = GAIT_PP[((Math.floor(animT) % 6) + 6) % 6]
           } else {
             fi = ((Math.floor(animT) % n) + n) % n
@@ -1717,6 +1721,15 @@ async function main() {
         const dw = spr.width * playerDrawScale, dh = spr.height * playerDrawScale
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
+        // Original ComeOn: dark oval under feet (native/Wine town captures)
+        {
+          const fx = pp.x + cam.x
+          const fy = pp.y + cam.y
+          ctx.fillStyle = 'rgba(0,0,0,0.38)'
+          ctx.beginPath()
+          ctx.ellipse(fx + 2, fy + 1, 16 * playerDrawScale, 7 * playerDrawScale, 0, 0, Math.PI * 2)
+          ctx.fill()
+        }
         ctx.drawImage(spr, Math.round(pp.x + cam.x - hx), Math.round(pp.y + cam.y - hy), dw, dh)
         if (skillFx) drawFx(ctx, skillFx, pp.x + cam.x, pp.y + cam.y)
         else if (attackT > 0) {
@@ -1877,14 +1890,30 @@ async function main() {
       ctx.restore()
     }
     if (rainOn) {
-      ctx.save(); ctx.strokeStyle = 'rgba(190,200,220,0.35)'; ctx.lineWidth = 1; ctx.beginPath()
+      // ScnInfo BigRain/SmallRain two layers; lean +4° (top-left→bottom-right) vs prior wrong dx=-3
       const tt = performance.now() / 1000
-      for (let i = 0; i < 140; i++) {
-        const rx = ((i * 97.13 + tt * 60) % (canvas.width + 60)) - 30
-        const ry = ((i * 53.71 + tt * 520 + (i % 7) * 40) % (canvas.height + 40)) - 20
-        ctx.moveTo(rx, ry); ctx.lineTo(rx - 3, ry + 14)
+      const area = (canvas.width * canvas.height) / (800 * 600)
+      const lean = (RAIN_1_0S.leanDeg * Math.PI) / 180
+      const drawLayer = (nBase: number, len: number, alpha: number, speedY: number, seed: number, lw: number) => {
+        const n = Math.max(1, Math.round(nBase * RAIN_1_0S.densityMul * area))
+        const dx = Math.sin(lean) * len
+        const dy = Math.cos(lean) * len
+        const speedX = Math.sin(lean) * speedY
+        ctx.save()
+        ctx.strokeStyle = `rgba(210,220,235,${alpha})`
+        ctx.lineWidth = lw
+        ctx.beginPath()
+        for (let i = 0; i < n; i++) {
+          const rx = ((i * (97.13 + seed) + tt * speedX + i * 13.7) % (canvas.width + 80)) - 40
+          const ry = ((i * (53.71 + seed * 0.3) + tt * speedY + (i % 7) * 37) % (canvas.height + 50)) - 25
+          ctx.moveTo(rx, ry)
+          ctx.lineTo(rx + dx, ry + dy)
+        }
+        ctx.stroke()
+        ctx.restore()
       }
-      ctx.stroke(); ctx.restore()
+      drawLayer(RAIN_1_0S.bigCount, RAIN_1_0S.bigLen, RAIN_1_0S.bigAlpha, RAIN_1_0S.bigSpeedY, 0.0, 1.25)
+      drawLayer(RAIN_1_0S.smallCount, RAIN_1_0S.smallLen, RAIN_1_0S.smallAlpha, RAIN_1_0S.smallSpeedY, 1.7, 1)
     }
 
     if (cutscene) {
