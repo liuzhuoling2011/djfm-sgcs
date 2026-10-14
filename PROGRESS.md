@@ -1,3 +1,17 @@
+## Reset original SD (2026-10-14 Asia/Shanghai)
+
+**Ask:** Reset web remake to non-HD original style (JM panels, SD sprites); keep Act-1 / combat E2E logic.
+
+**Base:** `phase55-act1-e2e` @ `c8061db` (Act-1 E2E + Phases 51–54 combat). HD *wiring* removed; `*_hd` asset trees left on disk unused.
+
+**Code**
+- `web/src/main.ts`: `loadImageHd` always loads SD; skip `ground_hd` / `player_hd`; player draw scale = 1
+- `web/src/style.css`: JM dialog/bag/shop/embed → `/game/hud/panels/` (not `panels_hd`)
+
+**Branch:** `reset-original-sd` · Build: `index-C9kXbHfl.js` + `index-D6yjGMsc.css`
+
+---
+
 ## Phase 54 — Skill 命中率 on F1/F2 (2026-10-12 ~23:10 Asia/Shanghai)
 
 **Ask:** Wire skill.txt 「命中率」 for F1 扫叶 / F2 疾电 into Phase 53 hit roll. Clarify `1` vs `999`.

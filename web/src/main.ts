@@ -36,9 +36,9 @@ type GameData = {
 }
 type PackIndex = { begin_scn_mapping: string; default: string; packs: { id: string }[] }
 
-/** Prefer HD path, fall back to SD. */
-async function loadImageHd(hd: string, sd: string): Promise<HTMLImageElement> {
-  try { return await loadImage(hd) } catch { return await loadImage(sd) }
+/** SD-only (reset-original-sd): ignore HD path and always load SD sprites. */
+async function loadImageHd(_hd: string, sd: string): Promise<HTMLImageElement> {
+  return loadImage(sd)
 }
 
 async function loadImage(src: string): Promise<HTMLImageElement> {
@@ -1025,13 +1025,9 @@ async function main() {
     groundMeta = meta.ground_full ?? null
     if (groundMeta?.file) {
       const gf = groundMeta.file
-      const gfJpg = gf.replace(/\.png$/i, '.jpg')
-      // Prefer JPEG ground_hd (Pages size), then PNG ground_hd, then SD
-      try { ground = await loadImage(`${base}/ground_hd/${gfJpg}`) }
-      catch {
-        try { ground = await loadImageHd(`${base}/ground_hd/${gf}`, `${base}/${gf}`) }
-        catch { ground = null }
-      }
+      // reset-original-sd: SD ground only (skip ground_hd JPEG/PNG)
+      try { ground = await loadImage(`${base}/${gf}`) }
+      catch { ground = null }
     }
     useGround = !!ground
     miniImg = null
@@ -1129,26 +1125,16 @@ async function main() {
     if (t.tagName === 'BUTTON' && t.dataset.pack) applyPack(t.dataset.pack).catch(console.error)
   })
 
-  // Phase 50: HD paper-doll (player_hd) with SD fallback; draw ~2× original size
+  // reset-original-sd: original SD paper-doll only (no player_hd / AI upscale)
   let playerHotspot = { x: 64, y: 100 }
   let playerCanvas = { w: 128, h: 128 }
-  let playerHd = false
   try {
-    const pm = await (await fetch('game/player_hd/meta.json')).json() as { hotspot?: number[]; canvas?: number[] }
-    playerHotspot = { x: pm.hotspot?.[0] ?? 256, y: pm.hotspot?.[1] ?? 400 }
-    playerCanvas = { w: pm.canvas?.[0] ?? 512, h: pm.canvas?.[1] ?? 512 }
-    playerHd = true
-  } catch {
-    try {
-      const pm = await (await fetch('game/player/meta.json')).json() as { hotspot?: number[]; canvas?: number[] }
-      if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
-      if (pm.canvas) playerCanvas = { w: pm.canvas[0], h: pm.canvas[1] }
-    } catch { /* */ }
-  }
-  const playerBase = playerHd ? 'game/player_hd' : 'game/player'
-  const hdDisplayMul = playerHd ? 2 : 1
-  const hdSrcScale = playerHd ? (playerCanvas.w / 128) : 1
-  const playerDrawScale = hdDisplayMul / Math.max(1, hdSrcScale)
+    const pm = await (await fetch('game/player/meta.json')).json() as { hotspot?: number[]; canvas?: number[] }
+    if (pm.hotspot) playerHotspot = { x: pm.hotspot[0], y: pm.hotspot[1] }
+    if (pm.canvas) playerCanvas = { w: pm.canvas[0], h: pm.canvas[1] }
+  } catch { /* */ }
+  const playerBase = 'game/player'
+  const playerDrawScale = 1
   const playerWalk: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerRun: HTMLImageElement[][] = Array.from({ length: 8 }, () => [])
   const playerIdle: HTMLImageElement[] = []

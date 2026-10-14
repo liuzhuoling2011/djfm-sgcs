@@ -102,7 +102,7 @@ img { max-width:100%; }
   text-shadow: 0 1px 2px #000;
   border-style: solid;
   border-width: 22px 48px 20px;
-  border-image-source: url('/game/hud/panels_hd/dialog_board.png');
+  border-image-source: url('/game/hud/panels/dialog_board.png');
   border-image-slice: 28 56 26 fill;
   border-image-width: 22px 48px 20px;
   border-image-repeat: stretch;
@@ -203,9 +203,9 @@ img { max-width:100%; }
   background-size: 100% 100%;
   filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .7));
 }
-.desk.bag { background-image: url('/game/hud/panels_hd/panel_625.png'); }
-.desk.shop { background-image: url('/game/hud/panels_hd/panel_1550.png'); }
-.desk.embed { background-image: url('/game/hud/panels_hd/panel_591.png'); }
+.desk.bag { background-image: url('/game/hud/panels/panel_625.png'); }
+.desk.shop { background-image: url('/game/hud/panels/panel_1550.png'); }
+.desk.embed { background-image: url('/game/hud/panels/panel_591.png'); }
 .desk-head { margin: 0; pointer-events: none; }
 .desk-head h3 {
   position: absolute;
@@ -389,9 +389,9 @@ button.row:hover, button.row:focus-visible {
 .inv-panel.jm-mode, .desk-wrap.jm-mode{width:auto;max-width:none;max-height:none;right:auto;bottom:auto;transform:none;background:transparent;border:none;padding:0;overflow:visible;z-index:42;filter:drop-shadow(0 12px 22px rgba(0,0,0,.75));pointer-events:auto}
 .inv-panel.jm-mode, .desk-wrap.jm-mode .box{background:transparent;border:none;padding:0;box-shadow:none;width:100%;height:100%}
 .jm-frame{position:relative;width:100%;height:100%;background-size:100% 100%;background-repeat:no-repeat;image-rendering:auto;font-family:"SimSun","Songti SC","WenQuanYi Micro Hei","Microsoft YaHei",ui-sans-serif,system-ui;color:#f6edd6;font-size:calc(var(--jm-w, 326px) * 0.046)}
-.jm-frame.shop{background-image:url(/game/hud/panels_hd/panel_1550.png)}
-.jm-frame.embed{background-image:url(/game/hud/panels_hd/panel_591.png)}
-.jm-frame.bag{background-image:url(/game/hud/panels_hd/panel_625.png)}
+.jm-frame.shop{background-image:url(/game/hud/panels/panel_1550.png)}
+.jm-frame.embed{background-image:url(/game/hud/panels/panel_591.png)}
+.jm-frame.bag{background-image:url(/game/hud/panels/panel_625.png)}
 .jm-frame .jm-title{position:absolute;left:18%;right:18%;top:5%;text-align:center;color:#ffe7a8;font-size:1.05em;font-weight:bold;text-shadow:0 1px 2px #000;pointer-events:none;letter-spacing:0.28em}
 .jm-frame .jm-body{position:absolute;left:10%;right:10%;top:16%;bottom:30%;overflow:auto;color:#f6edd6;font-size:0.95em}
 .jm-frame .jm-body ul{list-style:none;margin:0;padding:0}
@@ -447,7 +447,7 @@ button.row:hover, button.row:focus-visible {
 #dialog .dlg-board, #dialog.jm-dialog .dlg-board{
   width:100%;box-sizing:border-box;
   border-style:solid;border-width:18px 32px 16px;
-  border-image-source:url(/game/hud/panels_hd/dialog_board.png);
+  border-image-source:url(/game/hud/panels/dialog_board.png);
   border-image-slice:44 80 44 fill;
   border-image-width:18px 32px 16px;
   border-image-repeat:stretch;
