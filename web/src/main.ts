@@ -70,8 +70,8 @@ async function main() {
   const app = document.querySelector<HTMLDivElement>('#app')!
   app.innerHTML = `
     <header>
-      <h1>刀剑封魔录外传 · Phase 50 HD</h1>
-      <p>瓦当镇 · 原版 JM 底栏 · 现代对话/行囊 · Real-ESRGAN 高清 · WASD</p>
+      <h1>刀剑封魔录外传 · 上古传说</h1>
+      <p>瓦当镇 · 原版 JM 面板 · 标清原版素材 · WASD</p>
     </header>
     <div class="toolbar" id="packs"></div>
     <div id="stage">
