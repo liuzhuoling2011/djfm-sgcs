@@ -18,6 +18,8 @@
 
 **Proofs:** `assets/samples/compare_rain_walk/compare_rain_final.png`, `compare_walk_final.png`, `web_rain_800.png`, `native_town_fresh.png`.
 
+**Deploy:** Source `reset-original-sd` `40bfb0c` · Pages `main` (index-VOFPlXSR.js) · NAS skipped (SOCKS:1055 down).
+
 ## Reset original SD (2026-10-14 Asia/Shanghai)
 
 **Ask:** Reset web remake to non-HD original style (JM panels, SD sprites); keep Act-1 / combat E2E logic.
