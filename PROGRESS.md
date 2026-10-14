@@ -1,4 +1,18 @@
 
+## Phase 57 — Mac 原版录屏对照（2026-10-14 ~16:30 Asia/Shanghai）
+
+**Source:** 用户 Mac 录屏 832×628（游戏区 800×600 原生，crop 22,17），30fps 抽帧 + phaseCorrelate 测镜头位移。
+
+**测量**
+- 走 E/W ≈ 202 px/s，跑 ≈ 386–416 px/s（=2×）；网页 4.5/9.0 cells → 204/407 px/s，**已吻合**未改。
+- 走 N/S 屏幕 ≈ 86 px/s（网页 102，iso 理论 0.5 比例）；样本短，暂未改，待更多录屏。
+- 走路姿态约每 2 帧换一张（~15fps），周期 ≈ 0.57s；网页原 0.67s → 步频系数 2.0→2.35。
+- 雨：本段录屏无可检出雨丝（静止帧差分仅人物/NPC），雨参数未改。
+- 对话框：320×122 @ (feetX−150, feetY−83−122)，1px 金边(#a56b29)+1px 黑内线，~50% 黑底，12px 白字左下，无标题/按钮。
+
+**Fix:** `web/src/main.ts` placeDialogBox()/dlgAnchor、walk 步频；`web/src/style.css` Phase57 对话框。
+**Proofs:** `assets/samples/mac_compare/sbs_dialog.png`, `orig_dialog_mac.png`, `web_dialog_phase57.png`, `orig_walk_strip_30fps.png`.
+
 ## Phase 56 — 瓦当镇 rain + walk/run vs live original (2026-10-14 ~10:00 Asia/Shanghai)
 
 **Ask:** Fix rain + walk/run on `reset-original-sd`; compare live original; prefer non-Wine launcher.

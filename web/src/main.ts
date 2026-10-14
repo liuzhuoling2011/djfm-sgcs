@@ -483,8 +483,23 @@ async function main() {
     if (inv.toastT > 0) toastEl.textContent = inv.toast
   }
 
+  // Phase57 (Mac recording 2026-10-14): original NPC talk box is 320×122 @800×600, floating above the
+  // speaker (box left ≈ feetX-150, bottom ≈ feetY-83), thin gold+black border, ~50% black fill,
+  // 12px white text bottom-left, no title / no buttons.
+  let dlgAnchor: { x: number; y: number } | null = null
+  function placeDialogBox() {
+    if (dialogEl.classList.contains('hidden')) return
+    const a = dlgAnchor ?? pos
+    const p = iso(a.x, a.y)
+    const fx = p.x + cam.x, fy = p.y + cam.y
+    const W = 320, H = 122
+    const left = Math.max(4, Math.min(800 - W - 4, Math.round(fx - 150)))
+    const top = Math.max(4, Math.min(600 - 110 - H, Math.round(fy - 83 - H)))
+    dialogEl.style.left = `${(left / 800) * 100}%`
+    dialogEl.style.top = `${(top / 600) * 100}%`
+  }
   function clampDialog() {
-    requestAnimationFrame(() => placeChrome())
+    requestAnimationFrame(() => { placeChrome(); placeDialogBox() })
   }
   function renderDialog() {
     const wrap = (title: string, body: string, hint: string, next: boolean) =>
@@ -1254,7 +1269,11 @@ async function main() {
         const d = Math.hypot(ox - pos.x, oy - pos.y)
         if (d <= range && (!best || d < best.d)) best = { d, o }
       }
-      if (best?.o.EventID) { dlg.state = 0; dlg.start(String(best.o.EventID)); dialogOpen = dlg.open; renderDialog() }
+      if (best?.o.EventID) {
+        const bo = best.o
+        dlgAnchor = { x: bo.lx ?? (bo.x != null ? bo.x - origin.x : pos.x), y: bo.ly ?? (bo.y != null ? bo.y - origin.y : pos.y) }
+        dlg.state = 0; dlg.start(String(bo.EventID)); dialogOpen = dlg.open; renderDialog()
+      }
       else if (tryPickProp()) { /* quest prop / jiguan / ground loot */ }
     }
     if (k === ' ' && !dialogOpen) doMelee()
@@ -1431,7 +1450,7 @@ async function main() {
     if (moved > 1e-5) {
       const prev = animT
       // Phase42: Wine hold GIFs — walk ~2.0 (weightier), run ~1.65 (longer stride per cycle)
-      animT += moved * (running ? 1.65 : 2.0)
+      animT += moved * (running ? 1.65 : 2.35) // Phase57: Mac rec walk cycle ≈0.57s (~15fps poses)
       if (Math.floor(animT) !== Math.floor(prev)) playSfx('step', { vol: 0.28, minGap: 200 })
     }
 
@@ -1547,6 +1566,7 @@ async function main() {
     const focus = iso(pos.x, pos.y)
     cam.x = Math.round(canvas.width / 2 - focus.x)
     cam.y = Math.round(canvas.height / 2 - 36 - focus.y)
+    if (dialogOpen) placeDialogBox()
 
     ctx.fillStyle = '#0a1220'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
